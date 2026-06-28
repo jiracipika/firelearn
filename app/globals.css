@@ -1,18 +1,52 @@
-/* Fluent UI v9 styles components via Griffel (CSS-in-JS).
-   Global CSS stays minimal: a reset and full-height shell only.
-   All colors, typography, and spacing come from Fluent design tokens. */
+@import "tailwindcss";
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
+@theme {
+  --color-background: #0f1115;
+  --color-card: #171a21;
+  --color-primary: #ef3b2d;
+  --color-primary-foreground: #fff7f5;
+  --color-accent: #f59e0b;
+  --color-success: #22c55e;
+  --color-muted: #8b95a7;
+  --color-border: #262b36;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  color-scheme: dark;
+  --radius: 1rem;
 }
 
 * {
   box-sizing: border-box;
 }
 
-#__fluent-root {
+html {
+  scroll-behavior: smooth;
+}
+
+body {
   min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgb(239 59 45 / 14%), transparent 28rem),
+    radial-gradient(circle at top right, rgb(245 158 11 / 10%), transparent 24rem),
+    #0f1115;
+  color: #f6f7fb;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgb(239 59 45 / 35%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

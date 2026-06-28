@@ -1,5 +1,5 @@
-import { LessonPage } from '@/components/lesson-page'
+import { LessonView } from '@/components/course/lesson-view'
 
-export default function Lesson() {
-  return <LessonPage />
+export default function LessonPage() {
+  return <LessonView />
 }

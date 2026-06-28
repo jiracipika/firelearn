@@ -1,5 +1,5 @@
-import { FlashcardsPage } from '@/components/flashcards-page'
+import { FlashcardPreview } from '@/components/flashcards/flashcard-preview'
 
-export default function Flashcards() {
-  return <FlashcardsPage />
+export default function FlashcardsPage() {
+  return <FlashcardPreview />
 }

@@ -1,5 +1,5 @@
-import { ProfilePage } from '@/components/profile-page'
+import { DashboardOverview } from '@/components/dashboard/dashboard-overview'
 
-export default function Page() {
-  return <ProfilePage />
+export default function ProfilePage() {
+  return <DashboardOverview />
 }

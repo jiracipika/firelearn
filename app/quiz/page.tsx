@@ -1,5 +1,5 @@
-import { QuizPage } from '@/components/quiz-page'
+import { QuizPreview } from '@/components/quiz/quiz-preview'
 
-export default function Quiz() {
-  return <QuizPage />
+export default function QuizPage() {
+  return <QuizPreview />
 }
