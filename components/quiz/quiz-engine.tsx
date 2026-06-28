@@ -5,7 +5,8 @@ import * as React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, Clock, RotateCcw, XCircle } from 'lucide-react'
 import type { QuizQuestion } from '@/types/learning'
-import { getBrowserStorage, recordQuizResult } from '@/services/local-persistence'
+import { createOfflineProgressRepository } from '@/services/offline-progress'
+import { getBrowserStorage } from '@/services/local-persistence'
 import { buildQuizResult, collectQuestionBank, isAnswerCorrect, supportsMultipleSelection, type QuizAnswer, type QuizMode } from '@/services/quiz-engine'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -32,7 +33,7 @@ export function QuizEngine({ title, questions }: { title: string; questions: Qui
     if (recordedResultKey.current === resultKey) return
     const storage = getBrowserStorage()
     if (!storage) return
-    recordQuizResult(storage, {
+    createOfflineProgressRepository(storage).recordQuizAttempt({
       quizId: title,
       scorePercent: result.scorePercent,
       weakTopicIds: result.weakTopicIds,
