@@ -30,6 +30,10 @@ import {
 } from '@fluentui/react-icons'
 import { AppShell } from '@/components/app-shell'
 import { quiz } from '@/lib/mock-data'
+import { useAuth } from '@/components/auth-provider'
+import { saveQuizAttempt } from '@/lib/progress'
+
+const QUIZ_ID = 'fire-behavior-check'
 
 const useStyles = makeStyles({
   wrap: {
@@ -152,15 +156,37 @@ const useStyles = makeStyles({
 
 export function QuizPage() {
   const styles = useStyles()
+  const { user } = useAuth()
   const total = quiz.questions.length
   const [index, setIndex] = React.useState(0)
   const [selected, setSelected] = React.useState<number | null>(null)
   const [answered, setAnswered] = React.useState(false)
   const [score, setScore] = React.useState(0)
   const [finished, setFinished] = React.useState(false)
+  const [saveState, setSaveState] = React.useState<'idle' | 'saving' | 'saved' | 'signed-out'>('idle')
+  const savedRef = React.useRef(false)
 
   const q = quiz.questions[index]
   const isCorrect = selected === q?.correctIndex
+
+  React.useEffect(() => {
+    if (!finished || savedRef.current) return
+    savedRef.current = true
+    if (!user) {
+      setSaveState('signed-out')
+      return
+    }
+    setSaveState('saving')
+    const pct = Math.round((score / total) * 100)
+    saveQuizAttempt({
+      quizId: QUIZ_ID,
+      quizTitle: quiz.title,
+      score: pct,
+      totalQuestions: total,
+    }).then(({ error }) => {
+      setSaveState(error ? 'idle' : 'saved')
+    })
+  }, [finished, user, score, total])
 
   const choose = (i: number) => {
     if (answered) return
@@ -185,6 +211,8 @@ export function QuizPage() {
     setAnswered(false)
     setScore(0)
     setFinished(false)
+    setSaveState('idle')
+    savedRef.current = false
   }
 
   if (finished) {
@@ -212,6 +240,16 @@ export function QuizPage() {
                   ? 'Solid work. You have a strong grasp of the material — keep the streak alive.'
                   : 'Close. Review the lesson and run the deck again to lock it in before retesting.'}
               </Body1>
+              {saveState === 'saved' && (
+                <Caption1 style={{ color: tokens.colorStatusSuccessForeground1 }}>
+                  Score saved to your progress
+                </Caption1>
+              )}
+              {saveState === 'signed-out' && (
+                <Caption1 style={{ color: tokens.colorNeutralForeground3 }}>
+                  Sign in to save this score to your progress
+                </Caption1>
+              )}
               <div className={styles.resultActions}>
                 <Button appearance="primary" icon={<ArrowClockwise20Regular />} onClick={restart}>
                   Retake quiz

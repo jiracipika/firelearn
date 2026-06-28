@@ -30,7 +30,8 @@ import {
 } from '@fluentui/react-icons'
 import { AppShell } from '@/components/app-shell'
 import { CourseCard } from '@/components/course-card'
-import { courses, profile, currentLesson } from '@/lib/mock-data'
+import { profile, currentLesson } from '@/lib/mock-data'
+import { useCoursesWithProgress } from '@/components/use-courses-with-progress'
 
 const useStyles = makeStyles({
   stack: {
@@ -155,6 +156,7 @@ const useStyles = makeStyles({
 
 export function Dashboard() {
   const styles = useStyles()
+  const courses = useCoursesWithProgress()
   const overallProgress = profile.lessonsCompleted / profile.lessonsTotal
   const recommended = courses.filter((c) => c.progress === 0).slice(0, 3)
   const inProgress = courses.filter((c) => c.progress > 0 && c.progress < 1).slice(0, 3)

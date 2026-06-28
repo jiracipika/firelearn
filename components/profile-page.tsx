@@ -37,8 +37,11 @@ import {
   ArrowRight16Regular,
   CheckmarkCircle16Regular,
 } from '@fluentui/react-icons'
+import useSWR from 'swr'
 import { AppShell } from '@/components/app-shell'
-import { profile, decks, topicName, deckById } from '@/lib/mock-data'
+import { profile, topicName, deckById } from '@/lib/mock-data'
+import { useAuth } from '@/components/auth-provider'
+import { fetchQuizAttempts } from '@/lib/progress'
 
 const useStyles = makeStyles({
   stack: {
@@ -150,10 +153,29 @@ function scoreColor(score: number): 'success' | 'warning' | 'danger' {
 
 export function ProfilePage() {
   const styles = useStyles()
-  const overall = profile.lessonsCompleted / profile.lessonsTotal
-  const avg = Math.round(
-    profile.quizScores.reduce((a, s) => a + s.score, 0) / profile.quizScores.length,
+  const { user } = useAuth()
+  const { data: attempts } = useSWR(
+    user ? ['quiz-attempts', user.id] : null,
+    fetchQuizAttempts,
   )
+
+  const hasReal = !!user && !!attempts && attempts.length > 0
+  const scores = hasReal
+    ? attempts!.map((a) => ({
+        id: a.id,
+        name: a.quiz_title,
+        score: a.score,
+        date: new Date(a.taken_at).toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+        }),
+      }))
+    : profile.quizScores
+
+  const overall = profile.lessonsCompleted / profile.lessonsTotal
+  const avg = scores.length
+    ? Math.round(scores.reduce((a, s) => a + s.score, 0) / scores.length)
+    : 0
 
   return (
     <AppShell>
@@ -190,7 +212,7 @@ export function ProfilePage() {
               </div>
               <span className={styles.statValue}>{avg}%</span>
               <Caption1 style={{ color: tokens.colorNeutralForeground3 }}>
-                {profile.quizScores.length} quizzes taken
+                {scores.length} quizzes taken
               </Caption1>
             </Card>
             <Card className={styles.statCard}>
@@ -232,7 +254,7 @@ export function ProfilePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {profile.quizScores.map((s) => (
+                {scores.map((s) => (
                   <TableRow key={s.id}>
                     <TableCell>
                       <TableCellLayout>{s.name}</TableCellLayout>

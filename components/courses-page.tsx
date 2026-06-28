@@ -18,7 +18,8 @@ import {
 import { Search20Regular } from '@fluentui/react-icons'
 import { AppShell } from '@/components/app-shell'
 import { CourseCard } from '@/components/course-card'
-import { courses, topics } from '@/lib/mock-data'
+import { topics } from '@/lib/mock-data'
+import { useCoursesWithProgress } from '@/components/use-courses-with-progress'
 
 const useStyles = makeStyles({
   stack: {
@@ -71,6 +72,7 @@ const useStyles = makeStyles({
 
 export function CoursesPage() {
   const styles = useStyles()
+  const courses = useCoursesWithProgress()
   const [topicFilter, setTopicFilter] = React.useState<string>('all')
   const [query, setQuery] = React.useState('')
 

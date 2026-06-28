@@ -10,6 +10,7 @@ import {
 } from '@fluentui/react-components'
 import { useServerInsertedHTML } from 'next/navigation'
 import { fireLightTheme, fireDarkTheme } from '@/lib/theme'
+import { AuthProvider } from '@/components/auth-provider'
 
 type ThemeMode = 'light' | 'dark'
 
@@ -43,7 +44,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             theme={mode === 'light' ? fireLightTheme : fireDarkTheme}
             id="__fluent-root"
           >
-            {children}
+            <AuthProvider>{children}</AuthProvider>
           </FluentProvider>
         </ThemeModeContext.Provider>
       </SSRProvider>

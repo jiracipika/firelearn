@@ -18,14 +18,20 @@ import {
   MenuPopover,
   MenuList,
   MenuItem,
+  MenuDivider,
+  Avatar,
+  Spinner,
 } from '@fluentui/react-components'
 import {
   Fire24Filled,
   WeatherSunny24Regular,
   WeatherMoon24Regular,
   Navigation24Regular,
+  Person24Regular,
+  SignOut20Regular,
 } from '@fluentui/react-icons'
 import { useThemeMode } from '@/app/providers'
+import { useAuth } from '@/components/auth-provider'
 
 const useStyles = makeStyles({
   page: {
@@ -152,6 +158,58 @@ const navItems = [
   { href: '/profile', label: 'Progress' },
 ]
 
+function AuthControl() {
+  const { user, loading, error, signIn, signOut } = useAuth()
+
+  if (loading && !user) {
+    return <Spinner size="tiny" aria-label="Loading account" />
+  }
+
+  if (!user) {
+    return (
+      <Tooltip
+        content={error ?? 'Sign in to save your progress'}
+        relationship="label"
+      >
+        <Button
+          appearance="primary"
+          icon={<Person24Regular />}
+          onClick={() => void signIn()}
+        >
+          Sign in
+        </Button>
+      </Tooltip>
+    )
+  }
+
+  const label = user.email ?? 'Firefighter'
+
+  return (
+    <Menu>
+      <MenuTrigger disableButtonEnhancement>
+        <Button appearance="subtle" aria-label="Account menu">
+          <Avatar
+            name={label}
+            size={28}
+            color="brand"
+            icon={<Person24Regular />}
+            aria-hidden
+          />
+        </Button>
+      </MenuTrigger>
+      <MenuPopover>
+        <MenuList>
+          <MenuItem disabled>Signed in · progress saved</MenuItem>
+          <MenuDivider />
+          <MenuItem icon={<SignOut20Regular />} onClick={() => void signOut()}>
+            Sign out
+          </MenuItem>
+        </MenuList>
+      </MenuPopover>
+    </Menu>
+  )
+}
+
 export function AppShell({
   children,
   fullBleed = false,
@@ -192,6 +250,8 @@ export function AppShell({
         </nav>
 
         <div className={styles.right}>
+          <AuthControl />
+
           <Tooltip
             content={mode === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
             relationship="label"

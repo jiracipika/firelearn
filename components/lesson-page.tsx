@@ -34,6 +34,12 @@ import {
 } from '@fluentui/react-icons'
 import { AppShell } from '@/components/app-shell'
 import { currentLesson } from '@/lib/mock-data'
+import { useAuth } from '@/components/auth-provider'
+import { saveCourseProgress } from '@/lib/progress'
+
+// Lesson 3 of 8 in this course
+const LESSON_NUMBER = 3
+const COURSE_LESSON_TOTAL = 8
 
 const useStyles = makeStyles({
   stack: {
@@ -154,7 +160,29 @@ const outline = [
 
 export function LessonPage() {
   const styles = useStyles()
+  const { user } = useAuth()
   const [complete, setComplete] = React.useState(false)
+  const [saveNote, setSaveNote] = React.useState<string | null>(null)
+
+  const toggleComplete = async () => {
+    const next = !complete
+    setComplete(next)
+    if (!next) {
+      setSaveNote(null)
+      return
+    }
+    if (!user) {
+      setSaveNote('Sign in to save your progress')
+      return
+    }
+    const completedLessons = LESSON_NUMBER
+    const { error } = await saveCourseProgress({
+      courseId: currentLesson.courseId,
+      progress: completedLessons / COURSE_LESSON_TOTAL,
+      completedLessons,
+    })
+    setSaveNote(error ? null : 'Progress saved to your account')
+  }
 
   return (
     <AppShell>
@@ -226,10 +254,10 @@ export function LessonPage() {
             </Card>
 
             {complete && (
-              <MessageBar intent="success">
+              <MessageBar intent={saveNote === 'Sign in to save your progress' ? 'warning' : 'success'}>
                 <MessageBarBody>
                   <MessageBarTitle>Lesson complete.</MessageBarTitle>
-                  Nice work — your progress has been saved.
+                  {saveNote ?? 'Nice work — saving your progress…'}
                 </MessageBarBody>
               </MessageBar>
             )}
@@ -238,7 +266,7 @@ export function LessonPage() {
               <Button
                 appearance={complete ? 'secondary' : 'outline'}
                 icon={complete ? <CheckmarkCircle20Filled /> : <CheckmarkCircle20Regular />}
-                onClick={() => setComplete((c) => !c)}
+                onClick={() => void toggleComplete()}
               >
                 {complete ? 'Completed' : 'Mark complete'}
               </Button>
