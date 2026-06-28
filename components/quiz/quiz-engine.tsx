@@ -5,6 +5,7 @@ import * as React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, Clock, RotateCcw, XCircle } from 'lucide-react'
 import type { QuizQuestion } from '@/types/learning'
+import { getBrowserStorage, recordQuizResult } from '@/services/local-persistence'
 import { buildQuizResult, collectQuestionBank, isAnswerCorrect, supportsMultipleSelection, type QuizAnswer, type QuizMode } from '@/services/quiz-engine'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,22 @@ export function QuizEngine({ title, questions }: { title: string; questions: Qui
   const finished = answers.length === bank.length && index >= bank.length
   const selectedCorrect = question ? isAnswerCorrect(question, selected) : false
   const result = finished ? buildQuizResult(bank, answers) : null
+  const recordedResultKey = React.useRef<string | null>(null)
+
+  React.useEffect(() => {
+    if (!result) return
+    const resultKey = `${title}-${answers.length}-${result.scorePercent}`
+    if (recordedResultKey.current === resultKey) return
+    const storage = getBrowserStorage()
+    if (!storage) return
+    recordQuizResult(storage, {
+      quizId: title,
+      scorePercent: result.scorePercent,
+      weakTopicIds: result.weakTopicIds,
+      completedAt: new Date().toISOString(),
+    })
+    recordedResultKey.current = resultKey
+  }, [answers.length, result, title])
 
   function reset(nextMode = mode) {
     setMode(nextMode)
@@ -30,6 +47,7 @@ export function QuizEngine({ title, questions }: { title: string; questions: Qui
     setSelected([])
     setAnswers([])
     setSubmitted(false)
+    recordedResultKey.current = null
   }
 
   function toggleOption(option: string) {

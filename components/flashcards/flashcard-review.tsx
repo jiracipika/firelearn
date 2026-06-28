@@ -5,6 +5,7 @@ import * as React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Keyboard, RotateCcw } from 'lucide-react'
 import type { Flashcard, FlashcardRating } from '@/types/learning'
+import { getBrowserStorage, loadFlashcards, saveFlashcards } from '@/services/local-persistence'
 import { buildReviewQueue, cardStage, nextDueLabel, scheduleReview } from '@/services/spaced-repetition'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -25,6 +26,17 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
   const [revealed, setRevealed] = React.useState(false)
   const [reviewed, setReviewed] = React.useState(0)
 
+  React.useEffect(() => {
+    const storage = getBrowserStorage()
+    if (!storage) return
+    window.queueMicrotask(() => {
+      const storedCards = loadFlashcards(storage)
+      const mergedCards = initialCards.map((card) => storedCards[card.id] ?? card)
+      setCards(mergedCards)
+      setReviewIds(mergedCards.filter((card) => card.reviewCount === 0 || new Date(card.nextReview).getTime() <= Date.now()).map((card) => card.id))
+    })
+  }, [initialCards])
+
   const queue = buildReviewQueue(cards)
   const current = cards.find((card) => card.id === reviewIds[index])
   const complete = !current
@@ -32,7 +44,12 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
 
   const rate = React.useCallback((rating: FlashcardRating) => {
     if (!current || !revealed) return
-    setCards((existing) => existing.map((card) => card.id === current.id ? scheduleReview(card, rating) : card))
+    setCards((existing) => {
+      const nextCards = existing.map((card) => card.id === current.id ? scheduleReview(card, rating) : card)
+      const storage = getBrowserStorage()
+      if (storage) saveFlashcards(storage, nextCards)
+      return nextCards
+    })
     setRevealed(false)
     setReviewed((value) => value + 1)
     window.setTimeout(() => setIndex((value) => value + 1), 120)
