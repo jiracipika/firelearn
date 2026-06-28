@@ -1,5 +1,15 @@
 import type { Flashcard, FlashcardRating } from '@/types/learning'
 
+export type CardStage = 'new' | 'learning' | 'mature'
+
+export type ReviewQueue = {
+  dueToday: Flashcard[]
+  overdue: Flashcard[]
+  newCards: Flashcard[]
+  learning: Flashcard[]
+  mature: Flashcard[]
+}
+
 const ratingAdjustments: Record<FlashcardRating, { easeDelta: number; intervalMultiplier: number; minimumDays: number }> = {
   again: { easeDelta: -0.25, intervalMultiplier: 0, minimumDays: 0 },
   hard: { easeDelta: -0.15, intervalMultiplier: 1.2, minimumDays: 1 },
@@ -30,8 +40,29 @@ export function isDue(card: Flashcard, now = new Date()) {
   return new Date(card.nextReview).getTime() <= now.getTime()
 }
 
-export function cardStage(card: Flashcard) {
+export function isOverdue(card: Flashcard, now = new Date()) {
+  const next = new Date(card.nextReview)
+  return next.toDateString() !== now.toDateString() && next.getTime() < now.getTime()
+}
+
+export function cardStage(card: Flashcard): CardStage {
   if (card.reviewCount === 0) return 'new'
   if (card.intervalDays < 7) return 'learning'
   return 'mature'
+}
+
+export function buildReviewQueue(cards: Flashcard[], now = new Date()): ReviewQueue {
+  return {
+    dueToday: cards.filter((card) => isDue(card, now) && !isOverdue(card, now)),
+    overdue: cards.filter((card) => isOverdue(card, now)),
+    newCards: cards.filter((card) => cardStage(card) === 'new'),
+    learning: cards.filter((card) => cardStage(card) === 'learning'),
+    mature: cards.filter((card) => cardStage(card) === 'mature'),
+  }
+}
+
+export function nextDueLabel(card: Flashcard) {
+  if (card.intervalDays === 0) return 'later today'
+  if (card.intervalDays === 1) return 'tomorrow'
+  return `${card.intervalDays} days`
 }
