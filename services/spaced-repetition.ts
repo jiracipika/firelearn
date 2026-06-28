@@ -40,9 +40,13 @@ export function isDue(card: Flashcard, now = new Date()) {
   return new Date(card.nextReview).getTime() <= now.getTime()
 }
 
+function utcDay(value: Date) {
+  return value.toISOString().slice(0, 10)
+}
+
 export function isOverdue(card: Flashcard, now = new Date()) {
   const next = new Date(card.nextReview)
-  return next.toDateString() !== now.toDateString() && next.getTime() < now.getTime()
+  return utcDay(next) < utcDay(now)
 }
 
 export function cardStage(card: Flashcard): CardStage {
