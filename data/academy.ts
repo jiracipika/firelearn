@@ -1,5 +1,6 @@
 import type { Course, Difficulty, Flashcard, Lesson, QuizQuestion } from '@/types/learning'
 import { categories } from '@/data/categories'
+import { validateCourses } from '@/lib/content-validation'
 
 const today = new Date().toISOString()
 
@@ -192,7 +193,7 @@ starterCourses[0] = {
   ],
 }
 
-export const academyCourses: Course[] = starterCourses
+export const academyCourses: Course[] = validateCourses(starterCourses)
 
 export const educationalDisclaimer = 'FireLearn content is educational support only. It does not replace official firefighter training, department SOPs, local regulations, certification requirements, AHJ direction, or instructor-led evaluation.'
 
