@@ -22,7 +22,7 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
           {navItems.map((item) => <Link key={item.href} href={item.href} className="rounded-xl px-3 py-2 text-sm text-muted transition hover:bg-white/8 hover:text-white">{item.label}</Link>)}
         </nav>
-        <Button variant="ghost" size="sm" aria-label="Open global search"><Search size={18} /> Search</Button>
+        <Link href="/search"><Button variant="ghost" size="sm" aria-label="Open global search"><Search size={18} /> Search</Button></Link>
       </div>
     </header>
     <main className={fullBleed ? '' : 'mx-auto max-w-7xl px-5 py-8 md:py-12'}>{children}</main>
