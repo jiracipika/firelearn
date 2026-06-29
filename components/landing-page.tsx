@@ -18,7 +18,7 @@ const questionCount = academyCourses.reduce((total, course) => total + course.mo
 const videoCount = academyCourses.reduce((total, course) => total + course.modules.reduce((moduleTotal, module) => moduleTotal + module.lessons.reduce((lessonTotal, lesson) => lessonTotal + lesson.videos.length, 0), 0), 0)
 
 const stats = [
-  ['29', 'Disciplines'],
+  ['32', 'Disciplines'],
   [String(academyCourses.length), 'Courses'],
   [String(lessonCount), 'Lessons'],
   [String(videoCount), 'Videos'],

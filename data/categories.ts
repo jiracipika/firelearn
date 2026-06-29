@@ -30,6 +30,9 @@ const names = [
   'Mayday Procedures',
   'Canadian Fire Codes',
   'NFPA Standards',
+  'Electric Vehicle Incidents',
+  'Firefighter Rehab',
+  'Cancer Prevention & Decon',
 ] as const
 
 function slugify(value: string) {

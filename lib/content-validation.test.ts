@@ -4,7 +4,7 @@ import { validateCourses } from '@/lib/content-validation'
 
 describe('content validation', () => {
   it('accepts the shipped academy catalog', () => {
-    expect(validateCourses(academyCourses)).toHaveLength(29)
+    expect(validateCourses(academyCourses)).toHaveLength(32)
   })
 
   it('rejects quiz answers that are not present in options', () => {
