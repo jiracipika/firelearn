@@ -1,10 +1,13 @@
 'use client'
 
 import { Activity, BookOpen, Brain, Flame, Target, Trophy, UploadCloud } from 'lucide-react'
+import { useMemo } from 'react'
 import { academyCourses, getFeaturedLesson } from '@/data/academy'
 import { learnerProgress } from '@/data/progress'
 import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
 import { getWeakTopicSummary } from '@/services/offline-progress'
+import { aggregateLearnerStats } from '@/services/gamification-aggregator'
+import type { LeaderboardEntry } from '@/services/gamification'
 import { AppShell } from '@/components/layout/app-shell'
 import { CourseCard } from '@/components/course/course-card'
 import { AchievementProgressPanel, LeaderboardPanel, WeeklyChallengesPanel } from '@/components/dashboard/gamification-panels'
@@ -23,26 +26,57 @@ export function DashboardOverview() {
   const weakTopics = getWeakTopicSummary(quizHistory)
   const lessonIds = allLessonIds()
   const completion = lessonIds.length === 0 ? 0 : Math.round((completedLessonIds.length / lessonIds.length) * 100)
-  const totalXp = learnerProgress.xp + completedLessonIds.length * 50
+
+  // Compute real gamification stats from actual learner activity
+  const stats = useMemo(() => {
+    const completedLessons = completedLessonIds.map((lessonId) => {
+      // Find the course this lesson belongs to
+      const course = academyCourses.find((course) =>
+        course.modules.some((module) => module.lessons.some((lesson) => lesson.id === lessonId))
+      )
+      return {
+        lessonId,
+        courseId: course?.slug ?? 'unknown',
+        xpAwarded: course?.xp ?? 50,
+      }
+    })
+    return aggregateLearnerStats({
+      completedLessons,
+      quizAttempts: quizHistory,
+      flashcardsReviewed: 0,
+    })
+  }, [completedLessonIds, quizHistory])
+
+  const learnerEntry: LeaderboardEntry = {
+    id: 'current-learner',
+    name: 'You',
+    company: 'Engine 7',
+    xp: stats.xp,
+    streakDays: learnerProgress.streakDays,
+    completedLessons: stats.completedLessons,
+    perfectQuizzes: stats.perfectQuizzes,
+  }
+
+  const totalXp = learnerProgress.xp + stats.xp
   const dailyProgress = Math.round((learnerProgress.minutesStudiedToday / learnerProgress.dailyGoalMinutes) * 100)
-  const stats = [
+  const statTiles = [
     { label: 'Daily streak', value: `${learnerProgress.streakDays} days`, icon: Flame, tone: 'text-red-200' },
     { label: 'Total XP', value: totalXp.toLocaleString(), icon: Trophy, tone: 'text-amber-200' },
-    { label: 'Level', value: Math.max(learnerProgress.level, Math.floor(totalXp / 750) + 1).toString(), icon: Target, tone: 'text-green-200' },
+    { label: 'Level', value: stats.level.toString(), icon: Target, tone: 'text-green-200' },
     { label: 'Completion', value: `${completion}%`, icon: BookOpen, tone: 'text-sky-200' },
   ]
 
   return <AppShell><div className="space-y-8">
     <section className="grid gap-6 lg:grid-cols-[1fr_0.42fr] lg:items-stretch">
-      <Card className="relative overflow-hidden p-7"><div className="absolute right-0 top-0 h-48 w-48 rounded-full bg-primary/20 blur-3xl" /><p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-200">Command dashboard</p><h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-[-0.045em] md:text-6xl">Keep your fireground knowledge mission-ready.</h1><p className="mt-4 max-w-2xl text-lg leading-8 text-muted">Track Supabase-backed completions, quiz history, review signals, and weak topics from one focused learning cockpit.</p><div className="mt-6 grid gap-3 sm:grid-cols-4">{stats.map((stat) => <div key={stat.label} className="rounded-2xl border border-white/[0.08] bg-black/20 p-4"><stat.icon className={stat.tone} size={19} /><p className="mt-3 text-2xl font-semibold">{stat.value}</p><p className="text-xs text-muted">{stat.label}</p></div>)}</div></Card>
+      <Card className="relative overflow-hidden p-7"><div className="absolute right-0 top-0 h-48 w-48 rounded-full bg-primary/20 blur-3xl" /><p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-200">Command dashboard</p><h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-[-0.045em] md:text-6xl">Keep your fireground knowledge mission-ready.</h1><p className="mt-4 max-w-2xl text-lg leading-8 text-muted">Track Supabase-backed completions, quiz history, review signals, and weak topics from one focused learning cockpit.</p><div className="mt-6 grid gap-3 sm:grid-cols-4">{statTiles.map((stat) => <div key={stat.label} className="rounded-2xl border border-white/[0.08] bg-black/20 p-4"><stat.icon className={stat.tone} size={19} /><p className="mt-3 text-2xl font-semibold">{stat.value}</p><p className="text-xs text-muted">{stat.label}</p></div>)}</div></Card>
       <Card className="space-y-5 bg-gradient-to-br from-primary/12 to-accent/6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted">Daily goal</p><p className="mt-1 text-4xl font-semibold">{learnerProgress.minutesStudiedToday}/{learnerProgress.dailyGoalMinutes}m</p></div><Activity className="text-red-200" /></div><Progress value={dailyProgress} /><p className="text-sm leading-6 text-muted">Short reps win. Clear one lesson, one quiz, or one flashcard queue today.</p></Card>
     </section>
     <section className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
       <Card className="space-y-5"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-red-200">Continue learning</p><h2 className="mt-2 text-3xl font-semibold tracking-tight">{featuredLesson?.title ?? 'Start your first lesson'}</h2></div><Brain className="text-red-200" /></div><p className="max-w-2xl text-muted">Pick up the highest-value module and keep building recall through lesson, quiz, and card reinforcement.</p><Progress value={featuredLesson && completedLessonIds.includes(featuredLesson.id) ? 100 : (featuredLesson?.completion.percent ?? 0)} /></Card>
       <Card className="space-y-4"><div className="flex items-center gap-2"><UploadCloud className="size-5 text-red-300" /><h2 className="font-semibold">Supabase status</h2></div><p className="text-3xl font-semibold">{authenticated ? 'Connected' : 'Not signed in'}</p><p className="text-sm leading-6 text-muted">{available ? 'Supabase is configured. Anonymous auth stores progress per user under RLS.' : 'Supabase env is missing from this deployment.'}</p>{!authenticated && <Button disabled={!available} onClick={signIn}>Sign in anonymously</Button>}{error && <p className="text-sm text-red-200">{error}</p>}</Card>
     </section>
-    <section className="grid gap-5 lg:grid-cols-[1fr_0.8fr]"><StudyHeatmap /><WeeklyChallengesPanel /></section>
-    <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]"><LeaderboardPanel compact /><AchievementProgressPanel /></section>
+    <section className="grid gap-5 lg:grid-cols-[1fr_0.8fr]"><StudyHeatmap /><WeeklyChallengesPanel challenges={stats.challenges} /></section>
+    <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]"><LeaderboardPanel compact learnerEntry={learnerEntry} /><AchievementProgressPanel achievements={stats.achievements} /></section>
     <section className="grid gap-5 lg:grid-cols-2">
       <Card className="space-y-3"><h2 className="font-semibold">Quiz history</h2>{quizHistory.length === 0 ? <p className="text-sm text-muted">No Supabase quiz attempts yet. Complete a quiz after signing in.</p> : <div className="space-y-2">{quizHistory.slice(0, 4).map((attempt) => <div key={`${attempt.quizId}-${attempt.completedAt}`} className="rounded-2xl border border-white/[0.08] bg-black/20 p-3 text-sm"><p className="font-medium">{attempt.quizId}</p><p className="text-muted">{attempt.scorePercent}% · {new Date(attempt.completedAt).toLocaleDateString()}</p></div>)}</div>}</Card>
       <Card className="space-y-3"><h2 className="font-semibold">Weak-topic recommendations</h2>{weakTopics.length === 0 ? <p className="text-sm text-muted">No weak topics yet. FireLearn will surface repeated misses after quizzes.</p> : <div className="flex flex-wrap gap-2">{weakTopics.slice(0, 6).map((topic) => <span key={topic.topicId} className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm text-red-100">{topic.topicId} · {topic.misses}</span>)}</div>}</Card>
