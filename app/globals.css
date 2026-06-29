@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0f1115;
-  --color-card: #171a21;
-  --color-primary: #ef3b2d;
-  --color-primary-foreground: #fff7f5;
-  --color-accent: #f59e0b;
-  --color-success: #22c55e;
-  --color-muted: #8b95a7;
-  --color-border: #262b36;
+  --color-background: #080a0f;
+  --color-card: #11151d;
+  --color-primary: #ff3b22;
+  --color-primary-foreground: #fff7f2;
+  --color-accent: #f6b73c;
+  --color-success: #3ddc84;
+  --color-muted: #96a0b5;
+  --color-border: #252b36;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 :root {
   color-scheme: dark;
-  --radius: 1rem;
+  --radius: 1.15rem;
 }
 
 * {
@@ -24,22 +24,36 @@
 
 html {
   scroll-behavior: smooth;
+  background: #080a0f;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgb(239 59 45 / 14%), transparent 28rem),
-    radial-gradient(circle at top right, rgb(245 158 11 / 10%), transparent 24rem),
-    #0f1115;
-  color: #f6f7fb;
+    radial-gradient(circle at 12% -10%, rgb(255 59 34 / 22%), transparent 34rem),
+    radial-gradient(circle at 88% 4%, rgb(246 183 60 / 12%), transparent 30rem),
+    linear-gradient(180deg, #0b0d13 0%, #080a0f 52%, #0d1017 100%);
+  color: #f7f8fb;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
+body::before {
+  pointer-events: none;
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to bottom, black, transparent 75%);
+}
+
 ::selection {
-  background: rgb(239 59 45 / 35%);
+  background: rgb(255 59 34 / 38%);
 }
 
 @media (prefers-reduced-motion: reduce) {

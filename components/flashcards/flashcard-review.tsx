@@ -3,7 +3,7 @@
 
 import * as React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Keyboard, RotateCcw } from 'lucide-react'
+import { Keyboard, RotateCcw, Sparkles } from 'lucide-react'
 import type { Flashcard, FlashcardRating } from '@/types/learning'
 import { getBrowserStorage, loadFlashcards, saveFlashcards } from '@/services/local-persistence'
 import { buildReviewQueue, cardStage, nextDueLabel, scheduleReview } from '@/services/spaced-repetition'
@@ -77,37 +77,18 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
   }
 
   if (complete) {
-    return <div className="mx-auto max-w-4xl space-y-5">
-      <Card className="space-y-5 text-center"><Badge className="mx-auto">Review complete</Badge><h1 className="text-4xl font-semibold">Queue cleared</h1><p className="text-muted">You reviewed {reviewed} card(s). Scheduled cards now carry updated ease factors, intervals, review counts, and next review dates.</p><Button onClick={restart}><RotateCcw size={18} /> Rebuild due queue</Button></Card>
-      <QueueStats queue={queue} />
-    </div>
+    return <div className="mx-auto max-w-5xl space-y-5"><Card className="relative overflow-hidden p-8 text-center"><div className="absolute inset-x-20 top-0 h-24 bg-success/20 blur-3xl" /><Badge className="mx-auto">Review complete</Badge><h1 className="mt-4 text-5xl font-semibold tracking-tight">Queue cleared</h1><p className="mx-auto mt-3 max-w-2xl text-muted">You reviewed {reviewed} card(s). Scheduled cards now carry updated ease factors, intervals, review counts, and next review dates.</p><Button className="mt-6" onClick={restart}><RotateCcw size={18} /> Rebuild due queue</Button></Card><QueueStats queue={queue} /></div>
   }
 
-  return <div className="mx-auto max-w-4xl space-y-5">
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><Badge>{cardStage(current)} card</Badge><h1 className="mt-3 text-4xl font-semibold">Daily review</h1></div><p className="flex items-center gap-2 text-sm text-muted"><Keyboard size={16} /> Space to reveal · 1-4 to rate</p></div>
+  return <div className="mx-auto max-w-5xl space-y-5">
+    <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end"><div><Badge>{cardStage(current)} card</Badge><h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] md:text-5xl">Daily review</h1><p className="mt-2 text-muted">Spaced repetition for high-risk, high-recall firefighter knowledge.</p></div><p className="flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.035] px-3 py-2 text-sm text-muted"><Keyboard size={16} /> Space to reveal · 1-4 to rate</p></div>
     <Progress value={progress} />
     <QueueStats queue={queue} />
-    <AnimatePresence mode="wait">
-      <motion.div key={current.id + String(revealed)} initial={{ opacity: 0, rotateX: -6 }} animate={{ opacity: 1, rotateX: 0 }} exit={{ opacity: 0, rotateX: 6 }} transition={{ duration: 0.16 }}>
-        <Card className="min-h-80 space-y-6 p-8 text-center">
-          <p className="text-sm uppercase tracking-[0.2em] text-muted">{revealed ? 'Answer' : 'Prompt'}</p>
-          <p className="mx-auto max-w-2xl text-3xl font-semibold leading-tight">{revealed ? current.back : current.front}</p>
-          {!revealed && <Button onClick={() => setRevealed(true)}>Show answer</Button>}
-          {revealed && <div className="grid gap-3 sm:grid-cols-4">{ratings.map((rating) => <Button key={rating.value} variant="outline" onClick={() => rate(rating.value)}><span className={rating.tone}>{rating.label}</span><span className="text-xs text-muted">{rating.shortcut}</span></Button>)}</div>}
-          {revealed && <p className="text-sm text-muted">Current interval: {nextDueLabel(current)} · Ease {current.easeFactor.toFixed(2)} · Reviews {current.reviewCount}</p>}
-        </Card>
-      </motion.div>
-    </AnimatePresence>
+    <AnimatePresence mode="wait"><motion.div key={current.id + String(revealed)} initial={{ opacity: 0, rotateX: -6, y: 8 }} animate={{ opacity: 1, rotateX: 0, y: 0 }} exit={{ opacity: 0, rotateX: 6, y: -8 }} transition={{ duration: 0.16 }}><Card className="relative min-h-96 overflow-hidden p-8 text-center"><div className="absolute inset-x-16 top-0 h-28 bg-primary/15 blur-3xl" /><p className="text-sm font-semibold uppercase tracking-[0.22em] text-muted">{revealed ? 'Answer' : 'Prompt'}</p><p className="mx-auto mt-8 max-w-3xl text-3xl font-semibold leading-tight tracking-tight md:text-4xl">{revealed ? current.back : current.front}</p>{!revealed && <Button className="mt-8" onClick={() => setRevealed(true)}>Show answer <Sparkles size={17} /></Button>}{revealed && <div className="mt-8 grid gap-3 sm:grid-cols-4">{ratings.map((rating) => <Button key={rating.value} variant="outline" onClick={() => rate(rating.value)}><span className={rating.tone}>{rating.label}</span><span className="text-xs text-muted">{rating.shortcut}</span></Button>)}</div>}{revealed && <p className="mt-6 text-sm text-muted">Current interval: {nextDueLabel(current)} · Ease {current.easeFactor.toFixed(2)} · Reviews {current.reviewCount}</p>}</Card></motion.div></AnimatePresence>
   </div>
 }
 
 function QueueStats({ queue }: { queue: ReturnType<typeof buildReviewQueue> }) {
-  const stats = [
-    ['Due today', queue.dueToday.length],
-    ['Overdue', queue.overdue.length],
-    ['New', queue.newCards.length],
-    ['Learning', queue.learning.length],
-    ['Mature', queue.mature.length],
-  ] as const
+  const stats = [['Due today', queue.dueToday.length], ['Overdue', queue.overdue.length], ['New', queue.newCards.length], ['Learning', queue.learning.length], ['Mature', queue.mature.length]] as const
   return <div className="grid gap-3 sm:grid-cols-5">{stats.map(([label, value]) => <Card key={label} className="p-4 text-center"><p className="text-2xl font-semibold">{value}</p><p className="text-xs text-muted">{label}</p></Card>)}</div>
 }
