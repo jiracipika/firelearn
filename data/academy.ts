@@ -92,6 +92,71 @@ function makeLesson(categoryId: string, title: string, difficulty: Difficulty): 
   }
 }
 
+function makeScenarioDrillLesson(categoryId: string, title: string, difficulty: Difficulty): Lesson {
+  const normalizedTitle = title.toLowerCase()
+  const scenarioQuestion: QuizQuestion = {
+    id: `q-${categoryId}-scenario-drill-1`,
+    type: 'case-study',
+    prompt: `Case study: During a ${normalizedTitle} drill, conditions change and the company officer asks for a quick risk update. What is the strongest response?`,
+    options: [
+      'Report the observed change, connect it to a likely hazard, and recommend a department-approved next action',
+      'Wait until the drill ends before saying anything',
+      'Give a tactic that ignores local SOPs because it appeared in a lesson',
+      'Focus only on speed and skip the risk cue',
+    ],
+    correctAnswerIds: ['Report the observed change, connect it to a likely hazard, and recommend a department-approved next action'],
+    explanation: 'Scenario drills should convert observations into clear communication and safe action within department procedures. The goal is decision quality, not memorized trivia.',
+    topicIds: [categoryId],
+    timeLimitSeconds: 120,
+  }
+  const multipleAnswerQuestion: QuizQuestion = {
+    id: `q-${categoryId}-scenario-drill-2`,
+    type: 'multiple-answer',
+    prompt: `Which habits make ${normalizedTitle} training transfer better to real incidents? Select all that apply.`,
+    options: [
+      'Use standard radio language',
+      'Connect cues to tactical priorities',
+      'Debrief decisions after the scenario',
+      'Ignore accountability to move faster',
+      'Confirm actions against SOPs and instructor feedback',
+    ],
+    correctAnswerIds: ['Use standard radio language', 'Connect cues to tactical priorities', 'Debrief decisions after the scenario', 'Confirm actions against SOPs and instructor feedback'],
+    explanation: 'Transfer improves when firefighters practice communication, cue recognition, debriefing, and SOP alignment. Accountability is never optional.',
+    topicIds: [categoryId, 'communications'],
+  }
+
+  return {
+    id: `lesson-${categoryId}-scenario-drill`,
+    slug: `${categoryId}-scenario-drill`,
+    title: `${title} Scenario Drill`,
+    difficulty,
+    estimatedMinutes: 22,
+    objectives: [
+      `Apply ${normalizedTitle} concepts to a realistic training scenario`,
+      'Practice risk communication using concise radio language',
+      'Identify which cues should trigger reassessment or command notification',
+    ],
+    prerequisites: ['Completion of the foundation lesson', 'Department SOP review', 'Instructor or company officer debrief process'],
+    content: [
+      { type: 'paragraph', text: `Scenario practice turns ${normalizedTitle} from vocabulary into judgment. The firefighter should identify cues, communicate what changed, and connect the observation to a safe next step.` },
+      { type: 'paragraph', text: 'A useful drill includes a trigger event: worsening smoke, changing victim information, air consumption, radio congestion, water supply delay, structural concern, or a command update. The learner should explain what the trigger means and what they would communicate.' },
+      { type: 'callout', title: 'Debrief standard', text: 'A good answer should be specific, observable, and tied to local procedures. Avoid vague statements like “be careful” when a concrete risk cue can be reported.' },
+      { type: 'list', title: 'Scenario rep sequence', items: ['Observe the cue', 'Name the hazard', 'Communicate the change', 'Recommend or request the next approved action', 'Debrief what improved and what was missed'] },
+    ],
+    imageAlt: `Scenario-based ${normalizedTitle} training drill`,
+    videoPlaceholder: `Future simulation: branching ${title} scenario with command feedback.`,
+    knowledgeCheck: scenarioQuestion,
+    summary: [`${title} scenario reps build judgment under changing conditions.`, 'The strongest answers connect cues, hazards, communication, and approved actions.', 'Debriefing turns a single drill into durable learning.'],
+    quiz: [scenarioQuestion, multipleAnswerQuestion],
+    flashcards: [
+      card(`fc-${categoryId}-scenario-cue`, `In a ${normalizedTitle} scenario, what should you communicate first when conditions change?`, 'Report the specific observed cue, why it matters, and what action or reassessment is needed under department procedure.', [categoryId, 'communications'], difficulty),
+      card(`fc-${categoryId}-debrief`, 'What makes a FireLearn scenario debrief useful?', 'It compares observed cues, decisions, communication, SOP alignment, and missed opportunities without treating the app as a certification authority.', [categoryId], difficulty),
+    ],
+    references: ['Department SOPs', 'Instructor-led scenario debriefs', 'Authority Having Jurisdiction guidance', 'Applicable NFPA/local standards where adopted'],
+    completion: { completed: false, percent: 0 },
+  }
+}
+
 function card(id: string, front: string, back: string, topicIds: string[], difficulty: Difficulty, intervalDays = 0, reviewCount = 0): Flashcard {
   return { id, front, back, topicIds, difficulty, easeFactor: 2.5, intervalDays, nextReview: today, reviewCount }
 }
@@ -428,7 +493,7 @@ const starterCourses: Course[] = categories.map((category, index) => {
     estimatedMinutes: 45 + (index % 4) * 15,
     progressPercent: index < 4 ? [62, 35, 15, 8][index] : 0,
     xp: 300 + index * 20,
-    modules: [{ id: `module-${category.id}-core`, title: 'Core concepts', description: `Foundational concepts and decision points for ${category.title.toLowerCase()}.`, lessons: [makeLesson(category.id, category.title, difficulty)] }],
+    modules: [{ id: `module-${category.id}-core`, title: 'Core concepts', description: `Foundational concepts and decision points for ${category.title.toLowerCase()}.`, lessons: [makeLesson(category.id, category.title, difficulty), makeScenarioDrillLesson(category.id, category.title, difficulty)] }],
   }
 })
 
@@ -444,7 +509,7 @@ richLessonSeeds.forEach((seed) => {
     estimatedMinutes: seed.estimatedMinutes,
     xp: seed.xp,
     progressPercent: seed.categoryId === 'fire-behaviour' ? 62 : starterCourses[index].progressPercent,
-    modules: [{ id: `module-${seed.categoryId}-core`, title: seed.moduleTitle, description: seed.moduleDescription, lessons: [lessonFromSeed(seed)] }],
+    modules: [{ id: `module-${seed.categoryId}-core`, title: seed.moduleTitle, description: seed.moduleDescription, lessons: [lessonFromSeed(seed), makeScenarioDrillLesson(seed.categoryId, categories.find((category) => category.id === seed.categoryId)?.title ?? seed.courseTitle, seed.difficulty)] }],
   }
 })
 
