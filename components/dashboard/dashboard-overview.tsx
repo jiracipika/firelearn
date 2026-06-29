@@ -23,7 +23,7 @@ function allLessonIds() {
 
 export function DashboardOverview() {
   const featuredLesson = getFeaturedLesson()
-  const { completedLessonIds, quizHistory, available, authenticated, signIn, error } = useSupabaseProgress()
+  const { completedLessonIds, quizHistory, available, authenticated, loading, signIn, error, projectRef } = useSupabaseProgress()
   const weakTopics = getWeakTopicSummary(quizHistory)
   const lessonIds = allLessonIds()
   const completion = lessonIds.length === 0 ? 0 : Math.round((completedLessonIds.length / lessonIds.length) * 100)
@@ -119,9 +119,11 @@ export function DashboardOverview() {
           <h2 className="font-bold text-white">Supabase status</h2>
         </div>
         <p className="text-2xl font-bold text-white">{authenticated ? 'Connected' : 'Not signed in'}</p>
-        <p className="text-xs leading-5 text-muted-foreground">{available ? 'Anonymous auth stores progress per user under RLS.' : 'Supabase env not configured.'}</p>
-        {!authenticated && <Button size="sm" disabled={!available} onClick={signIn}>Sign in anonymously</Button>}
-        {error && <p className="text-xs text-red-300">{error}</p>}
+        <p className="text-xs leading-5 text-muted-foreground">
+          {available ? `Project ${projectRef ?? 'unknown'} · Anonymous auth stores progress per user under RLS.` : 'Supabase env not configured.'}
+        </p>
+        {!authenticated && <Button size="sm" disabled={!available || loading} onClick={signIn}>{loading ? 'Checking Supabase...' : 'Sign in anonymously'}</Button>}
+        {error && <p className="rounded-xl border border-red-500/30 bg-red-500/8 p-3 text-xs leading-5 text-red-200">{error}</p>}
       </Card>
     </section>
 

@@ -17,7 +17,7 @@ function lessonProgressPercent(completed: boolean, lesson: Lesson) {
 }
 
 export function LessonView({ course, lesson }: { course: Course; lesson: Lesson }) {
-  const { completedLessonIds, completeLesson, available, authenticated, signIn, error } = useSupabaseProgress()
+  const { completedLessonIds, completeLesson, available, authenticated, loading, signIn, error, projectRef } = useSupabaseProgress()
   const completed = completedLessonIds.includes(lesson.id)
   const progress = lessonProgressPercent(completed, lesson)
   const xpAwarded = Math.max(25, Math.round(course.xp / Math.max(1, course.modules.flatMap((module) => module.lessons).length)))
@@ -45,13 +45,13 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
           </div>
           <p className="text-xs leading-5 text-muted-foreground">
             {!available ? 'Supabase not configured in this deployment.'
-            : !authenticated ? 'Sign in anonymously to save completion.'
+            : !authenticated ? `Sign in anonymously to save completion${projectRef ? ` on project ${projectRef}` : ''}.`
             : completed ? 'Completed and saved.'
             : 'Save this completion to Supabase.'}
           </p>
           {error && <p className="rounded-lg border border-red-500/30 bg-red-500/8 p-2.5 text-xs text-red-300">{error}</p>}
           {!authenticated
-            ? <Button size="sm" disabled={!available} onClick={signIn}>Sign in to save</Button>
+            ? <Button size="sm" disabled={!available || loading} onClick={signIn}>{loading ? 'Checking Supabase...' : 'Sign in to save'}</Button>
             : <Button size="sm" disabled={completed} onClick={() => completeLesson({ lessonId: lesson.id, courseId: course.id, xpAwarded })}>{completed ? 'Completed' : `Mark complete · ${xpAwarded} XP`}</Button>
           }
         </Card>

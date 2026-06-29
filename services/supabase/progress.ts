@@ -18,6 +18,15 @@ export async function signInAnonymously(client: FireLearnSupabaseClient) {
   return client.auth.signInAnonymously()
 }
 
+export function formatSupabaseAuthError(error: { message?: string; code?: string; error_code?: string } | null | undefined) {
+  if (!error) return undefined
+  const code = error.code ?? error.error_code
+  if (code === 'anonymous_provider_disabled' || error.message?.toLowerCase().includes('anonymous sign-ins are disabled')) {
+    return 'Anonymous sign-ins are disabled for this Supabase project. Enable Authentication → Providers → Anonymous Sign-Ins for the project shown below, then redeploy or refresh.'
+  }
+  return error.message ?? 'Supabase authentication failed.'
+}
+
 export async function loadSupabaseProgress(client: FireLearnSupabaseClient): Promise<SupabaseProgressState> {
   const userId = await getUserId(client)
   if (!userId) return { authenticated: false, completedLessonIds: [], quizHistory: [] }

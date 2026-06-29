@@ -40,7 +40,9 @@ The current UI uses anonymous Supabase sign-in for quick learner progress. In Su
 
 Authentication -> Providers -> Anonymous Sign-Ins
 
-If anonymous sign-in is disabled, the UI will show an auth error and progress writes will not save.
+Production currently points at the Supabase project ref shown in the app's Supabase status card. If the app says anonymous sign-ins are disabled after you enabled them, verify you enabled Anonymous Sign-Ins in the same project as `NEXT_PUBLIC_SUPABASE_URL` in Vercel, then redeploy or refresh the page.
+
+If anonymous sign-in is disabled, the UI will show the Supabase auth error and progress writes will not save.
 
 ## Security reminder
 

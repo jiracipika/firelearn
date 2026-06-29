@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { completeLessonInSupabase, loadSupabaseProgress, recordQuizAttemptInSupabase } from '@/services/supabase/progress'
+import { completeLessonInSupabase, formatSupabaseAuthError, loadSupabaseProgress, recordQuizAttemptInSupabase } from '@/services/supabase/progress'
 import type { FireLearnSupabaseClient } from '@/services/supabase/client'
 
 function createFakeClient() {
@@ -66,5 +66,9 @@ describe('Supabase progress service', () => {
     await recordQuizAttemptInSupabase(client, { quizId: 'quiz-1', scorePercent: 90, weakTopicIds: [], completedAt: '2026-06-28T00:00:00.000Z' })
 
     expect(calls[0]).toMatchObject({ table: 'quiz_attempts', method: 'insert' })
+  })
+
+  it('formats disabled anonymous-auth errors with actionable guidance', () => {
+    expect(formatSupabaseAuthError({ error_code: 'anonymous_provider_disabled', message: 'Anonymous sign-ins are disabled' })).toContain('Authentication → Providers → Anonymous Sign-Ins')
   })
 })

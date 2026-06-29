@@ -3,9 +3,10 @@
 import * as React from 'react'
 import type { QuizAttempt } from '@/services/local-persistence'
 import type { CompleteLessonInput } from '@/services/offline-progress'
-import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
+import { createFireLearnBrowserSupabaseClient, getSupabaseProjectRef } from '@/services/supabase/client'
 import {
   completeLessonInSupabase,
+  formatSupabaseAuthError,
   loadSupabaseProgress,
   signInAnonymously,
 } from '@/services/supabase/progress'
@@ -48,12 +49,19 @@ export function useSupabaseProgress() {
   const signIn = React.useCallback(async () => {
     const client = createFireLearnBrowserSupabaseClient()
     if (!client) return
-    const { error: signInError } = await signInAnonymously(client)
-    if (signInError) {
-      setError(signInError.message)
-      return
+    setLoading(true)
+    try {
+      const { error: signInError } = await signInAnonymously(client)
+      if (signInError) {
+        setError(formatSupabaseAuthError(signInError) ?? signInError.message)
+        return
+      }
+      await refresh()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Supabase authentication failed.')
+    } finally {
+      setLoading(false)
     }
-    await refresh()
   }, [refresh])
 
   const completeLesson = React.useCallback(async (input: CompleteLessonInput) => {
@@ -72,6 +80,7 @@ export function useSupabaseProgress() {
     authenticated,
     loading,
     error,
+    projectRef: getSupabaseProjectRef(),
     completedLessonIds,
     quizHistory,
     completeLesson,

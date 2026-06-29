@@ -86,6 +86,16 @@ export function hasSupabaseBrowserEnv() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && getSupabaseBrowserKey())
 }
 
+export function getSupabaseProjectRef() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!url) return undefined
+  try {
+    return new URL(url).hostname.split('.')[0]
+  } catch {
+    return undefined
+  }
+}
+
 export function createFireLearnBrowserSupabaseClient(): FireLearnSupabaseClient | undefined {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = getSupabaseBrowserKey()
