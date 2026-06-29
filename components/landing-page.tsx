@@ -31,10 +31,7 @@ export function LandingPage() {
             <Sparkles size={13} /> Firefighter training, rebuilt
           </div>
           <h1 className="max-w-5xl text-5xl font-bold tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
-            Train smarter for the{' '}
-            <span className="bg-gradient-to-r from-red-400 via-primary to-accent bg-clip-text text-transparent">
-              fireground.
-            </span>
+            Train smarter for the <span className="bg-gradient-to-r from-red-400 via-primary to-accent bg-clip-text text-transparent">fireground.</span>
           </h1>
           <p className="max-w-2xl text-lg leading-7 text-muted-foreground sm:text-xl sm:leading-8">
             FireLearn combines structured courses, exam-grade quizzes, spaced-repetition flashcards, and Supabase-backed progress into one modern academy for firefighters.
