@@ -1,293 +1,58 @@
-'use client'
-
-import * as React from 'react'
 import Link from 'next/link'
-import {
-  makeStyles,
-  tokens,
-  Title1,
-  Title3,
-  Subtitle1,
-  Subtitle2,
-  Body1,
-  Body1Strong,
-  Caption1,
-  Button,
-  Card,
-  Badge,
-  Divider,
-} from '@fluentui/react-components'
-import {
-  BookOpen24Regular,
-  Flash24Regular,
-  Layer24Regular,
-  ArrowTrending24Regular,
-  ArrowRight20Regular,
-  Fire20Filled,
-} from '@fluentui/react-icons'
-import { AppShell } from '@/components/app-shell'
+import { ArrowRight, BookOpenCheck, Brain, CheckCircle2, Flame, Gauge, Radio, ShieldAlert, Sparkles, Trophy } from 'lucide-react'
+import { academyCourses } from '@/data/academy'
+import { AppShell } from '@/components/layout/app-shell'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
 
-const useStyles = makeStyles({
-  hero: {
-    position: 'relative',
-    overflow: 'hidden',
-    borderBottom: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
-  },
-  heroBg: {
-    position: 'absolute',
-    inset: 0,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    opacity: 0.5,
-  },
-  heroScrim: {
-    position: 'absolute',
-    inset: 0,
-    backgroundImage: `linear-gradient(180deg, ${tokens.colorNeutralBackground2}CC 0%, ${tokens.colorNeutralBackground2}99 40%, ${tokens.colorNeutralBackground2} 100%)`,
-  },
-  heroInner: {
-    position: 'relative',
-    maxWidth: '1160px',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    paddingLeft: tokens.spacingHorizontalXXL,
-    paddingRight: tokens.spacingHorizontalXXL,
-    paddingTop: '88px',
-    paddingBottom: '96px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalL,
-    alignItems: 'flex-start',
-    '@media (max-width: 520px)': {
-      paddingLeft: tokens.spacingHorizontalL,
-      paddingRight: tokens.spacingHorizontalL,
-      paddingTop: '56px',
-      paddingBottom: '64px',
-    },
-  },
-  heroCopy: {
-    maxWidth: '680px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalM,
-  },
-  heroTitle: {
-    fontSize: tokens.fontSizeHero900,
-    lineHeight: tokens.lineHeightHero900,
-    fontWeight: tokens.fontWeightBold,
-    letterSpacing: '-0.02em',
-    '@media (max-width: 520px)': {
-      fontSize: tokens.fontSizeHero800,
-      lineHeight: tokens.lineHeightHero800,
-    },
-  },
-  accent: {
-    backgroundImage: `linear-gradient(120deg, ${tokens.colorBrandForeground1}, ${tokens.colorPaletteYellowForeground2})`,
-    backgroundClip: 'text',
-    WebkitBackgroundClip: 'text',
-    color: 'transparent',
-  },
-  heroActions: {
-    display: 'flex',
-    gap: tokens.spacingHorizontalM,
-    flexWrap: 'wrap',
-    marginTop: tokens.spacingVerticalS,
-  },
-  stats: {
-    display: 'flex',
-    gap: tokens.spacingHorizontalXXL,
-    flexWrap: 'wrap',
-    marginTop: tokens.spacingVerticalL,
-  },
-  stat: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  statValue: {
-    fontSize: tokens.fontSizeHero700,
-    fontWeight: tokens.fontWeightBold,
-    color: tokens.colorBrandForeground1,
-    lineHeight: '1',
-  },
-  section: {
-    maxWidth: '1160px',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    paddingLeft: tokens.spacingHorizontalXXL,
-    paddingRight: tokens.spacingHorizontalXXL,
-    paddingTop: tokens.spacingVerticalXXXL,
-    paddingBottom: tokens.spacingVerticalXXXL,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalL,
-    '@media (max-width: 520px)': {
-      paddingLeft: tokens.spacingHorizontalL,
-      paddingRight: tokens.spacingHorizontalL,
-    },
-  },
-  sectionHead: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalXS,
-    maxWidth: '620px',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-    gap: tokens.spacingHorizontalL,
-  },
-  featureCard: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalS,
-    paddingTop: tokens.spacingVerticalL,
-    paddingBottom: tokens.spacingVerticalL,
-    paddingLeft: tokens.spacingHorizontalL,
-    paddingRight: tokens.spacingHorizontalL,
-  },
-  iconBadge: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '44px',
-    height: '44px',
-    borderRadius: tokens.borderRadiusLarge,
-    backgroundColor: tokens.colorBrandBackground2,
-    color: tokens.colorBrandForeground1,
-    marginBottom: tokens.spacingVerticalXS,
-  },
-  cta: {
-    position: 'relative',
-    overflow: 'hidden',
-    borderRadius: tokens.borderRadiusXLarge,
-    paddingTop: tokens.spacingVerticalXXXL,
-    paddingBottom: tokens.spacingVerticalXXXL,
-    paddingLeft: tokens.spacingHorizontalXXL,
-    paddingRight: tokens.spacingHorizontalXXL,
-    backgroundImage: `linear-gradient(135deg, ${tokens.colorBrandBackground}, ${tokens.colorBrandBackgroundPressed})`,
-    color: tokens.colorNeutralForegroundOnBrand,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
-    gap: tokens.spacingVerticalM,
-  },
-})
-
-const features = [
-  {
-    icon: <BookOpen24Regular />,
-    title: 'Lessons',
-    body: 'Structured, video-backed lessons with clear key takeaways for every fireground discipline.',
-  },
-  {
-    icon: <Flash24Regular />,
-    title: 'Quizzes',
-    body: 'Multiple-choice checks with instant feedback so knowledge sticks before the call comes in.',
-  },
-  {
-    icon: <Layer24Regular />,
-    title: 'Flashcards',
-    body: 'Spaced-repetition decks that drill the terms, tactics, and acronyms you need cold.',
-  },
-  {
-    icon: <ArrowTrending24Regular />,
-    title: 'Progress Tracking',
-    body: 'Streaks, scores, and completion tracking that keep your crew sharp and accountable.',
-  },
+const pillars = [
+  { title: 'Academy paths', body: 'Progress from fundamentals to scenario-heavy fireground judgment with a scalable course model.', icon: BookOpenCheck },
+  { title: 'Exam-grade quizzes', body: 'Practice mode, exam mode, explanations, weak-topic detection, and realistic incident prompts.', icon: Brain },
+  { title: 'Spaced repetition', body: 'SM-2 style scheduling keeps SCBA, mayday, codes, and tactics fresh between calls.', icon: Flame },
+  { title: 'Progress signals', body: 'XP, completion, streaks, and review queues create accountability without LMS clutter.', icon: Trophy },
 ]
 
+const stats = [
+  ['29', 'Disciplines'],
+  [String(academyCourses.length), 'Courses'],
+  ['7', 'Question types'],
+  ['SM-2', 'Review engine'],
+] as const
+
 export function LandingPage() {
-  const styles = useStyles()
-
-  return (
-    <AppShell fullBleed>
-      <section className={styles.hero}>
-        <div
-          className={styles.heroBg}
-          style={{ backgroundImage: 'url(/hero-fireground.png)' }}
-          aria-hidden
-        />
-        <div className={styles.heroScrim} aria-hidden />
-        <div className={styles.heroInner}>
-          <div className={styles.heroCopy}>
-            <Badge appearance="tint" color="brand" icon={<Fire20Filled />}>
-              Firefighter training, reimagined
-            </Badge>
-            <Title1 as="h1" className={styles.heroTitle}>
-              Train smarter for the{' '}
-              <span className={styles.accent}>fireground</span>
-            </Title1>
-            <Body1 style={{ fontSize: tokens.fontSizeBase400, color: tokens.colorNeutralForeground2 }}>
-              FireLearn blends bite-sized lessons, quizzes, and spaced-repetition
-              flashcards into one focused platform — so every member of your
-              company can build mastery on shift, between calls, or at the kitchen
-              table.
-            </Body1>
-            <div className={styles.heroActions}>
-              <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-                <Button appearance="primary" size="large" icon={<ArrowRight20Regular />} iconPosition="after">
-                  Start Learning
-                </Button>
-              </Link>
-              <Link href="/courses" style={{ textDecoration: 'none' }}>
-                <Button appearance="outline" size="large">
-                  Browse Courses
-                </Button>
-              </Link>
-            </div>
-            <div className={styles.stats}>
-              <div className={styles.stat}>
-                <span className={styles.statValue}>120+</span>
-                <Caption1>Lessons</Caption1>
-              </div>
-              <div className={styles.stat}>
-                <span className={styles.statValue}>6</span>
-                <Caption1>Core disciplines</Caption1>
-              </div>
-              <div className={styles.stat}>
-                <span className={styles.statValue}>900+</span>
-                <Caption1>Flashcards</Caption1>
-              </div>
-            </div>
+  const featured = academyCourses[0]
+  return <AppShell fullBleed>
+    <section className="relative isolate overflow-hidden px-4 py-16 sm:px-6 lg:py-24">
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_68%_20%,rgb(255_59_34_/_0.22),transparent_28rem)]" />
+      <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+        <div className="space-y-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-red-100"><Sparkles size={14} /> Firefighter training, rebuilt</div>
+          <div className="space-y-5">
+            <h1 className="max-w-5xl text-5xl font-semibold tracking-[-0.065em] text-white sm:text-6xl lg:text-7xl">Train smarter for the <span className="bg-gradient-to-r from-red-300 via-primary to-accent bg-clip-text text-transparent">fireground.</span></h1>
+            <p className="max-w-2xl text-lg leading-8 text-muted sm:text-xl">FireLearn combines structured courses, fast quizzes, spaced-repetition flashcards, and Supabase-backed progress into one modern academy for firefighters.</p>
           </div>
+          <div className="flex flex-wrap gap-3"><Link href="/dashboard"><Button size="lg">Start learning <ArrowRight size={18} /></Button></Link><Link href="/courses"><Button variant="outline" size="lg">Browse academy</Button></Link></div>
+          <div className="grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">{stats.map(([value, label]) => <div key={label} className="rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4"><p className="text-2xl font-semibold tracking-tight text-white">{value}</p><p className="mt-1 text-xs text-muted">{label}</p></div>)}</div>
         </div>
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <Subtitle1 as="h2">Everything your company needs to stay sharp</Subtitle1>
-          <Body1 style={{ color: tokens.colorNeutralForeground2 }}>
-            Four ways to learn, built to fit the rhythm of the firehouse.
-          </Body1>
-        </div>
-        <div className={styles.grid}>
-          {features.map((f) => (
-            <Card key={f.title} className={styles.featureCard}>
-              <span className={styles.iconBadge}>{f.icon}</span>
-              <Subtitle2>{f.title}</Subtitle2>
-              <Body1 style={{ color: tokens.colorNeutralForeground2 }}>{f.body}</Body1>
-            </Card>
-          ))}
-        </div>
-
-        <Divider style={{ marginTop: tokens.spacingVerticalL, marginBottom: tokens.spacingVerticalL }} />
-
-        <div className={styles.cta}>
-          <Title3 style={{ color: 'inherit' }}>Ready to put in the reps?</Title3>
-          <Body1Strong style={{ color: 'inherit', maxWidth: '520px' }}>
-            Jump into your dashboard and pick up right where you left off — or
-            explore the full course catalog.
-          </Body1Strong>
-          <div className={styles.heroActions}>
-            <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-              <Button appearance="secondary" size="large" icon={<ArrowRight20Regular />} iconPosition="after">
-                Go to Dashboard
-              </Button>
-            </Link>
+        <Card className="relative overflow-hidden p-0">
+          <div className="border-b border-white/[0.08] bg-white/[0.035] px-5 py-4"><div className="flex items-center justify-between"><p className="font-semibold">Today&apos;s firehouse session</p><span className="rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-green-200">Live path</span></div></div>
+          <div className="space-y-5 p-5">
+            <div className="rounded-[1.2rem] border border-primary/20 bg-gradient-to-br from-primary/18 to-accent/8 p-5">
+              <p className="text-sm text-red-100">Continue course</p>
+              <h2 className="mt-2 text-2xl font-semibold">{featured?.title ?? 'Fire behaviour foundations'}</h2>
+              <p className="mt-2 text-sm leading-6 text-muted">Smoke reading, SCBA checks, incident command, and mayday decision points — practiced in small daily reps.</p>
+              <Progress value={featured?.progressPercent ?? 34} className="mt-5" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[{label: 'Due cards', value: '18', icon: Flame}, {label: 'Weak topic', value: 'SCBA', icon: ShieldAlert}, {label: 'Goal', value: '25m', icon: Gauge}].map((item) => <div key={item.label} className="rounded-2xl border border-white/[0.08] bg-black/20 p-4"><item.icon className="mb-3 text-red-200" size={18} /><p className="text-xl font-semibold">{item.value}</p><p className="text-xs text-muted">{item.label}</p></div>)}
+            </div>
+            <div className="rounded-2xl border border-white/[0.08] bg-black/20 p-4"><div className="flex items-start gap-3"><Radio className="mt-0.5 text-amber-200" size={18} /><div><p className="font-medium">Educational support only</p><p className="mt-1 text-sm leading-6 text-muted">Built to reinforce official training, department SOPs, and instructor-led certification — not replace them.</p></div></div></div>
           </div>
-        </div>
-      </section>
-    </AppShell>
-  )
+        </Card>
+      </div>
+    </section>
+    <section className="mx-auto grid max-w-7xl gap-4 px-4 pb-20 sm:px-6 md:grid-cols-4">{pillars.map((pillar) => <Card key={pillar.title} className="group transition duration-200 hover:-translate-y-1 hover:border-primary/35 hover:bg-white/[0.055]"><pillar.icon className="mb-5 text-red-300 transition group-hover:scale-110" aria-hidden /><h2 className="font-semibold text-white">{pillar.title}</h2><p className="mt-2 text-sm leading-6 text-muted">{pillar.body}</p></Card>)}</section>
+    <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6"><Card className="grid gap-6 overflow-hidden bg-gradient-to-br from-red-950/70 via-card to-amber-950/30 p-7 md:grid-cols-[1fr_auto] md:items-center"><div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-red-100">Ready for the next rep?</p><h2 className="mt-3 text-3xl font-semibold tracking-tight">Build mastery before the alarm drops.</h2><p className="mt-2 max-w-2xl text-muted">Jump into the dashboard, run mixed practice, or clear today&apos;s review queue.</p></div><Link href="/dashboard"><Button size="lg">Open dashboard <CheckCircle2 size={18} /></Button></Link></Card></section>
+  </AppShell>
 }

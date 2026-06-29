@@ -1,5 +1,8 @@
-import { LessonPage } from '@/components/lesson-page'
+import { academyCourses } from '@/data/academy'
+import { LessonView } from '@/components/course/lesson-view'
 
-export default function Lesson() {
-  return <LessonPage />
+export default function LessonPage() {
+  const course = academyCourses[0]
+  const lesson = course.modules[0].lessons[0]
+  return <LessonView course={course} lesson={lesson} />
 }

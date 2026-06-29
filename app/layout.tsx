@@ -1,28 +1,19 @@
 import type { Metadata, Viewport } from 'next'
+import { Geist, Geist_Mono } from 'next/font/google'
+import { RegisterServiceWorker } from '@/components/pwa/register-service-worker'
 import './globals.css'
-import { Providers } from './providers'
+
+const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
+const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'FireLearn — Train smarter for the fireground',
-  description:
-    'FireLearn is a modern training platform for firefighters: lessons, quizzes, flashcards, and progress tracking across fire behavior, incident command, hazmat, and more.',
-  generator: 'v0.app',
+  title: 'FireLearn — Train Smarter. Respond Better.',
+  description: 'A modern firefighter learning platform with courses, quizzes, spaced repetition, and progress tracking.',
+  manifest: '/manifest.webmanifest',
 }
 
-export const viewport: Viewport = {
-  themeColor: '#0E1117',
-}
+export const viewport: Viewport = { themeColor: '#0F1115', colorScheme: 'dark' }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="en">
-      <body>
-        <Providers>{children}</Providers>
-      </body>
-    </html>
-  )
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}><body>{children}<RegisterServiceWorker /></body></html>
 }
