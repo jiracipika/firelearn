@@ -13,10 +13,12 @@ const pillars = [
   { title: 'Progress signals', body: 'XP, completion, streaks, and review queues create accountability without LMS clutter.', icon: Trophy },
 ]
 
+const lessonCount = academyCourses.reduce((total, course) => total + course.modules.reduce((courseTotal, module) => courseTotal + module.lessons.length, 0), 0)
+
 const stats = [
   ['29', 'Disciplines'],
   [String(academyCourses.length), 'Courses'],
-  ['120+', 'Lessons'],
+  [String(lessonCount), 'Lessons'],
   ['SM-2', 'Review engine'],
 ] as const
 

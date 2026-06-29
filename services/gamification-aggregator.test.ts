@@ -86,6 +86,16 @@ describe('aggregateLearnerStats', () => {
     expect(stats.perfectQuizzes).toBe(2)
   })
 
+  it('uses learner streak days for streak achievement progress', () => {
+    const stats = aggregateLearnerStats({
+      ...baseActivity,
+      streakDays: 23,
+    })
+    const streakAchievement = stats.achievements.find((achievement) => achievement.id === 'streak-30')
+    expect(streakAchievement?.progress).toBe(23)
+    expect(streakAchievement?.unlocked).toBe(false)
+  })
+
   it('computes leaderboard entry with dynamic XP replacing seed value', () => {
     const stats = aggregateLearnerStats({
       ...baseActivity,

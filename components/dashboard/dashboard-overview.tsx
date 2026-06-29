@@ -43,25 +43,27 @@ export function DashboardOverview() {
       completedLessons,
       quizAttempts: quizHistory,
       flashcardsReviewed: 0,
+      streakDays: learnerProgress.streakDays,
     })
   })()
 
+  const totalXp = learnerProgress.xp + stats.xp
   const learnerEntry: LeaderboardEntry = {
     id: 'current-learner',
     name: 'You',
     company: 'Engine 7',
-    xp: stats.xp,
+    xp: totalXp,
     streakDays: learnerProgress.streakDays,
     completedLessons: stats.completedLessons,
     perfectQuizzes: stats.perfectQuizzes,
   }
 
-  const totalXp = learnerProgress.xp + stats.xp
   const dailyProgress = Math.round((learnerProgress.minutesStudiedToday / learnerProgress.dailyGoalMinutes) * 100)
+  const displayLevel = Math.floor(totalXp / 750) + 1
   const statTiles = [
     { label: 'Daily streak', value: `${learnerProgress.streakDays}`, suffix: 'days', icon: Flame, color: 'text-red-400', bg: 'bg-red-500/10' },
     { label: 'Total XP', value: totalXp.toLocaleString(), suffix: '', icon: Trophy, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-    { label: 'Level', value: stats.level.toString(), suffix: '', icon: Target, color: 'text-green-400', bg: 'bg-green-500/10' },
+    { label: 'Level', value: displayLevel.toString(), suffix: '', icon: Target, color: 'text-green-400', bg: 'bg-green-500/10' },
     { label: 'Completion', value: completion.toString(), suffix: '%', icon: BookOpen, color: 'text-sky-400', bg: 'bg-sky-500/10' },
   ]
 

@@ -17,6 +17,7 @@ export type LearnerActivity = {
   completedLessons: CompletedLesson[]
   quizAttempts: QuizAttempt[]
   flashcardsReviewed: number
+  streakDays?: number
 }
 
 export type AggregatedStats = {
@@ -67,7 +68,7 @@ function computeAchievements(activity: LearnerActivity, achievements: Achievemen
     'quiz-master-10': perfectQuizzes,
     'academy-builder': completedCount,
     'air-management': activity.completedLessons.some((lesson) => lesson.courseId === 'scba-air-management') ? 1 : 0,
-    'streak-30': 0, // streak comes from learner state, not derivable from raw activity here
+    'streak-30': activity.streakDays ?? achievementProgress.find((achievement) => achievement.id === 'streak-30')?.progress ?? 0,
   }
 
   return achievements.map((achievement) => {
