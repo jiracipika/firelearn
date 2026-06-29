@@ -32,6 +32,7 @@ import {
 } from '@fluentui/react-icons'
 import { useThemeMode } from '@/app/providers'
 import { useAuth } from '@/components/auth-provider'
+import { AuthDialog } from '@/components/auth-dialog'
 
 const useStyles = makeStyles({
   page: {
@@ -159,7 +160,8 @@ const navItems = [
 ]
 
 function AuthControl() {
-  const { user, loading, error, signIn, signOut } = useAuth()
+  const { user, loading, signOut } = useAuth()
+  const [dialogOpen, setDialogOpen] = React.useState(false)
 
   if (loading && !user) {
     return <Spinner size="tiny" aria-label="Loading account" />
@@ -167,18 +169,20 @@ function AuthControl() {
 
   if (!user) {
     return (
-      <Tooltip
-        content={error ?? 'Sign in to save your progress'}
-        relationship="label"
-      >
+      <>
         <Button
           appearance="primary"
           icon={<Person24Regular />}
-          onClick={() => void signIn()}
+          onClick={() => setDialogOpen(true)}
         >
           Sign in
         </Button>
-      </Tooltip>
+        <AuthDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          defaultMode="sign-in"
+        />
+      </>
     )
   }
 
@@ -199,7 +203,7 @@ function AuthControl() {
       </MenuTrigger>
       <MenuPopover>
         <MenuList>
-          <MenuItem disabled>Signed in · progress saved</MenuItem>
+          <MenuItem disabled>{user.email ?? 'Signed in'}</MenuItem>
           <MenuDivider />
           <MenuItem icon={<SignOut20Regular />} onClick={() => void signOut()}>
             Sign out
