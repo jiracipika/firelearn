@@ -1,4 +1,4 @@
-import type { Course, Difficulty, Flashcard, Lesson, QuizQuestion } from '@/types/learning'
+import type { Course, Difficulty, Flashcard, Lesson, LessonVideo, QuizQuestion } from '@/types/learning'
 import { categories } from '@/data/categories'
 import { validateCourses } from '@/lib/content-validation'
 import { examPrepSeeds, type ExamPrepSeed } from '@/data/exam-prep-seeds'
@@ -83,10 +83,11 @@ function makeLesson(categoryId: string, title: string, difficulty: Difficulty): 
       { type: 'list', title: 'Study pattern', items: ['Review the concept', 'Answer a knowledge check', 'Practice recall with flashcards', 'Discuss the tactic with an instructor or company officer', 'Apply only within approved practical training'] },
     ],
     imageAlt: `Firefighter training context for ${title.toLowerCase()}`,
-    videoPlaceholder: `Future video placeholder: instructor-led walkthrough for ${title}.`,
+    videoPlaceholder: `Watch the embedded ${title.toLowerCase()} tutorials before starting the reading and knowledge check.`,
+    videos: videosForTopic(categoryId),
     knowledgeCheck: question,
     summary: [`${title} study should improve recognition and communication.`, 'Digital lessons are strongest when paired with supervised drills.', 'Local rules, SOPs, and command direction always control real incidents.'],
-    quiz: [question],
+    quiz: enrichQuiz([question], categoryId, `${categoryId}-foundations`, `${title} Foundations`),
     flashcards: [flashcard],
     references: ['Department SOPs', 'Authority Having Jurisdiction guidance', 'Instructor-led certification materials', 'Applicable NFPA/local standards where adopted'],
     completion: { completed: false, percent: 0 },
@@ -145,10 +146,11 @@ function makeScenarioDrillLesson(categoryId: string, title: string, difficulty: 
       { type: 'list', title: 'Scenario rep sequence', items: ['Observe the cue', 'Name the hazard', 'Communicate the change', 'Recommend or request the next approved action', 'Debrief what improved and what was missed'] },
     ],
     imageAlt: `Scenario-based ${normalizedTitle} training drill`,
-    videoPlaceholder: `Future simulation: branching ${title} scenario with command feedback.`,
+    videoPlaceholder: `Watch the embedded ${normalizedTitle} tutorials, then run the scenario questions as a decision drill.`,
+    videos: videosForTopic(categoryId),
     knowledgeCheck: scenarioQuestion,
     summary: [`${title} scenario reps build judgment under changing conditions.`, 'The strongest answers connect cues, hazards, communication, and approved actions.', 'Debriefing turns a single drill into durable learning.'],
-    quiz: [scenarioQuestion, multipleAnswerQuestion],
+    quiz: enrichQuiz([scenarioQuestion, multipleAnswerQuestion], categoryId, `${categoryId}-scenario-drill`, `${title} Scenario Drill`),
     flashcards: [
       card(`fc-${categoryId}-scenario-cue`, `In a ${normalizedTitle} scenario, what should you communicate first when conditions change?`, 'Report the specific observed cue, why it matters, and what action or reassessment is needed under department procedure.', [categoryId, 'communications'], difficulty),
       card(`fc-${categoryId}-debrief`, 'What makes a FireLearn scenario debrief useful?', 'It compares observed cues, decisions, communication, SOP alignment, and missed opportunities without treating the app as a certification authority.', [categoryId], difficulty),
@@ -160,6 +162,323 @@ function makeScenarioDrillLesson(categoryId: string, title: string, difficulty: 
 
 function card(id: string, front: string, back: string, topicIds: string[], difficulty: Difficulty, intervalDays = 0, reviewCount = 0): Flashcard {
   return { id, front, back, topicIds, difficulty, easeFactor: 2.5, intervalDays, nextReview: today, reviewCount }
+}
+
+type VideoSeed = { id: string; title: string }
+type QuestionTemplate = Omit<QuizQuestion, 'id' | 'topicIds'> & { topicIds?: string[] }
+
+const topicVideoLibrary: Record<string, VideoSeed[]> = {
+  'fire-behaviour': [
+    { id: 'cLBtRwJ93aQ', title: 'The Art of Reading Smoke' },
+    { id: 'U9HgTQsH_m4', title: 'Fire Behavior 101' },
+    { id: 'fHUjG5Zt1tM', title: 'Fireground Size-Up and Reading Smoke' },
+  ],
+  'building-construction': [
+    { id: '79rDCXSf-UM', title: 'Building Construction Collapse Indicators' },
+    { id: 'A6LpkfZHTeM', title: 'Construction Risk for Firefighters' },
+    { id: 'JqtMVWnblIo', title: 'Collapse Awareness Training' },
+  ],
+  'fire-dynamics': [
+    { id: '7EKBYtRQSW4', title: 'Understanding Flow Paths' },
+    { id: 'O8s3Q57TZtE', title: 'Fire Flows From High Pressure to Low Pressure' },
+    { id: 'nJY688j9QT4', title: 'Modern VES and Flow Path Control' },
+  ],
+  'search-and-rescue': [
+    { id: '0R5zSWOd_Vs', title: 'VEIS: Vent, Enter, Isolate, Search' },
+    { id: '89E69lFcTmI', title: 'V.E.I.S. Rescue Technique' },
+    { id: 'RHJNPe9bWyY', title: 'Vent-Enter-Search Tools' },
+  ],
+  'incident-command': [
+    { id: '1X4JpjMnIJ8', title: 'Incident Command System Scenario Refresher' },
+    { id: 'P-dPBso2xPM', title: 'Introduction to the Incident Command System' },
+    { id: 'BNI5EFMCwZ8', title: 'Incident Command Scenario Training' },
+  ],
+  communications: [
+    { id: 'VLC_AuNhDak', title: 'Radio Communications Procedures' },
+    { id: 'j2f6aE69G14', title: 'Firefighter Radio Communications Training' },
+    { id: 'Z5u56U-JRn8', title: 'Fireground Radio Skills' },
+  ],
+  ventilation: [
+    { id: 'ZB2Je4C2_m4', title: 'Coordinated Ventilation' },
+    { id: 'z_4bFtGoZks', title: 'Fire Department Ventilation Techniques' },
+    { id: 'X7r8iSAuP4w', title: 'Fire Training Course: Ventilation' },
+  ],
+  ladders: [
+    { id: '-ekoZjdudoQ', title: 'Ladders Basics' },
+    { id: 'Vxex_rQrFNA', title: 'Ground Ladders Training' },
+    { id: '5e4S2Ky34vE', title: 'Firefighter Ladder Operations' },
+  ],
+  ropes: [
+    { id: 'ik35SXGrjsw', title: 'Firefighter Knots and Ropes' },
+    { id: '3O1puuJK7E0', title: 'Rope Rescue Knot Practice' },
+    { id: 'MIWtwWPCIOI', title: 'Fire Service Rope Skills' },
+  ],
+  'forcible-entry': [
+    { id: 'u8BKpvxkhQ8', title: 'Halligan Forcible Entry Training' },
+    { id: 'mnvrHBli06M', title: 'Conventional Forcible Entry' },
+    { id: '98T0VRSyi98', title: 'Door Forcing Skill Drill' },
+  ],
+  ppe: [
+    { id: 'OZsdgJFWI5E', title: 'Turnout Gear Inspection Training' },
+    { id: 'D73lGG8UOv8', title: 'Firefighter PPE Inspection' },
+    { id: 'lst2l7PQGOk', title: 'Structural PPE Basics' },
+  ],
+  scba: [
+    { id: 'yVQMDtmZiLo', title: 'SCBA Breathing Techniques' },
+    { id: 'Dkqf-yUyDWM', title: 'Three SCBA Breathing Techniques' },
+    { id: 'oGzX95dsChk', title: 'SCBA Air Management Training' },
+  ],
+  medical: [
+    { id: '3uj-wUYxcWA', title: 'EMR Review for First Responders' },
+    { id: 'hi4aWvRxeG4', title: 'EMT Class Review' },
+    { id: 'tMfFt7i66Uw', title: 'EMR Medical Assessment' },
+  ],
+  'vehicle-extrication': [
+    { id: 'kQ4TInm55dw', title: 'Auto Extrication Dash Roll' },
+    { id: 'V4ZlAjkfZtc', title: 'Eight-Minute Extrication Training' },
+    { id: 'h_zVjEpgFDM', title: 'Vehicle Extrication Training' },
+  ],
+  'hazmat-awareness': [
+    { id: '3v4QUaTAKY8', title: 'How To Use the ERG' },
+    { id: 'pDi5okZiYM4', title: 'Hazardous Materials Awareness' },
+    { id: 'BTVNQ3H9tjo', title: 'ERG Scenario-Based Practice' },
+  ],
+  'wildland-firefighting': [
+    { id: 'CoHCVC8DI6Y', title: 'Preparing for Wildland Firefighting' },
+    { id: 'vxSI1uXuBsk', title: 'Wildland Firefighter Basics' },
+    { id: 'qCrbeXsDPp0', title: 'Wildland Fire Training' },
+  ],
+  'fire-prevention': [
+    { id: 'oKBVDJMnpW0', title: 'Fire Inspection Ride-Along' },
+    { id: 'yodLMfOZNvA', title: 'Fire Extinguisher Training' },
+    { id: 'IIdG4Em92Hc', title: 'Follow Along With a Fire Inspection' },
+  ],
+  'fire-investigation': [
+    { id: 'KsrvvZ3DsN4', title: 'Fire Investigation Techniques' },
+    { id: 'U9HgTQsH_m4', title: 'Fire Behavior 101' },
+    { id: 'rmFMdrPuV5Y', title: 'Fire Investigation Training Video' },
+  ],
+  'emergency-driving': [
+    { id: 'wqQIQMRCCiU', title: 'Emergency Vehicle Operations' },
+    { id: 'Gaj_n3rXN6o', title: 'Driver Operator Safety' },
+    { id: 'gvl_QqzElX4', title: 'Fire Apparatus Driving Training' },
+  ],
+  'water-supply': [
+    { id: '7j8SYZEE-1A', title: 'Forward Lay and Hydrant Water Supply' },
+    { id: 'BpZJkNu5rSU', title: 'Obtaining a Water Supply' },
+    { id: '7jg_BY4qpRo', title: 'Hydrant Operations Training' },
+  ],
+  'pump-operations': [
+    { id: 'BpZJkNu5rSU', title: 'Basic Pump Operations' },
+    { id: 'l5S_AmGLFvk', title: 'Basic Pumper Operations' },
+    { id: 'Mnjdh5CCH40', title: 'Pump Operations Training' },
+  ],
+  hydraulics: [
+    { id: 'tOdO39TmB8M', title: 'Calculating Friction Loss' },
+    { id: 'McUG7CxR-08', title: 'Modern Friction Loss Formula' },
+    { id: 'bic2cAt7Das', title: 'Hand Method for Friction Loss' },
+  ],
+  'fire-streams': [
+    { id: '-sQUDqvEtAY', title: 'Fire Stream and Nozzle Basics' },
+    { id: '0Epyqi0ISGk', title: 'Fire Streams and Nozzles' },
+    { id: 'W1I_6ELDojg', title: 'Fire Streams' },
+  ],
+  'thermal-imaging': [
+    { id: 's2nRd7FpVX8', title: 'Thermal Imaging Camera Training' },
+    { id: 'NUrgHtwr3VI', title: 'TIC Search and Fire Attack' },
+    { id: 'AvDpCyPP0gc', title: 'Firefighter TIC Skills' },
+  ],
+  leadership: [
+    { id: 'S1lwPMTBhOI', title: 'What Makes a Great Fire Service Officer' },
+    { id: 'XZPW0EMOthM', title: 'Rules for a New Company Officer' },
+    { id: 'dypmM1LDa-M', title: 'Passionate Leadership in the Fire Service' },
+  ],
+  'mental-health': [
+    { id: 'pfLu1mUNL7Y', title: 'Firefighters Mental Wellness' },
+    { id: '_gDaHeoRx6Q', title: 'Mindfulness and Mental Rehearsal' },
+    { id: 'aOmkJ5OCorE', title: 'Firefighter Behavioral Health Seminar' },
+  ],
+  'mayday-procedures': [
+    { id: 'pRjVXLC-MW8', title: 'Calling the Mayday' },
+    { id: 'Q3FSsOSw1tY', title: 'Firefighter Mayday Training' },
+    { id: 'J_rhTqaTn7k', title: 'Initiating a Mayday' },
+  ],
+  'canadian-fire-codes': [
+    { id: 'JXBsCh3_9HU', title: 'Toronto Fire Code Updates Webinar' },
+    { id: 'IdjJRDEFu0k', title: 'Fire Code Compliance and Enforcement' },
+    { id: 'n3WgTA8-jug', title: 'NFPA Codes and Standards in Canada' },
+  ],
+  'nfpa-standards': [
+    { id: 'GY_IRRel32Q', title: 'NFPA 1001 Firefighter Knots' },
+    { id: 'tO-owtWD924', title: 'NFPA Standards for the Fire Service' },
+    { id: '-WPTy2HwMxY', title: 'Fire Service Knots: NFPA 1001 Edition' },
+  ],
+}
+
+const fallbackVideos: VideoSeed[] = [
+  { id: 'U9HgTQsH_m4', title: 'Fire Behavior 101' },
+  { id: 'P-dPBso2xPM', title: 'Introduction to Incident Command' },
+  { id: 'VLC_AuNhDak', title: 'Fireground Radio Communications' },
+]
+
+function videosForTopic(categoryId: string): LessonVideo[] {
+  return (topicVideoLibrary[categoryId] ?? fallbackVideos).map((video) => ({
+    id: `yt-${categoryId}-${video.id}`,
+    title: video.title,
+    source: 'YouTube',
+    url: `https://www.youtube.com/watch?v=${video.id}`,
+    embedUrl: `https://www.youtube-nocookie.com/embed/${video.id}`,
+  }))
+}
+
+const genericQuestionTemplates: QuestionTemplate[] = [
+  {
+    type: 'scenario',
+    prompt: 'A training evolution starts to drift from the department plan. What should the learner do first?',
+    options: ['Pause and confirm the approved objective with the instructor or officer', 'Continue because speed matters most', 'Change tactics without telling anyone', 'Treat the app as command authority'],
+    correctAnswerIds: ['Pause and confirm the approved objective with the instructor or officer'],
+    explanation: 'Digital learning supports preparation. Practical work must stay aligned with the instructor, company officer, SOPs, and the authority having jurisdiction.',
+    timeLimitSeconds: 90,
+  },
+  {
+    type: 'multiple-answer',
+    prompt: 'Which habits improve transfer from lesson study to supervised fire service training? Select all that apply.',
+    options: ['Name observable cues', 'Use standard terminology', 'Debrief errors after the rep', 'Ignore PPE checks', 'Connect decisions to local SOPs'],
+    correctAnswerIds: ['Name observable cues', 'Use standard terminology', 'Debrief errors after the rep', 'Connect decisions to local SOPs'],
+    explanation: 'Good study becomes operationally useful when firefighters can identify cues, communicate clearly, debrief honestly, and connect decisions to local procedure.',
+  },
+]
+
+const topicQuestionTemplates: Record<string, QuestionTemplate[]> = {
+  'fire-behaviour': [
+    {
+      type: 'scenario',
+      prompt: 'Smoke changes from lazy gray to turbulent, dark, pressurized movement. What should this trigger?',
+      options: ['A radio update and reassessment of fire conditions', 'A decision to ignore ventilation timing', 'Removal of SCBA facepieces', 'Freelancing by the nearest crew'],
+      correctAnswerIds: ['A radio update and reassessment of fire conditions'],
+      explanation: 'Changing smoke pressure, density, and velocity can indicate worsening compartment conditions and should be communicated before tactics continue.',
+      topicIds: ['fire-dynamics', 'ventilation'],
+      timeLimitSeconds: 75,
+    },
+    {
+      type: 'multiple-choice',
+      prompt: 'Which smoke-reading attribute most directly describes how forcefully smoke is moving?',
+      options: ['Velocity', 'Color', 'Volume', 'Occupancy'],
+      correctAnswerIds: ['Velocity'],
+      explanation: 'Velocity describes smoke movement and pressure. It should be read with volume, density, and color rather than as a standalone answer.',
+      topicIds: ['fire-dynamics'],
+    },
+  ],
+  scba: [
+    {
+      type: 'scenario',
+      prompt: 'A crew member reports the lowest air pressure and a longer-than-expected exit path. What is the best next step?',
+      options: ['Begin crew-level exit planning immediately', 'Split the low-air member from the crew', 'Wait for the low-air alarm', 'Turn off PASS devices to reduce stress'],
+      correctAnswerIds: ['Begin crew-level exit planning immediately'],
+      explanation: 'Air management is a crew decision. Lowest member air, route complexity, work rate, and conditions should drive early exit decisions.',
+      topicIds: ['mayday-procedures'],
+      timeLimitSeconds: 75,
+    },
+    {
+      type: 'multiple-answer',
+      prompt: 'Which items belong in an SCBA status update? Select all that apply.',
+      options: ['Lowest cylinder pressure', 'Crew location', 'Assignment progress', 'Exit route complexity', 'Preferred helmet sticker'],
+      correctAnswerIds: ['Lowest cylinder pressure', 'Crew location', 'Assignment progress', 'Exit route complexity'],
+      explanation: 'Useful air updates connect the pressure number to location, task progress, and the path back to a safer atmosphere.',
+    },
+  ],
+  ventilation: [
+    {
+      type: 'scenario',
+      prompt: 'A window can be taken before the attack line is ready. What is the safest training answer?',
+      options: ['Coordinate timing with command and fire attack before opening', 'Vent immediately because any air movement helps', 'Create every possible opening', 'Ignore interior crew location'],
+      correctAnswerIds: ['Coordinate timing with command and fire attack before opening'],
+      explanation: 'Ventilation changes the flow path and fire growth. It must be coordinated with command, water application, and interior crew position.',
+      topicIds: ['fire-behaviour'],
+      timeLimitSeconds: 75,
+    },
+    {
+      type: 'multiple-answer',
+      prompt: 'What should be confirmed before tactical ventilation? Select all that apply.',
+      options: ['Command approval', 'Attack coordination', 'Interior crew awareness', 'Likely flow path', 'That no one has a radio'],
+      correctAnswerIds: ['Command approval', 'Attack coordination', 'Interior crew awareness', 'Likely flow path'],
+      explanation: 'Command, attack, crew location, and flow path all matter before making a ventilation opening.',
+    },
+  ],
+  'hazmat-awareness': [
+    {
+      type: 'multiple-choice',
+      prompt: 'What is the awareness-level responder priority at a suspected hazmat release?',
+      options: ['Recognize, isolate, protect, and request trained resources', 'Patch the leak immediately', 'Enter the hot zone for samples', 'Move containers by hand'],
+      correctAnswerIds: ['Recognize, isolate, protect, and request trained resources'],
+      explanation: 'Awareness-level responders focus on recognition and protective actions from a safe position.',
+    },
+    {
+      type: 'multiple-answer',
+      prompt: 'Which clues can identify a hazardous material? Select all that apply.',
+      options: ['Placards', 'Container shape', 'Shipping papers', 'Odor or vapor cloud from a safe distance', 'The newest apparatus on scene'],
+      correctAnswerIds: ['Placards', 'Container shape', 'Shipping papers', 'Odor or vapor cloud from a safe distance'],
+      explanation: 'Identification may come from placards, labels, papers, container type, and scene clues while maintaining responder safety.',
+    },
+  ],
+  'incident-command': [
+    {
+      type: 'scenario',
+      prompt: 'Command is tracking too many assignments directly. What should happen before span of control breaks?',
+      options: ['Expand the organization using divisions, groups, or supervisors', 'Stop accountability tracking', 'Move tactical traffic to private phones', 'Let every company self-assign'],
+      correctAnswerIds: ['Expand the organization using divisions, groups, or supervisors'],
+      explanation: 'ICS should expand before one supervisor loses control of assignments, resources, and accountability.',
+      topicIds: ['communications'],
+    },
+    {
+      type: 'multiple-choice',
+      prompt: 'What should the initial incident action plan give operating crews?',
+      options: ['Strategy, objectives, hazards, and assignments', 'Permission to freelance', 'A replacement for size-up', 'Only the incident address'],
+      correctAnswerIds: ['Strategy, objectives, hazards, and assignments'],
+      explanation: 'A useful initial IAP creates shared direction while command continues to update for changing conditions.',
+    },
+  ],
+  'mayday-procedures': [
+    {
+      type: 'scenario',
+      prompt: 'A firefighter is disoriented, separated, and low on air. What is the strongest action?',
+      options: ['Transmit a Mayday according to department procedure', 'Keep searching silently', 'Wait until air is gone', 'Remove PPE to move faster'],
+      correctAnswerIds: ['Transmit a Mayday according to department procedure'],
+      explanation: 'Early Mayday communication gives command and rescue crews time and information to act.',
+      topicIds: ['scba', 'communications'],
+      timeLimitSeconds: 60,
+    },
+    {
+      type: 'multiple-answer',
+      prompt: 'Which details are commonly useful in a Mayday report? Select all that apply.',
+      options: ['Location', 'Unit or identity', 'Air status', 'Resources needed', 'Lunch preference'],
+      correctAnswerIds: ['Location', 'Unit or identity', 'Air status', 'Resources needed'],
+      explanation: 'The exact acronym varies, but actionable Mayday reports prioritize location, identity, air, assignment/problem, and needed resources.',
+      topicIds: ['communications'],
+    },
+  ],
+}
+
+function supplementalQuestions(categoryId: string, lessonKey: string, lessonTitle: string): QuizQuestion[] {
+  const templates = topicQuestionTemplates[categoryId] ?? genericQuestionTemplates
+  return templates.map((template, index) => ({
+    id: `q-${categoryId}-${lessonKey}-supplement-${index + 1}`,
+    type: template.type,
+    prompt: template.prompt.replace('this topic', lessonTitle.toLowerCase()),
+    options: template.options,
+    correctAnswerIds: template.correctAnswerIds,
+    explanation: template.explanation,
+    topicIds: [...new Set([categoryId, ...(template.topicIds ?? [])])],
+    timeLimitSeconds: template.timeLimitSeconds,
+  }))
+}
+
+function enrichQuiz(baseQuiz: QuizQuestion[], categoryId: string, lessonKey: string, lessonTitle: string): QuizQuestion[] {
+  const existing = new Set(baseQuiz.map((question) => question.id))
+  return [
+    ...baseQuiz,
+    ...supplementalQuestions(categoryId, lessonKey, lessonTitle).filter((question) => !existing.has(question.id)),
+  ]
 }
 
 const richLessonSeeds: RichLessonSeed[] = [
@@ -470,10 +789,11 @@ function lessonFromSeed(seed: RichLessonSeed): Lesson {
       { type: 'list', title: seed.checklistTitle, items: seed.checklist },
     ],
     imageAlt: `Training visual for ${seed.lessonTitle.toLowerCase()}`,
-    videoPlaceholder: `Future instructor video: ${seed.lessonTitle}.`,
+    videoPlaceholder: `Watch the embedded ${seed.lessonTitle.toLowerCase()} tutorials before starting the lesson.`,
+    videos: videosForTopic(seed.categoryId),
     knowledgeCheck: seed.knowledgeCheck,
     summary: seed.summary,
-    quiz: seed.quiz,
+    quiz: enrichQuiz(seed.quiz, seed.categoryId, seed.lessonSlug, seed.lessonTitle),
     flashcards: seed.flashcards,
     references: ['Department SOPs', 'Authority Having Jurisdiction guidance', 'Instructor-led certification materials', 'Applicable NFPA/local standards where adopted'],
     completion: { completed: false, percent: seed.categoryId === 'fire-behaviour' ? 70 : 0 },
@@ -495,10 +815,11 @@ function lessonFromExamSeed(seed: ExamPrepSeed): Lesson {
       { type: 'list', title: seed.checklistTitle, items: seed.checklist },
     ],
     imageAlt: `Training visual for ${seed.lessonTitle.toLowerCase()}`,
-    videoPlaceholder: `Future instructor video: ${seed.lessonTitle}.`,
+    videoPlaceholder: `Watch the embedded ${seed.lessonTitle.toLowerCase()} tutorials before starting the lesson.`,
+    videos: videosForTopic(seed.categoryId),
     knowledgeCheck: seed.knowledgeCheck,
     summary: seed.summary,
-    quiz: seed.quiz,
+    quiz: enrichQuiz(seed.quiz, seed.categoryId, seed.lessonSlug, seed.lessonTitle),
     flashcards: seed.flashcards,
     references: ['Department SOPs', 'NFPA 1001 Firefighter Professional Qualifications', 'NFPA 472 Hazardous Materials Response', 'Authority Having Jurisdiction guidance', 'Applicable provincial/Canadian standards where adopted'],
     completion: { completed: false, percent: 0 },

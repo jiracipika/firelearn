@@ -40,6 +40,14 @@ export type Flashcard = {
   lastReviewed?: string
 }
 
+export type LessonVideo = {
+  id: string
+  title: string
+  source: 'YouTube'
+  url: string
+  embedUrl: string
+}
+
 export type Lesson = {
   id: string
   slug: string
@@ -51,6 +59,7 @@ export type Lesson = {
   content: LessonContentBlock[]
   imageAlt: string
   videoPlaceholder: string
+  videos: LessonVideo[]
   knowledgeCheck: QuizQuestion
   summary: string[]
   quiz: QuizQuestion[]

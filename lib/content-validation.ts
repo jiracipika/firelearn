@@ -39,6 +39,14 @@ const contentBlockSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('list'), title: z.string().min(3), items: z.array(z.string().min(3)).min(2) }),
 ])
 
+const lessonVideoSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(3),
+  source: z.literal('YouTube'),
+  url: z.string().url(),
+  embedUrl: z.string().url(),
+})
+
 const lessonSchema = z.object({
   id: z.string().min(1),
   slug: z.string().min(1),
@@ -50,6 +58,7 @@ const lessonSchema = z.object({
   content: z.array(contentBlockSchema).min(1),
   imageAlt: z.string().min(8),
   videoPlaceholder: z.string().min(8),
+  videos: z.array(lessonVideoSchema).min(1),
   knowledgeCheck: questionSchema,
   summary: z.array(z.string().min(8)).min(1),
   quiz: z.array(questionSchema).min(1),

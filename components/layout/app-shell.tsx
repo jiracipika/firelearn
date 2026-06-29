@@ -28,7 +28,7 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-6">
           <Link href="/" className="group flex items-center gap-2.5" aria-label="FireLearn home">
-            <span className="relative flex size-9 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary to-primary-dim shadow-[0_0_25px_rgb(255_59_34_/_0.35)]">
+            <span className="relative flex size-9 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-primary to-primary-dim shadow-[0_0_25px_rgb(255_74_46_/_0.35)]">
               <Flame size={18} className="text-white" aria-hidden />
             </span>
             <span className="flex flex-col leading-none">
@@ -62,7 +62,7 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
             <Button variant="ghost" size="sm"><ShieldCheck size={16} /> <span className="hidden lg:inline">Profile</span></Button>
           </Link>
           <button
-            className="inline-flex size-10 items-center justify-center rounded-xl border border-border-bright bg-elevated/60 text-white md:hidden"
+            className="inline-flex size-10 items-center justify-center rounded-lg border border-border-bright bg-elevated/60 text-white md:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle navigation menu"
             aria-expanded={mobileOpen}
@@ -80,7 +80,7 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition',
+                  'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition',
                   isActive(item.href)
                     ? 'bg-elevated text-white'
                     : 'text-muted-foreground hover:bg-elevated/60 hover:text-white'

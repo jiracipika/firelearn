@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Search } from 'lucide-react'
+import { BookOpen, Brain, PlayCircle, Search } from 'lucide-react'
 import { categories } from '@/data/categories'
 import { academyCourses } from '@/data/academy'
 import { AppShell } from '@/components/layout/app-shell'
@@ -27,11 +27,42 @@ export function CourseCatalog() {
     return counts
   }, [])
 
+  const totals = React.useMemo(() => {
+    return academyCourses.reduce(
+      (acc, course) => {
+        course.modules.forEach((module) => {
+          module.lessons.forEach((lesson) => {
+            acc.lessons += 1
+            acc.videos += lesson.videos.length
+            acc.questions += lesson.quiz.length
+          })
+        })
+        return acc
+      },
+      { lessons: 0, videos: 0, questions: 0 }
+    )
+  }, [])
+
   return <AppShell><div className="space-y-8">
-    <section className="space-y-4">
-      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Academy</p>
-      <h1 className="text-4xl font-bold tracking-[-0.03em] md:text-5xl">Firefighter course catalog</h1>
-      <p className="max-w-2xl text-lg leading-7 text-muted-foreground">A scalable academy mapped to NFPA 1001 and 472 certification domains. Category, course, module, lesson, quiz, and flashcards.</p>
+    <section className="grid gap-6 lg:grid-cols-[1fr_0.8fr] lg:items-end">
+      <div className="space-y-4">
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Academy</p>
+        <h1 className="text-4xl font-bold tracking-[-0.03em] md:text-5xl">Firefighter course catalog</h1>
+        <p className="max-w-2xl text-lg leading-7 text-muted-foreground">Mapped learning paths with embedded tutorials, scenario quizzes, flashcards, and references for recruit through company-officer study.</p>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Lessons', value: totals.lessons, icon: BookOpen },
+          { label: 'Videos', value: totals.videos, icon: PlayCircle },
+          { label: 'Questions', value: totals.questions, icon: Brain },
+        ].map((item) => (
+          <div key={item.label} className="rounded-lg border border-border-bright bg-card/80 p-4">
+            <item.icon className="text-info" size={18} />
+            <p className="mt-2 text-2xl font-bold text-white">{item.value}</p>
+            <p className="text-xs text-muted">{item.label}</p>
+          </div>
+        ))}
+      </div>
     </section>
 
     <div className="relative">
@@ -42,7 +73,7 @@ export function CourseCatalog() {
     <div className="flex flex-wrap gap-2">
       <button
         onClick={() => setActiveCategory(null)}
-        className={cn('rounded-lg border px-3 py-1.5 text-xs font-medium transition', !activeCategory ? 'border-primary/40 bg-primary/10 text-red-200' : 'border-border bg-elevated/40 text-muted-foreground hover:text-white')}
+        className={cn('rounded-md border px-3 py-1.5 text-xs font-medium transition', !activeCategory ? 'border-primary/40 bg-primary/10 text-red-200' : 'border-border bg-elevated/40 text-muted-foreground hover:text-white')}
       >
         All ({academyCourses.length})
       </button>
@@ -50,7 +81,7 @@ export function CourseCatalog() {
         <button
           key={category.id}
           onClick={() => setActiveCategory(activeCategory === category.id ? null : category.id)}
-          className={cn('rounded-lg border px-3 py-1.5 text-xs font-medium transition', activeCategory === category.id ? 'border-primary/40 bg-primary/10 text-red-200' : 'border-border bg-elevated/40 text-muted-foreground hover:text-white')}
+          className={cn('rounded-md border px-3 py-1.5 text-xs font-medium transition', activeCategory === category.id ? 'border-primary/40 bg-primary/10 text-red-200' : 'border-border bg-elevated/40 text-muted-foreground hover:text-white')}
         >
           {category.title}
         </button>

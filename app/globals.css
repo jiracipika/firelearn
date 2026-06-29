@@ -1,29 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #07080c;
-  --color-surface: #0d0f15;
-  --color-card: #10131a;
-  --color-elevated: #141823;
-  --color-primary: #ff3b22;
+  --color-background: #07090d;
+  --color-surface: #0c1117;
+  --color-card: #111821;
+  --color-elevated: #16202b;
+  --color-primary: #ff4a2e;
   --color-primary-foreground: #fff7f2;
-  --color-primary-dim: #e0351f;
-  --color-accent: #f6b73c;
-  --color-success: #3ddc84;
-  --color-info: #5b9bf0;
-  --color-muted: #7d8699;
-  --color-muted-foreground: #a8b0c2;
-  --color-border: #1c212c;
-  --color-border-bright: #2a3140;
+  --color-primary-dim: #d83b23;
+  --color-accent: #ffc857;
+  --color-success: #42d392;
+  --color-info: #55c7f7;
+  --color-muted: #8290a4;
+  --color-muted-foreground: #b4bdcc;
+  --color-border: #223041;
+  --color-border-bright: #34465b;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 :root {
   color-scheme: dark;
-  --radius: 1rem;
-  --glow-primary: 0 0 40px rgb(255 59 34 / 0.25);
-  --glow-accent: 0 0 40px rgb(246 183 60 / 0.18);
+  --radius: 0.5rem;
+  --glow-primary: 0 0 34px rgb(255 74 46 / 0.22);
+  --glow-accent: 0 0 34px rgb(85 199 247 / 0.16);
 }
 
 * {
@@ -32,16 +32,17 @@
 
 html {
   scroll-behavior: smooth;
-  background: #07080c;
+  background: #07090d;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(255 59 34 / 12%), transparent),
-    radial-gradient(ellipse 60% 40% at 90% 10%, rgb(246 183 60 / 6%), transparent),
-    #07080c;
+    linear-gradient(180deg, rgb(13 20 27 / 0.92), rgb(7 9 13 / 0.96) 42rem),
+    radial-gradient(ellipse 56% 34% at 18% -8%, rgb(255 74 46 / 16%), transparent),
+    radial-gradient(ellipse 42% 32% at 86% 4%, rgb(85 199 247 / 10%), transparent),
+    #07090d;
   color: #eef1f6;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -55,10 +56,10 @@ body::before {
   inset: 0;
   z-index: -1;
   background-image:
-    linear-gradient(rgb(255 255 255 / 0.022) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 0.022) 1px, transparent 1px);
+    linear-gradient(rgb(255 255 255 / 0.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.026) 1px, transparent 1px);
   background-size: 64px 64px;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 90%);
+  mask-image: linear-gradient(180deg, black, transparent 82%);
 }
 
 ::selection {
