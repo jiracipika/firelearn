@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { QuizQuestion } from '@/types/learning'
-import { buildQuizResult, isAnswerCorrect, supportsMultipleSelection } from '@/services/quiz-engine'
+import { buildExamQuestionBank, buildQuizResult, isAnswerCorrect, supportsMultipleSelection, DEFAULT_EXAM_CONFIG } from '@/services/quiz-engine'
 
 const multipleAnswerQuestion: QuizQuestion = {
   id: 'q1',
@@ -31,5 +31,43 @@ describe('quiz engine', () => {
 
   it('identifies multiple-answer question types', () => {
     expect(supportsMultipleSelection(multipleAnswerQuestion)).toBe(true)
+  })
+})
+
+describe('exam mode', () => {
+  const bank: QuizQuestion[] = Array.from({ length: 50 }, (_, i) => ({
+    id: `q-${i}`,
+    type: 'multiple-choice' as const,
+    prompt: `Question ${i} prompt here`,
+    options: ['A', 'B', 'C', 'D'],
+    correctAnswerIds: ['A'],
+    explanation: `Explanation for question ${i} here`,
+    topicIds: ['test'],
+  }))
+
+  it('builds a shuffled exam question bank with a target count', () => {
+    const exam = buildExamQuestionBank(bank, { questionCount: 10, timeLimitMinutes: 15, passingScorePercent: 80 })
+    expect(exam).toHaveLength(10)
+    expect(exam.every((question) => question.timeLimitSeconds === 900)).toBe(true)
+  })
+
+  it('caps exam questions at available bank size', () => {
+    const smallBank: QuizQuestion[] = Array.from({ length: 5 }, (_, i) => ({
+      id: `q-${i}`,
+      type: 'multiple-choice' as const,
+      prompt: `Question ${i} prompt here`,
+      options: ['A', 'B'],
+      correctAnswerIds: ['A'],
+      explanation: `Explanation for question ${i} here`,
+      topicIds: ['test'],
+    }))
+    const exam = buildExamQuestionBank(smallBank, { questionCount: 25, timeLimitMinutes: 30, passingScorePercent: 80 })
+    expect(exam).toHaveLength(5)
+  })
+
+  it('uses default config values when no config provided', () => {
+    const exam = buildExamQuestionBank(bank)
+    expect(exam).toHaveLength(DEFAULT_EXAM_CONFIG.questionCount)
+    expect(exam.every((question) => question.timeLimitSeconds === DEFAULT_EXAM_CONFIG.timeLimitMinutes * 60)).toBe(true)
   })
 })

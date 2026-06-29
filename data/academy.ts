@@ -1,6 +1,7 @@
 import type { Course, Difficulty, Flashcard, Lesson, QuizQuestion } from '@/types/learning'
 import { categories } from '@/data/categories'
 import { validateCourses } from '@/lib/content-validation'
+import { examPrepSeeds, type ExamPrepSeed } from '@/data/exam-prep-seeds'
 
 const today = new Date().toISOString()
 
@@ -479,6 +480,31 @@ function lessonFromSeed(seed: RichLessonSeed): Lesson {
   }
 }
 
+function lessonFromExamSeed(seed: ExamPrepSeed): Lesson {
+  return {
+    id: `lesson-${seed.categoryId}-${seed.lessonSlug}`,
+    slug: seed.lessonSlug,
+    title: seed.lessonTitle,
+    difficulty: seed.difficulty,
+    estimatedMinutes: Math.round(seed.estimatedMinutes / 4),
+    objectives: seed.objectives,
+    prerequisites: seed.prerequisites,
+    content: [
+      ...seed.paragraphs.map((text) => ({ type: 'paragraph' as const, text })),
+      { type: 'callout', title: seed.callout.title, text: seed.callout.text },
+      { type: 'list', title: seed.checklistTitle, items: seed.checklist },
+    ],
+    imageAlt: `Training visual for ${seed.lessonTitle.toLowerCase()}`,
+    videoPlaceholder: `Future instructor video: ${seed.lessonTitle}.`,
+    knowledgeCheck: seed.knowledgeCheck,
+    summary: seed.summary,
+    quiz: seed.quiz,
+    flashcards: seed.flashcards,
+    references: ['Department SOPs', 'NFPA 1001 Firefighter Professional Qualifications', 'NFPA 472 Hazardous Materials Response', 'Authority Having Jurisdiction guidance', 'Applicable provincial/Canadian standards where adopted'],
+    completion: { completed: false, percent: 0 },
+  }
+}
+
 const difficultyCycle: Difficulty[] = ['Recruit', 'Firefighter I', 'Firefighter II', 'Company Officer', 'Advanced']
 
 const starterCourses: Course[] = categories.map((category, index) => {
@@ -510,6 +536,22 @@ richLessonSeeds.forEach((seed) => {
     xp: seed.xp,
     progressPercent: seed.categoryId === 'fire-behaviour' ? 62 : starterCourses[index].progressPercent,
     modules: [{ id: `module-${seed.categoryId}-core`, title: seed.moduleTitle, description: seed.moduleDescription, lessons: [lessonFromSeed(seed), makeScenarioDrillLesson(seed.categoryId, categories.find((category) => category.id === seed.categoryId)?.title ?? seed.courseTitle, seed.difficulty)] }],
+  }
+})
+
+// Apply exam-prep seeds: override course metadata and add rich NFPA 1001/472 lessons
+examPrepSeeds.forEach((seed) => {
+  const index = starterCourses.findIndex((course) => course.categoryId === seed.categoryId)
+  if (index === -1) return
+  starterCourses[index] = {
+    ...starterCourses[index],
+    title: seed.courseTitle,
+    slug: seed.courseSlug,
+    description: seed.courseDescription,
+    difficulty: seed.difficulty,
+    estimatedMinutes: seed.estimatedMinutes,
+    xp: seed.xp,
+    modules: [{ id: `module-${seed.categoryId}-core`, title: seed.moduleTitle, description: seed.moduleDescription, lessons: [lessonFromExamSeed(seed), makeScenarioDrillLesson(seed.categoryId, seed.courseTitle, seed.difficulty)] }],
   }
 })
 

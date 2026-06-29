@@ -62,3 +62,30 @@ export function collectQuestionBank(questions: QuizQuestion[], mode: QuizMode) {
 export function supportsMultipleSelection(question: QuizQuestion) {
   return question.type === 'multiple-answer'
 }
+
+export type ExamConfig = {
+  questionCount: number
+  timeLimitMinutes: number
+  passingScorePercent: number
+}
+
+export const DEFAULT_EXAM_CONFIG: ExamConfig = {
+  questionCount: 25,
+  timeLimitMinutes: 30,
+  passingScorePercent: 80,
+}
+
+/**
+ * Builds a mixed-topic exam from all quiz questions across the academy.
+ * In exam mode, questions are shuffled, options are shuffled,
+ * and a time limit applies.
+ */
+export function buildExamQuestionBank(allQuestions: QuizQuestion[], config: ExamConfig = DEFAULT_EXAM_CONFIG) {
+  const shuffled = [...allQuestions].sort(() => Math.random() - 0.5)
+  const selected = shuffled.slice(0, Math.min(config.questionCount, shuffled.length))
+  return selected.map((question) => ({
+    ...question,
+    options: [...question.options].sort(() => Math.random() - 0.5),
+    timeLimitSeconds: config.timeLimitMinutes * 60,
+  }))
+}
