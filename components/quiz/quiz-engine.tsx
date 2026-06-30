@@ -14,7 +14,7 @@ import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
-export function QuizEngine({ title, questions }: { title: string; questions: QuizQuestion[] }) {
+export function QuizEngine({ title, questions, poolTotal }: { title: string; questions: QuizQuestion[]; poolTotal?: number }) {
   const [mode, setMode] = React.useState<QuizMode>('practice')
   const [index, setIndex] = React.useState(0)
   const [selected, setSelected] = React.useState<string[]>([])
@@ -110,7 +110,7 @@ export function QuizEngine({ title, questions }: { title: string; questions: Qui
         <div>
           <Badge>{mode === 'practice' ? 'Practice mode' : 'Exam mode'}</Badge>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-white md:text-4xl">{title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Question {Math.min(index + 1, bank.length)} of {bank.length}</p>
+          <p className="mt-1 text-sm text-muted-foreground">Question {Math.min(index + 1, bank.length)} of {bank.length}{poolTotal && poolTotal > bank.length ? ` · ${poolTotal} in pool` : ''}</p>
         </div>
         <div className="flex gap-2">
           <Button variant={mode === 'practice' ? 'primary' : 'outline'} size="sm" onClick={() => reset('practice')}>Practice</Button>

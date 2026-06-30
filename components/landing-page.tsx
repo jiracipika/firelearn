@@ -18,11 +18,11 @@ const questionCount = academyCourses.reduce((total, course) => total + course.mo
 const videoCount = academyCourses.reduce((total, course) => total + course.modules.reduce((moduleTotal, module) => moduleTotal + module.lessons.reduce((lessonTotal, lesson) => lessonTotal + lesson.videos.length, 0), 0), 0)
 
 const stats = [
-  ['32', 'Disciplines'],
   [String(academyCourses.length), 'Courses'],
   [String(lessonCount), 'Lessons'],
   [String(videoCount), 'Videos'],
   [String(questionCount), 'Quiz questions'],
+  ['SM-2', 'Review engine'],
 ] as const
 
 export function LandingPage() {

@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { Activity, BookOpen, Brain, Flame, Target, Trophy, UploadCloud } from 'lucide-react'
+import Link from 'next/link'
 import { academyCourses, getFeaturedLesson } from '@/data/academy'
 import { learnerProgress } from '@/data/progress'
 import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
@@ -12,6 +13,7 @@ import { AppShell } from '@/components/layout/app-shell'
 import { CourseCard } from '@/components/course/course-card'
 import { AchievementProgressPanel, LeaderboardPanel, WeeklyChallengesPanel } from '@/components/dashboard/gamification-panels'
 import { StudyHeatmap } from '@/components/dashboard/study-heatmap'
+import { SupabaseSyncButton } from '@/components/sync/supabase-sync-button'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -23,7 +25,7 @@ function allLessonIds() {
 
 export function DashboardOverview() {
   const featuredLesson = getFeaturedLesson()
-  const { completedLessonIds, quizHistory, available, authenticated, loading, signIn, error, projectRef } = useSupabaseProgress()
+  const { completedLessonIds, quizHistory, available, authenticated, loading, signIn, error, projectRef, refresh } = useSupabaseProgress()
   const weakTopics = getWeakTopicSummary(quizHistory)
   const lessonIds = allLessonIds()
   const completion = lessonIds.length === 0 ? 0 : Math.round((completedLessonIds.length / lessonIds.length) * 100)
@@ -123,6 +125,7 @@ export function DashboardOverview() {
           {available ? `Project ${projectRef ?? 'unknown'} · Anonymous auth stores progress per user under RLS.` : 'Supabase env not configured.'}
         </p>
         {!authenticated && <Button size="sm" disabled={!available || loading} onClick={signIn}>{loading ? 'Checking Supabase...' : 'Sign in anonymously'}</Button>}
+        {authenticated && <SupabaseSyncButton onSynced={refresh} />}
         {error && <p className="rounded-xl border border-red-500/30 bg-red-500/8 p-3 text-xs leading-5 text-red-200">{error}</p>}
       </Card>
     </section>
@@ -167,8 +170,14 @@ export function DashboardOverview() {
         <p className="mt-1 text-sm text-muted-foreground">Prioritized modules based on current progress.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {academyCourses.filter((course) => course.progressPercent > 0 || course.modules.some((module) => module.lessons.some((lesson) => completedLessonIds.includes(lesson.id)))).slice(0, 6).map((course) => <CourseCard key={course.id} course={course} />)}
+        {academyCourses.filter((course) => course.modules.some((module) => module.lessons.some((lesson) => completedLessonIds.includes(lesson.id)))).slice(0, 6).map((course) => <CourseCard key={course.id} course={course} />)}
       </div>
+      {academyCourses.filter((course) => course.modules.some((module) => module.lessons.some((lesson) => completedLessonIds.includes(lesson.id)))).length === 0 && (
+        <Card className="py-12 text-center text-muted-foreground">
+          <p>No courses started yet.</p>
+          <Link href="/courses" className="mt-2 inline-block text-sm font-semibold text-primary hover:opacity-80">Browse the academy to begin</Link>
+        </Card>
+      )}
     </section>
   </div></AppShell>
 }

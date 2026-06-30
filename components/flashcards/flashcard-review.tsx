@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Keyboard, RotateCcw, Sparkles } from 'lucide-react'
 import type { Flashcard, FlashcardRating } from '@/types/learning'
 import { getBrowserStorage, loadFlashcards, saveFlashcards } from '@/services/local-persistence'
+import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
+import { recordFlashcardReviewInSupabase } from '@/services/supabase/progress'
 import { buildReviewQueue, cardStage, nextDueLabel, scheduleReview } from '@/services/spaced-repetition'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -45,9 +47,29 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
   const rate = React.useCallback((rating: FlashcardRating) => {
     if (!current || !revealed) return
     setCards((existing) => {
-      const nextCards = existing.map((card) => card.id === current.id ? scheduleReview(card, rating) : card)
+      const reviewedAt = new Date()
+      let updatedCard: Flashcard | undefined
+      const nextCards = existing.map((card) => {
+        if (card.id !== current.id) return card
+        updatedCard = scheduleReview(card, rating, reviewedAt)
+        return updatedCard
+      })
       const storage = getBrowserStorage()
       if (storage) saveFlashcards(storage, nextCards)
+      if (updatedCard) {
+        const supabase = createFireLearnBrowserSupabaseClient()
+        if (supabase) {
+          void recordFlashcardReviewInSupabase(supabase, {
+            cardId: updatedCard.id,
+            rating,
+            easeFactor: updatedCard.easeFactor,
+            intervalDays: updatedCard.intervalDays,
+            reviewCount: updatedCard.reviewCount,
+            nextReview: updatedCard.nextReview,
+            reviewedAt: updatedCard.lastReviewed ?? reviewedAt.toISOString(),
+          }).catch(() => undefined)
+        }
+      }
       return nextCards
     })
     setRevealed(false)

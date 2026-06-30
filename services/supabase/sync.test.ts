@@ -48,6 +48,52 @@ describe('Supabase sync adapter', () => {
     ])
   })
 
+  it('replays flashcard reviews as inserts', async () => {
+    const calls: Array<{ table: string; method: string; payload: unknown }> = []
+    const client: MinimalSupabaseSyncClient = {
+      from(table) {
+        return {
+          upsert(payload) {
+            calls.push({ table, method: 'upsert', payload })
+            return { error: null }
+          },
+          insert(payload) {
+            calls.push({ table, method: 'insert', payload })
+            return { error: null }
+          },
+        }
+      },
+    }
+
+    const result = await replaySyncQueueToSupabase(client, [makeItem('flashcard_review', {
+      cardId: 'card-1',
+      rating: 'good',
+      easeFactor: 2.5,
+      intervalDays: 3,
+      reviewCount: 2,
+      nextReview: '2026-07-01T00:00:00.000Z',
+      reviewedAt: '2026-06-28T00:00:00.000Z',
+    })])
+
+    expect(result.syncedIds).toEqual(['flashcard_review-1'])
+    expect(calls).toEqual([
+      {
+        table: 'flashcard_reviews',
+        method: 'insert',
+        payload: {
+          card_id: 'card-1',
+          rating: 'good',
+          ease_factor: 2.5,
+          interval_days: 3,
+          review_count: 2,
+          next_review: '2026-07-01T00:00:00.000Z',
+          reviewed_at: '2026-06-28T00:00:00.000Z',
+          client_mutation_id: 'flashcard_review-1',
+        },
+      },
+    ])
+  })
+
   it('keeps failed queue items pending for retry', async () => {
     const client: MinimalSupabaseSyncClient = {
       from() {

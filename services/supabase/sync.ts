@@ -38,6 +38,19 @@ async function normalizeMutationResult(result: unknown): Promise<SupabaseMutatio
   return { error: awaited?.error ?? null }
 }
 
+function flashcardReviewPayload(item: SyncQueueItem) {
+  return {
+    card_id: String(item.payload.cardId),
+    rating: String(item.payload.rating),
+    ease_factor: Number(item.payload.easeFactor ?? 2.5),
+    interval_days: Number(item.payload.intervalDays ?? 0),
+    review_count: Number(item.payload.reviewCount ?? 0),
+    next_review: String(item.payload.nextReview ?? new Date().toISOString()),
+    reviewed_at: String(item.payload.reviewedAt ?? new Date().toISOString()),
+    client_mutation_id: item.id,
+  }
+}
+
 async function replayItem(client: MinimalSupabaseSyncClient, item: SyncQueueItem): Promise<SupabaseMutationResult> {
   if (item.entity === 'lesson_completion') {
     return normalizeMutationResult(client.from('lesson_completions').upsert(lessonCompletionPayload(item), { onConflict: 'user_id,lesson_id' }))
@@ -45,6 +58,10 @@ async function replayItem(client: MinimalSupabaseSyncClient, item: SyncQueueItem
 
   if (item.entity === 'quiz_attempt') {
     return normalizeMutationResult(client.from('quiz_attempts').insert(quizAttemptPayload(item)))
+  }
+
+  if (item.entity === 'flashcard_review') {
+    return normalizeMutationResult(client.from('flashcard_reviews').insert(flashcardReviewPayload(item)))
   }
 
   return { error: { message: `Unsupported sync entity: ${item.entity}` } }

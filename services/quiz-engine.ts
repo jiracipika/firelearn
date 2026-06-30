@@ -53,10 +53,36 @@ export function buildQuizResult(questions: QuizQuestion[], answers: QuizAnswer[]
 
 export function collectQuestionBank(questions: QuizQuestion[], mode: QuizMode) {
   if (mode === 'practice') return questions
-  return questions.map((question, questionIndex) => ({
-    ...question,
-    options: [...question.options].sort((a, b) => `${questionIndex}-${a}`.localeCompare(`${questionIndex}-${b}`)),
-  }))
+  // Exam mode: shuffle options using a deterministic per-question seed
+  // so SSR and client render match (avoids hydration mismatch).
+  return questions.map((question, questionIndex) => {
+    const seedBase = hashCode(`${question.id}-${questionIndex}`)
+    return {
+      ...question,
+      options: seededShuffle(question.options, seedBase),
+    }
+  })
+}
+
+/** Stable string hash (djb2) — deterministic across SSR and client. */
+function hashCode(str: string): number {
+  let hash = 5381
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0
+  }
+  return Math.abs(hash)
+}
+
+/** Deterministic Fisher-Yates shuffle using a seed value. */
+function seededShuffle<T>(array: T[], seed: number): T[] {
+  const result = [...array]
+  let state = seed || 1
+  for (let i = result.length - 1; i > 0; i--) {
+    state = (state * 9301 + 49297) % 233280
+    const j = Math.floor((state / 233280) * (i + 1))
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
 }
 
 export function supportsMultipleSelection(question: QuizQuestion) {

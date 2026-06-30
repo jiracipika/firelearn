@@ -1,11 +1,16 @@
 import type { LearnerProgress } from '@/types/learning'
 
+/**
+ * Default empty learner progress.
+ * All real values are computed from actual activity (Supabase + localStorage).
+ * Never hardcode fake progress — start from zero.
+ */
 export const learnerProgress: LearnerProgress = {
-  streakDays: 23,
-  xp: 8420,
-  level: 12,
+  streakDays: 0,
+  xp: 0,
+  level: 1,
   dailyGoalMinutes: 25,
-  minutesStudiedToday: 17,
-  weeklyActivity: [20, 35, 15, 42, 28, 50, 17],
-  achievements: ['7-day streak', 'Perfect quiz', 'First module complete'],
+  minutesStudiedToday: 0,
+  weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
+  achievements: [],
 }

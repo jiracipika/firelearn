@@ -1,19 +1,21 @@
 'use client'
 
-import { Activity, Flame, Trophy, UserCircle } from 'lucide-react'
+import { Activity, Flame, LogOut, Trophy, UserCircle } from 'lucide-react'
 import { learnerProgress } from '@/data/progress'
 import { academyCourses } from '@/data/academy'
 import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
 import { aggregateLearnerStats } from '@/services/gamification-aggregator'
 import type { LeaderboardEntry } from '@/services/gamification'
+import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
 import { AchievementProgressPanel, LeaderboardPanel, WeeklyChallengesPanel } from '@/components/dashboard/gamification-panels'
 import { AppShell } from '@/components/layout/app-shell'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
 export default function ProfilePage() {
-  const { completedLessonIds, quizHistory } = useSupabaseProgress()
+  const { completedLessonIds, quizHistory, authenticated, refresh } = useSupabaseProgress()
 
   const stats = (() => {
     const completedLessons = completedLessonIds.map((lessonId) => {
@@ -48,9 +50,15 @@ export default function ProfilePage() {
         </div>
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Learner profile</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-white">Engine 7 Firefighter</h1>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">Anonymous Supabase learner. Future versions can map this to department accounts and certifications.</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-white">Your Firefighter Profile</h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{authenticated ? 'Connected to Supabase. Progress saves automatically.' : 'Not signed in. Sign in from the dashboard to save progress.'}</p>
         </div>
+        {authenticated && (
+          <Button variant="outline" size="sm" onClick={async () => {
+            const client = createFireLearnBrowserSupabaseClient()
+            if (client) { await client.auth.signOut(); refresh() }
+          }}><LogOut size={16} /> Sign out</Button>
+        )}
       </Card>
       <Card className="grid gap-3 sm:grid-cols-3">
         {profileStats.map((stat) => (

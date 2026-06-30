@@ -80,3 +80,31 @@ export async function recordQuizAttemptInSupabase(client: FireLearnSupabaseClien
 
   if (error) throw new Error(error.message)
 }
+
+export type FlashcardReviewRecord = {
+  cardId: string
+  rating: 'again' | 'hard' | 'good' | 'easy'
+  easeFactor: number
+  intervalDays: number
+  reviewCount: number
+  nextReview: string
+  reviewedAt: string
+}
+
+export async function recordFlashcardReviewInSupabase(client: FireLearnSupabaseClient, review: FlashcardReviewRecord) {
+  const userId = await getUserId(client)
+  if (!userId) throw new Error('You must be signed in before saving flashcard reviews.')
+
+  const { error } = await client.from('flashcard_reviews').insert({
+    user_id: userId,
+    card_id: review.cardId,
+    rating: review.rating,
+    ease_factor: review.easeFactor,
+    interval_days: review.intervalDays,
+    review_count: review.reviewCount,
+    next_review: review.nextReview,
+    reviewed_at: review.reviewedAt,
+  })
+
+  if (error) throw new Error(error.message)
+}

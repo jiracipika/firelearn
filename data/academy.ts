@@ -1074,5 +1074,5 @@ export function getCategoryTitle(categoryId: string) {
 }
 
 export function getFeaturedLesson() {
-  return academyCourses[0].modules[0]?.lessons[0]
+  return academyCourses[0]?.modules[0]?.lessons[0]
 }
