@@ -2,7 +2,19 @@ import { academyCourses } from '@/data/academy'
 import { AppShell } from '@/components/layout/app-shell'
 import { QuizEngine } from '@/components/quiz/quiz-engine'
 
-export function QuizPreview() {
-  const questions = academyCourses.flatMap((course) => course.modules.flatMap((module) => module.lessons.flatMap((lesson) => lesson.quiz)))
-  return <AppShell><QuizEngine title={`FireLearn mixed practice · ${questions.length} questions`} questions={questions} /></AppShell>
+type QuizPreviewProps = {
+  courseSlug?: string
+  lessonSlug?: string
+}
+
+export function QuizPreview({ courseSlug, lessonSlug }: QuizPreviewProps) {
+  const course = academyCourses.find((item) => item.slug === courseSlug)
+  const lesson = course?.modules.flatMap((module) => module.lessons).find((item) => item.slug === lessonSlug)
+  const questions = lesson
+    ? lesson.quiz
+    : academyCourses.flatMap((course) => course.modules.flatMap((module) => module.lessons.flatMap((lesson) => lesson.quiz)))
+  const title = lesson
+    ? `${lesson.title} quiz · ${questions.length} questions`
+    : `FireLearn mixed practice · ${questions.length} questions`
+  return <AppShell><QuizEngine title={title} questions={questions} /></AppShell>
 }

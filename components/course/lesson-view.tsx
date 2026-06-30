@@ -156,8 +156,8 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
           <h2 className="font-bold text-white">Quiz and flashcards</h2>
           <p className="text-sm leading-6 text-muted-foreground">This lesson includes {lesson.quiz.length} quiz question(s) and {lesson.flashcards.length} spaced-repetition card(s).</p>
           <div className="flex flex-wrap gap-2">
-            <Link href="/quiz"><Button variant="outline" size="sm">Practice quiz</Button></Link>
-            <Link href="/flashcards"><Button variant="outline" size="sm">Review cards</Button></Link>
+            <Link href={`/quiz?course=${course.slug}&lesson=${lesson.slug}`}><Button variant="outline" size="sm">Practice this lesson</Button></Link>
+            <Link href={`/flashcards?course=${course.slug}&lesson=${lesson.slug}`}><Button variant="outline" size="sm">Review lesson cards</Button></Link>
           </div>
         </Card>
       </section>

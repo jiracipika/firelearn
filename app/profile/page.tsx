@@ -4,11 +4,13 @@ import { Activity, Flame, LogOut, Trophy, UserCircle } from 'lucide-react'
 import { learnerProgress } from '@/data/progress'
 import { academyCourses } from '@/data/academy'
 import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
+import { useStudyActivity } from '@/hooks/use-study-activity'
 import { aggregateLearnerStats } from '@/services/gamification-aggregator'
 import type { LeaderboardEntry } from '@/services/gamification'
 import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
 import { AchievementProgressPanel, LeaderboardPanel, WeeklyChallengesPanel } from '@/components/dashboard/gamification-panels'
 import { AppShell } from '@/components/layout/app-shell'
+import { ProfileDataTools } from '@/components/profile/profile-data-tools'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -16,6 +18,7 @@ import { cn } from '@/lib/utils'
 
 export default function ProfilePage() {
   const { completedLessonIds, quizHistory, authenticated, refresh } = useSupabaseProgress()
+  const studyActivity = useStudyActivity()
 
   const stats = (() => {
     const completedLessons = completedLessonIds.map((lessonId) => {
@@ -24,7 +27,7 @@ export default function ProfilePage() {
       )
       return { lessonId, courseId: course?.slug ?? 'unknown', xpAwarded: course?.xp ?? 50 }
     })
-    return aggregateLearnerStats({ completedLessons, quizAttempts: quizHistory, flashcardsReviewed: 0, streakDays: learnerProgress.streakDays })
+    return aggregateLearnerStats({ completedLessons, quizAttempts: quizHistory, flashcardsReviewed: 0, streakDays: studyActivity.streakDays })
   })()
 
   const totalXp = learnerProgress.xp + stats.xp
@@ -32,14 +35,14 @@ export default function ProfilePage() {
   const levelProgress = Math.round((totalXp % 750) / 750 * 100)
   const learnerEntry: LeaderboardEntry = {
     id: 'current-learner', name: 'You', company: 'Engine 7',
-    xp: totalXp, streakDays: learnerProgress.streakDays,
+    xp: totalXp, streakDays: studyActivity.streakDays,
     completedLessons: stats.completedLessons, perfectQuizzes: stats.perfectQuizzes,
   }
 
   const profileStats = [
     { icon: Trophy, label: 'Level', value: displayLevel.toString(), sub: `${totalXp.toLocaleString()} XP`, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-    { icon: Flame, label: 'Streak', value: `${learnerProgress.streakDays}`, sub: 'days', color: 'text-red-400', bg: 'bg-red-500/10' },
-    { icon: Activity, label: 'Daily goal', value: `${learnerProgress.minutesStudiedToday}`, sub: `/${learnerProgress.dailyGoalMinutes}m`, color: 'text-green-400', bg: 'bg-green-500/10' },
+    { icon: Flame, label: 'Streak', value: `${studyActivity.streakDays}`, sub: 'days', color: 'text-red-400', bg: 'bg-red-500/10' },
+    { icon: Activity, label: 'Daily goal', value: `${studyActivity.minutesToday}`, sub: `/${learnerProgress.dailyGoalMinutes}m`, color: 'text-green-400', bg: 'bg-green-500/10' },
   ]
 
   return <AppShell><div className="space-y-8">
@@ -77,6 +80,9 @@ export default function ProfilePage() {
       <LeaderboardPanel learnerEntry={learnerEntry} />
       <WeeklyChallengesPanel challenges={stats.challenges} />
     </section>
-    <AchievementProgressPanel achievements={stats.achievements} />
+    <section className="grid gap-5 lg:grid-cols-[1fr_0.85fr]">
+      <AchievementProgressPanel achievements={stats.achievements} />
+      <ProfileDataTools onReset={() => { refresh(); studyActivity.refresh() }} />
+    </section>
   </div></AppShell>
 }

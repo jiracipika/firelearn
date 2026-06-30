@@ -6,6 +6,7 @@ import {
   type QuizAttempt,
   type StorageLike,
 } from '@/services/local-persistence'
+import { recordStudyActivity } from '@/services/study-activity'
 
 export type SyncEntity = 'lesson_completion' | 'quiz_attempt' | 'flashcard_review'
 export type SyncOperation = 'upsert' | 'insert' | 'delete'
@@ -67,6 +68,7 @@ export function createOfflineProgressRepository(storage: StorageLike) {
           completedLessonIds: [...state.completedLessonIds, input.lessonId],
           xp: state.xp + input.xpAwarded,
         })
+        recordStudyActivity(storage, { kind: 'lesson_complete', minutes: 5, entityId: input.lessonId })
         queueOperation(storage, {
           entity: 'lesson_completion',
           operation: 'upsert',
@@ -79,6 +81,7 @@ export function createOfflineProgressRepository(storage: StorageLike) {
     },
     recordQuizAttempt(attempt: QuizAttempt) {
       recordQuizResult(storage, attempt)
+      recordStudyActivity(storage, { kind: 'quiz_complete', minutes: 3, entityId: attempt.quizId, createdAt: attempt.completedAt })
       queueOperation(storage, {
         entity: 'quiz_attempt',
         operation: 'insert',

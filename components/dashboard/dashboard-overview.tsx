@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { academyCourses, getFeaturedLesson } from '@/data/academy'
 import { learnerProgress } from '@/data/progress'
 import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
+import { useStudyActivity } from '@/hooks/use-study-activity'
 import { getWeakTopicSummary } from '@/services/offline-progress'
 import { aggregateLearnerStats } from '@/services/gamification-aggregator'
 import type { LeaderboardEntry } from '@/services/gamification'
@@ -13,6 +14,7 @@ import { AppShell } from '@/components/layout/app-shell'
 import { CourseCard } from '@/components/course/course-card'
 import { AchievementProgressPanel, LeaderboardPanel, WeeklyChallengesPanel } from '@/components/dashboard/gamification-panels'
 import { StudyHeatmap } from '@/components/dashboard/study-heatmap'
+import { StudyTimerPanel } from '@/components/dashboard/study-timer-panel'
 import { SupabaseSyncButton } from '@/components/sync/supabase-sync-button'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -26,6 +28,7 @@ function allLessonIds() {
 export function DashboardOverview() {
   const featuredLesson = getFeaturedLesson()
   const { completedLessonIds, quizHistory, available, authenticated, loading, signIn, error, projectRef, refresh } = useSupabaseProgress()
+  const studyActivity = useStudyActivity()
   const weakTopics = getWeakTopicSummary(quizHistory)
   const lessonIds = allLessonIds()
   const completion = lessonIds.length === 0 ? 0 : Math.round((completedLessonIds.length / lessonIds.length) * 100)
@@ -45,7 +48,7 @@ export function DashboardOverview() {
       completedLessons,
       quizAttempts: quizHistory,
       flashcardsReviewed: 0,
-      streakDays: learnerProgress.streakDays,
+      streakDays: studyActivity.streakDays,
     })
   })()
 
@@ -53,17 +56,17 @@ export function DashboardOverview() {
   const learnerEntry: LeaderboardEntry = {
     id: 'current-learner',
     name: 'You',
-    company: 'Engine 7',
+    company: 'Your station',
     xp: totalXp,
-    streakDays: learnerProgress.streakDays,
+    streakDays: studyActivity.streakDays,
     completedLessons: stats.completedLessons,
     perfectQuizzes: stats.perfectQuizzes,
   }
 
-  const dailyProgress = Math.round((learnerProgress.minutesStudiedToday / learnerProgress.dailyGoalMinutes) * 100)
+  const dailyProgress = Math.round((studyActivity.minutesToday / learnerProgress.dailyGoalMinutes) * 100)
   const displayLevel = Math.floor(totalXp / 750) + 1
   const statTiles = [
-    { label: 'Daily streak', value: `${learnerProgress.streakDays}`, suffix: 'days', icon: Flame, color: 'text-red-400', bg: 'bg-red-500/10' },
+    { label: 'Daily streak', value: `${studyActivity.streakDays}`, suffix: 'days', icon: Flame, color: 'text-red-400', bg: 'bg-red-500/10' },
     { label: 'Total XP', value: totalXp.toLocaleString(), suffix: '', icon: Trophy, color: 'text-amber-400', bg: 'bg-amber-500/10' },
     { label: 'Level', value: displayLevel.toString(), suffix: '', icon: Target, color: 'text-green-400', bg: 'bg-green-500/10' },
     { label: 'Completion', value: completion.toString(), suffix: '%', icon: BookOpen, color: 'text-sky-400', bg: 'bg-sky-500/10' },
@@ -93,7 +96,7 @@ export function DashboardOverview() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Daily goal</p>
-              <p className="mt-1 text-3xl font-bold text-white">{learnerProgress.minutesStudiedToday}<span className="text-lg text-muted">/{learnerProgress.dailyGoalMinutes}m</span></p>
+              <p className="mt-1 text-3xl font-bold text-white">{studyActivity.minutesToday}<span className="text-lg text-muted">/{learnerProgress.dailyGoalMinutes}m</span></p>
             </div>
             <Activity className="text-red-400" size={24} />
           </div>
@@ -131,13 +134,21 @@ export function DashboardOverview() {
     </section>
 
     <section className="grid gap-5 lg:grid-cols-[1fr_0.85fr]">
-      <StudyHeatmap />
+      <StudyTimerPanel />
       <WeeklyChallengesPanel challenges={stats.challenges} />
+    </section>
+
+    <section className="grid gap-5 lg:grid-cols-[1fr_0.85fr]">
+      <StudyHeatmap weeklyActivity={studyActivity.weeklyMinutes} />
+      <AchievementProgressPanel achievements={stats.achievements} />
     </section>
 
     <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
       <LeaderboardPanel compact learnerEntry={learnerEntry} />
-      <AchievementProgressPanel achievements={stats.achievements} />
+      <Card className="space-y-3">
+        <h2 className="font-bold text-white">Activity notes</h2>
+        <p className="text-sm leading-6 text-muted-foreground">Streaks and weekly minutes now come from real recorded study activity: lesson completions, quizzes, flashcards, and saved timer sessions.</p>
+      </Card>
     </section>
 
     <section className="grid gap-5 lg:grid-cols-2">

@@ -21,9 +21,32 @@
 
 :root {
   color-scheme: dark;
-  --radius: 0.5rem;
-  --glow-primary: 0 0 34px rgb(255 74 46 / 0.22);
-  --glow-accent: 0 0 34px rgb(85 199 247 / 0.16);
+  --radius: 1rem;
+  --glow-primary: 0 0 40px rgb(255 74 46 / 0.25);
+  --glow-accent: 0 0 40px rgb(246 183 60 / 0.18);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --color-background: #f6f7fb;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+  --color-elevated: #eef1f7;
+  --color-muted: #667085;
+  --color-muted-foreground: #344054;
+  --color-border: #d7dce6;
+  --color-border-bright: #b7c0cf;
+}
+
+:root[data-theme='light'] body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(255 74 46 / 10%), transparent),
+    #f6f7fb;
+  color: #101828;
+}
+
+:root[data-theme='light'] .text-white {
+  color: #101828;
 }
 
 * {

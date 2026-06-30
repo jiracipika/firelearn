@@ -1,4 +1,5 @@
-import { BookOpen, Brain, Clock, Layers, LibraryBig, PlayCircle } from 'lucide-react'
+import Link from 'next/link'
+import { Award, BookOpen, Brain, Clock, Layers, LibraryBig, PlayCircle } from 'lucide-react'
 import type { Course } from '@/types/learning'
 import { getCategoryTitle } from '@/data/academy'
 import { getCourseStats } from '@/lib/academy-selectors'
@@ -36,6 +37,9 @@ export function CourseDetail({ course }: { course: Course }) {
             <span className="font-bold text-white">{item.value}</span>
           </div>
         ))}
+        <Link href={`/courses/${course.slug}/certificate`} className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-red-200 transition hover:bg-primary/15">
+          <Award size={16} /> Generate certificate
+        </Link>
       </Card>
     </section>
     {course.modules.map((module, moduleIndex) => (

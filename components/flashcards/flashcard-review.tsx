@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Keyboard, RotateCcw, Sparkles } from 'lucide-react'
 import type { Flashcard, FlashcardRating } from '@/types/learning'
 import { getBrowserStorage, loadFlashcards, saveFlashcards } from '@/services/local-persistence'
+import { recordStudyActivity } from '@/services/study-activity'
 import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
 import { recordFlashcardReviewInSupabase } from '@/services/supabase/progress'
 import { buildReviewQueue, cardStage, nextDueLabel, scheduleReview } from '@/services/spaced-repetition'
@@ -55,7 +56,10 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
         return updatedCard
       })
       const storage = getBrowserStorage()
-      if (storage) saveFlashcards(storage, nextCards)
+      if (storage) {
+        saveFlashcards(storage, nextCards)
+        recordStudyActivity(storage, { kind: 'flashcard_review', minutes: 1, entityId: current.id, createdAt: reviewedAt.toISOString() })
+      }
       if (updatedCard) {
         const supabase = createFireLearnBrowserSupabaseClient()
         if (supabase) {

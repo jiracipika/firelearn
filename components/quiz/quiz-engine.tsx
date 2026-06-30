@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, ChevronRight, Clock, RotateCcw, XCircle } from 'lucide-react'
 import type { QuizQuestion } from '@/types/learning'
 import { getBrowserStorage, recordQuizResult } from '@/services/local-persistence'
+import { recordStudyActivity } from '@/services/study-activity'
 import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
 import { recordQuizAttemptInSupabase } from '@/services/supabase/progress'
 import { buildQuizResult, collectQuestionBank, isAnswerCorrect, supportsMultipleSelection, type QuizAnswer, type QuizMode } from '@/services/quiz-engine'
@@ -34,11 +35,14 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
     if (recordedResultKey.current === resultKey) return
     const attempt = { quizId: title, scorePercent: result.scorePercent, weakTopicIds: result.weakTopicIds, completedAt: new Date().toISOString() }
     const storage = getBrowserStorage()
-    if (storage) recordQuizResult(storage, attempt)
+    if (storage) {
+      recordQuizResult(storage, attempt)
+      recordStudyActivity(storage, { kind: 'quiz_complete', minutes: Math.max(3, Math.round(bank.length * 0.75)), entityId: title, createdAt: attempt.completedAt })
+    }
     const supabase = createFireLearnBrowserSupabaseClient()
     if (supabase) void recordQuizAttemptInSupabase(supabase, attempt).catch(() => undefined)
     recordedResultKey.current = resultKey
-  }, [answers.length, result, title])
+  }, [answers.length, bank.length, result, title])
 
   function reset(nextMode: QuizMode = mode) {
     setMode(nextMode)
