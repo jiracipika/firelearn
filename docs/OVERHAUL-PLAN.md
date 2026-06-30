@@ -1,13 +1,14 @@
 # FireLearn Full Overhaul Plan
 
 Generated: 2026-06-30
-Status: Active
+Status: Active — refreshed during five-phase iteration pass
 
 ## Current State
 - Next.js 16 + React 19 + Tailwind 4 + Supabase + framer-motion
-- 32 courses, 64 lessons, 253 quiz questions
+- 32 courses, 64 lessons, 253 quiz questions (computed from catalog)
 - Deployed: fflearn.vercel.app (Supabase: iwcalmxtokxohdgemwjs)
-- Health: typecheck PASS, lint PASS, 42/42 tests PASS
+- Health baseline on 2026-06-30: typecheck PASS, lint PASS, 44/44 tests PASS
+- Execution plan: `docs/ITERATION-PLAN-2026-06-30.md`
 
 ## Bugs Found
 
