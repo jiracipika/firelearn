@@ -9,6 +9,7 @@ import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
 import { useStudyActivity } from '@/hooks/use-study-activity'
 import { getWeakTopicSummary } from '@/services/offline-progress'
 import { aggregateLearnerStats } from '@/services/gamification-aggregator'
+import { chooseNextAction } from '@/services/next-action'
 import type { LeaderboardEntry } from '@/services/gamification'
 import { AppShell } from '@/components/layout/app-shell'
 import { CourseCard } from '@/components/course/course-card'
@@ -30,6 +31,13 @@ export function DashboardOverview() {
   const { completedLessonIds, quizHistory, available, authenticated, loading, signIn, error, projectRef, refresh } = useSupabaseProgress()
   const studyActivity = useStudyActivity()
   const weakTopics = getWeakTopicSummary(quizHistory)
+  const nextAction = chooseNextAction({
+    courses: academyCourses,
+    completedLessonIds,
+    quizHistory,
+    weakTopicIds: weakTopics.map((topic) => topic.topicId),
+    dueFlashcardCount: 0,
+  })
   const lessonIds = allLessonIds()
   const completion = lessonIds.length === 0 ? 0 : Math.round((completedLessonIds.length / lessonIds.length) * 100)
 
@@ -115,8 +123,11 @@ export function DashboardOverview() {
           </div>
           <Brain className="text-red-400" size={24} />
         </div>
-        <p className="text-sm leading-6 text-muted-foreground">Pick up the highest-value module and keep building recall.</p>
+        <p className="text-sm leading-6 text-muted-foreground">{nextAction.description}</p>
         <Progress value={featuredLesson && completedLessonIds.includes(featuredLesson.id) ? 100 : (featuredLesson?.completion.percent ?? 0)} />
+        <Link href={nextAction.href}>
+          <Button size="sm">{nextAction.title}</Button>
+        </Link>
       </Card>
       <Card className="space-y-3">
         <div className="flex items-center gap-2">
