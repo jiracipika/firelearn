@@ -6,6 +6,7 @@ import type { Course, Lesson } from '@/types/learning'
 import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
 import { getBrowserStorage } from '@/services/local-persistence'
 import { createOfflineProgressRepository } from '@/services/offline-progress'
+import { getLessonPracticeHref, getLessonSequence } from '@/services/lesson-navigation'
 import { AppShell } from '@/components/layout/app-shell'
 import { ContentBlock } from '@/components/course/content-block'
 import { InteractiveKnowledgeCheck } from '@/components/course/interactive-knowledge-check'
@@ -26,10 +27,9 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
   const xpAwarded = Math.max(25, Math.round(course.xp / Math.max(1, course.modules.flatMap((module) => module.lessons).length)))
 
   // Compute prev/next lessons for navigation
-  const allLessonsInCourse = course.modules.flatMap((module) => module.lessons)
-  const currentIndex = allLessonsInCourse.findIndex((item) => item.id === lesson.id)
-  const prevLesson = currentIndex > 0 ? allLessonsInCourse[currentIndex - 1] : undefined
-  const nextLesson = currentIndex >= 0 && currentIndex < allLessonsInCourse.length - 1 ? allLessonsInCourse[currentIndex + 1] : undefined
+  const sequence = getLessonSequence(course, lesson.id)
+  const prevLesson = sequence.previous
+  const nextLesson = sequence.next
 
   return <AppShell>
     <article className="mx-auto max-w-4xl space-y-6">
@@ -156,8 +156,8 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
           <h2 className="font-bold text-white">Quiz and flashcards</h2>
           <p className="text-sm leading-6 text-muted-foreground">This lesson includes {lesson.quiz.length} quiz question(s) and {lesson.flashcards.length} spaced-repetition card(s).</p>
           <div className="flex flex-wrap gap-2">
-            <Link href={`/quiz?course=${course.slug}&lesson=${lesson.slug}`}><Button variant="outline" size="sm">Practice this lesson</Button></Link>
-            <Link href={`/flashcards?course=${course.slug}&lesson=${lesson.slug}`}><Button variant="outline" size="sm">Review lesson cards</Button></Link>
+            <Link href={getLessonPracticeHref('quiz', course, lesson)}><Button variant="outline" size="sm">Practice this lesson</Button></Link>
+            <Link href={getLessonPracticeHref('flashcards', course, lesson)}><Button variant="outline" size="sm">Review lesson cards</Button></Link>
           </div>
         </Card>
       </section>
