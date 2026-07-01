@@ -19,10 +19,13 @@ describe('search', () => {
   })
 
   it('ranks exact title matches above description-only matches', () => {
-    const results = rankSearchResults('SCBA')
+    const results = rankSearchResults('SCBA', [
+      { id: 'description-only', type: 'lesson', title: 'Air management', description: 'Includes SCBA checks.', href: '/lesson', keywords: [] },
+      { id: 'exact', type: 'course', title: 'SCBA', description: 'Self-contained breathing apparatus.', href: '/course', keywords: [] },
+    ])
 
-    expect(results[0]?.title.toLowerCase()).toContain('scba')
-    expect(results[0]?.score).toBeGreaterThan(results.at(-1)?.score ?? 0)
+    expect(results[0]?.id).toBe('exact')
+    expect(results[0]?.score).toBeGreaterThan(results[1]?.score ?? 0)
   })
 
   it('requires every query token to match somewhere in the indexed material', () => {

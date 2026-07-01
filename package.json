@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "supabase:migrate": "node scripts/apply-supabase-migration.mjs",
-    "verify": "npm run test && npm run typecheck && npm run lint"
+    "verify": "npm run verify:references && npm run test && npm run typecheck && npm run lint",
+    "verify:references": "node scripts/verify-catalog-references.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
