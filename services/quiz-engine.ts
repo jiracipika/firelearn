@@ -105,13 +105,35 @@ export const DEFAULT_EXAM_CONFIG: ExamConfig = {
  * Builds a mixed-topic exam from all quiz questions across the academy.
  * In exam mode, questions are shuffled, options are shuffled,
  * and a time limit applies.
+ *
+ * If `weakTopicIds` is provided, questions touching those topics are
+ * prioritized in the selection so the exam targets the learner's gaps.
  */
-export function buildExamQuestionBank(allQuestions: QuizQuestion[], config: ExamConfig = DEFAULT_EXAM_CONFIG) {
-  const shuffled = [...allQuestions].sort(() => Math.random() - 0.5)
-  const selected = shuffled.slice(0, Math.min(config.questionCount, shuffled.length))
-  return selected.map((question) => ({
+export function buildExamQuestionBank(
+  allQuestions: QuizQuestion[],
+  config: ExamConfig = DEFAULT_EXAM_CONFIG,
+  options?: { weakTopicIds?: string[]; seed?: number },
+) {
+  const weakSet = new Set(options?.weakTopicIds ?? [])
+  const seed = options?.seed ?? Date.now()
+  const target = Math.min(config.questionCount, allQuestions.length)
+
+  // Partition into weak-topic and remaining, shuffle each deterministically
+  const weakPool = allQuestions.filter((q) => q.topicIds.some((t) => weakSet.has(t)))
+  const restPool = allQuestions.filter((q) => !q.topicIds.some((t) => weakSet.has(t)))
+  const shuffledWeak = seededShuffleQuestions(weakPool, seed)
+  const shuffledRest = seededShuffleQuestions(restPool, seed + 1)
+
+  // Take weak-topic questions first, fill from the rest
+  const selected = [...shuffledWeak, ...shuffledRest].slice(0, target)
+
+  return selected.map((question, i) => ({
     ...question,
-    options: [...question.options].sort(() => Math.random() - 0.5),
+    options: seededShuffle(question.options, hashCode(`${question.id}-opt-${seed}-${i}`)),
     timeLimitSeconds: config.timeLimitMinutes * 60,
   }))
+}
+
+function seededShuffleQuestions(questions: QuizQuestion[], seed: number): QuizQuestion[] {
+  return seededShuffle(questions, seed)
 }

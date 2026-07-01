@@ -70,4 +70,35 @@ describe('exam mode', () => {
     expect(exam).toHaveLength(DEFAULT_EXAM_CONFIG.questionCount)
     expect(exam.every((question) => question.timeLimitSeconds === DEFAULT_EXAM_CONFIG.timeLimitMinutes * 60)).toBe(true)
   })
+
+  it('prioritizes weak-topic questions when weakTopicIds provided', () => {
+    const mixedBank: QuizQuestion[] = Array.from({ length: 50 }, (_, i) => ({
+      id: `q-${i}`,
+      type: 'multiple-choice' as const,
+      prompt: `Question ${i} prompt here`,
+      options: ['A', 'B', 'C', 'D'],
+      correctAnswerIds: ['A'],
+      explanation: `Explanation for question ${i} here`,
+      topicIds: i < 10 ? ['weak-topic'] : ['other-topic'],
+    }))
+
+    const exam = buildExamQuestionBank(
+      mixedBank,
+      { questionCount: 15, timeLimitMinutes: 30, passingScorePercent: 80 },
+      { weakTopicIds: ['weak-topic'], seed: 42 },
+    )
+
+    expect(exam).toHaveLength(15)
+    // All 10 weak-topic questions should be in the exam (prioritized)
+    const weakCount = exam.filter((q) => q.topicIds.includes('weak-topic')).length
+    expect(weakCount).toBe(10)
+  })
+
+  it('produces deterministic output for the same seed', () => {
+    const exam1 = buildExamQuestionBank(bank, { questionCount: 10, timeLimitMinutes: 30, passingScorePercent: 80 }, { seed: 999 })
+    const exam2 = buildExamQuestionBank(bank, { questionCount: 10, timeLimitMinutes: 30, passingScorePercent: 80 }, { seed: 999 })
+
+    expect(exam1.map((q) => q.id)).toEqual(exam2.map((q) => q.id))
+    expect(exam1.map((q) => q.options)).toEqual(exam2.map((q) => q.options))
+  })
 })
