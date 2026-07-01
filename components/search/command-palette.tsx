@@ -12,12 +12,14 @@ export function CommandPalette() {
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState('')
+  const [activeIndex, setActiveIndex] = React.useState(0)
   const index = React.useMemo(() => buildSearchIndex(), [])
   const results = React.useMemo(() => searchFireLearn(query, index).slice(0, 8), [index, query])
 
   const closePalette = React.useCallback(() => {
     setOpen(false)
     setQuery('')
+    setActiveIndex(0)
   }, [])
 
   React.useEffect(() => {
@@ -37,6 +39,20 @@ export function CommandPalette() {
     router.push(href)
   }
 
+  function handleKeyDown(event: React.KeyboardEvent) {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setActiveIndex((current) => Math.min(current + 1, results.length - 1))
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setActiveIndex((current) => Math.max(current - 1, 0))
+    } else if (event.key === 'Enter') {
+      event.preventDefault()
+      const selected = results[activeIndex]
+      if (selected) go(selected.href)
+    }
+  }
+
   if (!open) return null
 
   return <div className="fixed inset-0 z-[100] bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Command palette">
@@ -46,7 +62,8 @@ export function CommandPalette() {
         <Input
           className="border-0 bg-transparent px-0 shadow-none focus:ring-0"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => { setQuery(event.target.value); setActiveIndex(0) }}
+          onKeyDown={handleKeyDown}
           placeholder="Search lessons, courses, flashcards, topics..."
           autoFocus
           aria-label="Command palette search"
@@ -56,12 +73,12 @@ export function CommandPalette() {
         </button>
       </div>
       <div className="max-h-[60vh] overflow-y-auto p-2">
-        {results.map((result) => (
+        {results.map((result, i) => (
           <button
             key={`${result.type}-${result.id}`}
             type="button"
             onClick={() => go(result.href)}
-            className="block w-full rounded-xl px-3 py-3 text-left transition hover:bg-elevated"
+            className={`block w-full rounded-xl px-3 py-3 text-left transition hover:bg-elevated ${i === activeIndex ? 'bg-elevated ring-1 ring-primary/30' : ''}`}
           >
             <div className="flex flex-wrap items-center gap-2">
               <Badge>{result.type}</Badge>
@@ -73,7 +90,7 @@ export function CommandPalette() {
         {results.length === 0 && <div className="px-4 py-10 text-center text-sm text-muted-foreground">No results found.</div>}
       </div>
       <div className="flex items-center justify-between border-t border-border px-4 py-2 text-xs text-muted">
-        <span>Tip: press Cmd/Ctrl + K anywhere</span>
+        <span>↑↓ to navigate · Enter to select · Esc to close</span>
         <Link href="/search" onClick={closePalette} className="font-semibold text-primary">Open full search</Link>
       </div>
     </div>
