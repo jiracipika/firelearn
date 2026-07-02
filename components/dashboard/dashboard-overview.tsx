@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Activity, BookOpen, Brain, Flame, Target, Trophy, UploadCloud } from 'lucide-react'
+import { Activity, BookOpen, Brain, ClipboardCheck, Flame, Target, Trophy, UploadCloud } from 'lucide-react'
 import Link from 'next/link'
 import { academyCourses, getFeaturedLesson } from '@/data/academy'
 import { learnerProgress } from '@/data/progress'
@@ -10,6 +10,7 @@ import { useStudyActivity } from '@/hooks/use-study-activity'
 import { getWeakTopicSummary } from '@/services/offline-progress'
 import { aggregateLearnerStats } from '@/services/gamification-aggregator'
 import { chooseNextAction } from '@/services/next-action'
+import { getWeeklyStudyInsight } from '@/services/study-insight'
 import type { LeaderboardEntry } from '@/services/gamification'
 import { AppShell } from '@/components/layout/app-shell'
 import { CourseCard } from '@/components/course/course-card'
@@ -61,6 +62,11 @@ export function DashboardOverview() {
   })()
 
   const totalXp = learnerProgress.xp + stats.xp
+  const studyInsight = getWeeklyStudyInsight({
+    weeklyMinutes: studyActivity.weeklyMinutes,
+    dailyGoalMinutes: learnerProgress.dailyGoalMinutes,
+    streakDays: studyActivity.streakDays,
+  })
   const learnerEntry: LeaderboardEntry = {
     id: 'current-learner',
     name: 'You',
@@ -157,8 +163,18 @@ export function DashboardOverview() {
     <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
       <LeaderboardPanel compact learnerEntry={learnerEntry} />
       <Card className="space-y-3">
-        <h2 className="font-bold text-white">Activity notes</h2>
-        <p className="text-sm leading-6 text-muted-foreground">Streaks and weekly minutes now come from real recorded study activity: lesson completions, quizzes, flashcards, and saved timer sessions.</p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Activity coach</p>
+            <h2 className="mt-1 font-bold text-white">{studyInsight.title}</h2>
+          </div>
+          <ClipboardCheck className="shrink-0 text-red-400" size={22} />
+        </div>
+        <p className="text-sm leading-6 text-muted-foreground">{studyInsight.summary}</p>
+        <div className="rounded-xl border border-border bg-elevated/40 px-4 py-3">
+          <p className="text-xs uppercase tracking-[0.14em] text-muted">{studyInsight.metricLabel}</p>
+          <p className="mt-1 text-2xl font-bold text-white">{studyInsight.metricValue}</p>
+        </div>
       </Card>
     </section>
 
