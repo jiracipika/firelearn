@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { BookOpen, Brain, PlayCircle, Search } from 'lucide-react'
+import { BookOpen, Brain, PlayCircle, Search, X } from 'lucide-react'
 import { categories } from '@/data/categories'
 import { academyCourses } from '@/data/academy'
 import { AppShell } from '@/components/layout/app-shell'
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils'
 export function CourseCatalog() {
   const [query, setQuery] = React.useState('')
   const [activeCategory, setActiveCategory] = React.useState<string | null>(null)
+  const searchInputRef = React.useRef<HTMLInputElement>(null)
   const normalized = query.trim().toLowerCase()
 
   const courses = academyCourses.filter((course) => {
@@ -43,6 +44,20 @@ export function CourseCatalog() {
     )
   }, [])
 
+  React.useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null
+      const typing = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable
+      if (typing) return
+      if (event.key === '/') {
+        event.preventDefault()
+        searchInputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   return <AppShell><div className="space-y-8">
     <section className="grid gap-6 lg:grid-cols-[1fr_0.8fr] lg:items-end">
       <div className="space-y-4">
@@ -67,7 +82,21 @@ export function CourseCatalog() {
 
     <div className="relative">
       <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" size={18} />
-      <Input className="pl-11" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search courses, disciplines, tactics..." aria-label="Search courses" />
+      <Input ref={searchInputRef} className="pl-11 pr-24" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search courses, disciplines, tactics..." aria-label="Search courses" />
+      <div className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-2">
+        {query ? (
+          <button
+            type="button"
+            onClick={() => { setQuery(''); searchInputRef.current?.focus() }}
+            className="pointer-events-auto inline-flex size-6 items-center justify-center rounded text-muted transition hover:bg-elevated hover:text-white"
+            aria-label="Clear search"
+          >
+            <X size={14} />
+          </button>
+        ) : (
+          <kbd className="hidden rounded border border-border bg-elevated/60 px-1.5 py-0.5 text-[10px] text-muted sm:inline-block">/</kbd>
+        )}
+      </div>
     </div>
 
     <div className="flex flex-wrap gap-2">
@@ -92,8 +121,23 @@ export function CourseCatalog() {
       {courses.map((course) => <CourseCard key={course.id} course={course} />)}
     </section>
 
-    {courses.length === 0 && (
-      <Card className="py-12 text-center text-muted-foreground">No courses match your search.</Card>
+    {courses.length === 0 ? (
+      <Card className="py-12 text-center text-muted-foreground">
+        <p>No courses match your search.</p>
+        {(query || activeCategory) && (
+          <button
+            type="button"
+            onClick={() => { setQuery(''); setActiveCategory(null); searchInputRef.current?.focus() }}
+            className="mt-2 inline-block text-sm font-semibold text-primary hover:opacity-80"
+          >
+            Clear filters
+          </button>
+        )}
+      </Card>
+    ) : (
+      <p className="text-center text-xs text-muted">
+        Showing {courses.length} of {academyCourses.length} courses
+      </p>
     )}
   </div></AppShell>
 }
