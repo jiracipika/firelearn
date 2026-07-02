@@ -53,7 +53,7 @@ export default function ProfilePage() {
         </div>
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Learner profile</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-white">Your Firefighter Profile</h1>
+          <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-gradient-fire">Your Firefighter Profile</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{authenticated ? 'Connected to Supabase. Progress saves automatically.' : 'Not signed in. Sign in from the dashboard to save progress.'}</p>
         </div>
         {authenticated && (
@@ -65,7 +65,7 @@ export default function ProfilePage() {
       </Card>
       <Card className="grid gap-3 sm:grid-cols-3">
         {profileStats.map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-border bg-elevated/40 p-5">
+          <div key={stat.label} className="stat-tile-hover rounded-2xl border border-border bg-elevated/40 p-5">
             <div className={cn('inline-flex size-12 items-center justify-center rounded-xl', stat.bg)}>
               <stat.icon className={stat.color} size={22} />
             </div>

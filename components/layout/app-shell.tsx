@@ -41,8 +41,8 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-6">
           <Link href="/" className="group flex items-center gap-2.5" aria-label="FireLearn home">
-            <span className="relative flex size-9 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-primary to-primary-dim shadow-[0_0_25px_rgb(255_74_46_/_0.35)]">
-              <Flame size={18} className="text-white" aria-hidden />
+            <span className="relative flex size-9 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-primary to-primary-dim shadow-[0_0_25px_rgb(255_74_46_/_0.35)] transition-shadow duration-300 group-hover:shadow-[0_0_35px_rgb(255_74_46_/_0.55)]">
+              <Flame size={18} className="text-white animate-flame-flicker" aria-hidden />
             </span>
             <span className="flex flex-col leading-none">
               <span className="text-sm font-bold tracking-tight">FireLearn</span>
@@ -55,9 +55,9 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition',
+                  'inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                   isActive(item.href)
-                    ? 'bg-elevated text-white'
+                    ? 'bg-gradient-to-br from-primary/20 to-primary/5 text-white shadow-[inset_0_0_0_1px_rgb(255_74_46_/_0.2)]'
                     : 'text-muted-foreground hover:bg-elevated/60 hover:text-white'
                 )}
               >

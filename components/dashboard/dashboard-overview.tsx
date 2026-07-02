@@ -85,11 +85,11 @@ export function DashboardOverview() {
       <Card className="relative overflow-hidden p-6 md:p-8">
         <div className="absolute right-0 top-0 size-40 rounded-full bg-primary/15 blur-3xl" />
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Command dashboard</p>
-        <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-[-0.03em] md:text-5xl">Keep your fireground knowledge mission-ready.</h1>
+        <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-[-0.03em] md:text-5xl text-gradient-fire">Keep your fireground knowledge mission-ready.</h1>
         <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Track completions, quiz history, and weak topics from one focused cockpit.</p>
         <div className="mt-6 grid gap-3 sm:grid-cols-4">
           {statTiles.map((stat) => (
-            <div key={stat.label} className="rounded-2xl border border-border bg-elevated/40 p-4">
+            <div key={stat.label} className="stat-tile-hover rounded-2xl border border-border bg-elevated/40 p-4">
               <div className={cn('inline-flex size-10 items-center justify-center rounded-xl', stat.bg)}>
                 <stat.icon className={stat.color} size={20} />
               </div>
@@ -106,7 +106,7 @@ export function DashboardOverview() {
               <p className="text-sm text-muted-foreground">Daily goal</p>
               <p className="mt-1 text-3xl font-bold text-white">{studyActivity.minutesToday}<span className="text-lg text-muted">/{learnerProgress.dailyGoalMinutes}m</span></p>
             </div>
-            <Activity className="text-red-400" size={24} />
+            <Activity className="text-red-400 animate-pulse-glow" size={24} />
           </div>
           <Progress value={dailyProgress} className="mt-4" />
         </div>
@@ -119,7 +119,7 @@ export function DashboardOverview() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Continue learning</p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">{featuredLesson?.title ?? 'Start your first lesson'}</h2>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-gradient-fire">{featuredLesson?.title ?? 'Start your first lesson'}</h2>
           </div>
           <Brain className="text-red-400" size={24} />
         </div>

@@ -42,7 +42,7 @@ export function LandingPage() {
             <Sparkles size={13} /> Firefighter training, rebuilt
           </div>
           <h1 className="max-w-5xl text-5xl font-bold tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
-            FireLearn
+            <span className="text-gradient-fire">FireLearn</span>
           </h1>
           <p className="max-w-2xl text-lg leading-7 text-muted-foreground sm:text-xl sm:leading-8">
             A firefighter learning console with embedded video tutorials, scenario-heavy quizzes, flashcards, and progress tracking built around supervised training and local SOPs.
@@ -57,8 +57,8 @@ export function LandingPage() {
           </div>
           <div className="grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-5">
             {stats.map(([value, label]) => (
-              <div key={label} className="rounded-lg border border-border-bright bg-background/70 p-4 backdrop-blur">
-                <p className="text-3xl font-bold tracking-tight text-white">{value}</p>
+              <div key={label} className="stat-tile-hover rounded-lg border border-border-bright bg-background/70 p-4 backdrop-blur">
+                <p className="text-3xl font-bold tracking-tight text-gradient-flame">{value}</p>
                 <p className="mt-1 text-xs text-muted">{label}</p>
               </div>
             ))}
@@ -126,7 +126,7 @@ export function LandingPage() {
       <Card className="grid gap-6 overflow-hidden border-border-bright bg-gradient-to-r from-card via-card to-elevated p-8 md:grid-cols-[1fr_auto] md:items-center">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Ready for the next rep?</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Build mastery before the alarm drops.</h2>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-gradient-fire">Build mastery before the alarm drops.</h2>
           <p className="mt-2 max-w-2xl text-muted-foreground">Jump into the dashboard, run mixed practice, or clear today&apos;s review queue.</p>
         </div>
         <Link href="/dashboard">
