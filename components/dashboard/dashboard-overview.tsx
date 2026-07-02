@@ -7,6 +7,7 @@ import { academyCourses, getFeaturedLesson } from '@/data/academy'
 import { learnerProgress } from '@/data/progress'
 import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
 import { useStudyActivity } from '@/hooks/use-study-activity'
+import { useFlashcardQueueSummary } from '@/hooks/use-flashcard-queue-summary'
 import { getWeakTopicSummary } from '@/services/offline-progress'
 import { aggregateLearnerStats } from '@/services/gamification-aggregator'
 import { chooseNextAction } from '@/services/next-action'
@@ -31,13 +32,15 @@ export function DashboardOverview() {
   const featuredLesson = getFeaturedLesson()
   const { completedLessonIds, quizHistory, available, authenticated, loading, signIn, error, projectRef, refresh } = useSupabaseProgress()
   const studyActivity = useStudyActivity()
+  const flashcardQueue = useFlashcardQueueSummary()
   const weakTopics = getWeakTopicSummary(quizHistory)
+  const flashcardsReviewed = studyActivity.activity.filter((entry) => entry.kind === 'flashcard_review').length
   const nextAction = chooseNextAction({
     courses: academyCourses,
     completedLessonIds,
     quizHistory,
     weakTopicIds: weakTopics.map((topic) => topic.topicId),
-    dueFlashcardCount: 0,
+    dueFlashcardCount: flashcardQueue.dueCount,
   })
   const lessonIds = allLessonIds()
   const completion = lessonIds.length === 0 ? 0 : Math.round((completedLessonIds.length / lessonIds.length) * 100)
@@ -56,7 +59,7 @@ export function DashboardOverview() {
     return aggregateLearnerStats({
       completedLessons,
       quizAttempts: quizHistory,
-      flashcardsReviewed: 0,
+      flashcardsReviewed,
       streakDays: studyActivity.streakDays,
     })
   })()
@@ -116,7 +119,14 @@ export function DashboardOverview() {
           </div>
           <Progress value={dailyProgress} className="mt-4" />
         </div>
-        <p className="text-xs leading-5 text-muted-foreground">Short reps win. Clear one lesson, one quiz, or one flashcard queue today.</p>
+        <div className="grid gap-2 text-xs leading-5 text-muted-foreground">
+          <p>Short reps win. Clear one lesson, one quiz, or one flashcard queue today.</p>
+          <Link href="/flashcards" className="rounded-xl border border-border bg-elevated/40 px-3 py-2 transition hover:border-primary/50 hover:text-white">
+            {flashcardQueue.dueCount > 0
+              ? `${flashcardQueue.dueCount} flashcard${flashcardQueue.dueCount === 1 ? '' : 's'} due (${flashcardQueue.overdue} overdue)`
+              : `${flashcardQueue.totalCards} flashcards scheduled · queue clear`}
+          </Link>
+        </div>
       </Card>
     </section>
 
