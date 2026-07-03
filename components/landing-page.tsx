@@ -29,7 +29,7 @@ export function LandingPage() {
   const featured = academyCourses[0]
   return <AppShell fullBleed>
     <section
-      className="relative isolate overflow-hidden px-4 pb-16 pt-16 sm:px-6 lg:pb-20 lg:pt-24"
+      className="relative isolate overflow-hidden px-4 pb-12 pt-10 sm:px-6 sm:pt-16 lg:pb-20 lg:pt-24"
       style={{
         backgroundImage: "linear-gradient(90deg, rgb(7 9 13 / 0.94), rgb(7 9 13 / 0.72) 48%, rgb(7 9 13 / 0.48)), linear-gradient(180deg, transparent 70%, #07090d), url('/hero-fireground.png')",
         backgroundPosition: 'center',
@@ -37,17 +37,17 @@ export function LandingPage() {
       }}
     >
       <div className="mx-auto max-w-7xl">
-        <div className="animate-fade-in-up max-w-3xl space-y-7">
-          <div className="inline-flex items-center gap-2 rounded-md border border-border-bright bg-background/70 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-red-100 backdrop-blur">
+        <div className="animate-fade-in-up max-w-3xl space-y-6 sm:space-y-7">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border-bright bg-background/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-red-100 backdrop-blur">
             <Sparkles size={13} /> Firefighter training, rebuilt
           </div>
-          <h1 className="max-w-5xl text-5xl font-bold tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
+          <h1 className="max-w-5xl text-4xl font-bold tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
             <span className="text-gradient-fire">FireLearn</span>
           </h1>
-          <p className="max-w-2xl text-lg leading-7 text-muted-foreground sm:text-xl sm:leading-8">
+          <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-xl sm:leading-8">
             A firefighter learning console with embedded video tutorials, scenario-heavy quizzes, flashcards, and progress tracking built around supervised training and local SOPs.
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="grid gap-3 sm:flex sm:flex-wrap">
             <Link href="/dashboard">
               <Button size="lg">Start learning <ArrowRight size={18} /></Button>
             </Link>
@@ -55,9 +55,9 @@ export function LandingPage() {
               <Button variant="outline" size="lg">Browse academy</Button>
             </Link>
           </div>
-          <div className="grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-5">
+          <div className="mobile-snap-row max-w-3xl sm:grid sm:grid-cols-5 sm:gap-3">
             {stats.map(([value, label]) => (
-              <div key={label} className="stat-tile-hover rounded-lg border border-border-bright bg-background/70 p-4 backdrop-blur">
+              <div key={label} className="stat-tile-hover min-w-32 snap-start rounded-2xl border border-border-bright bg-background/70 p-4 backdrop-blur sm:min-w-0">
                 <p className="text-3xl font-bold tracking-tight text-gradient-flame">{value}</p>
                 <p className="mt-1 text-xs text-muted">{label}</p>
               </div>
@@ -65,7 +65,7 @@ export function LandingPage() {
           </div>
         </div>
 
-        <Card className="mt-10 max-w-3xl animate-fade-in-up overflow-hidden border-border-bright bg-background/78 p-0" >
+        <Card className="mt-8 max-w-3xl sm:mt-10 animate-fade-in-up overflow-hidden border-border-bright bg-background/78 p-0" >
           <div className="border-b border-border bg-elevated/50 px-5 py-4">
             <div className="flex items-center justify-between">
               <p className="font-semibold text-white">Today&apos;s training queue</p>
@@ -83,20 +83,20 @@ export function LandingPage() {
                 <span>{featured?.estimatedMinutes ?? 0} min</span>
               </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {[
                 { label: 'Tutorials', value: String(featured?.modules[0]?.lessons[0]?.videos.length ?? 3), icon: PlayCircle, tone: 'text-info' },
                 { label: 'Weak topic', value: 'SCBA', icon: ShieldAlert, tone: 'text-amber-300' },
                 { label: 'Goal', value: '25m', icon: Gauge, tone: 'text-green-300' },
               ].map((item) => (
-                <div key={item.label} className="rounded-lg border border-border bg-elevated/40 p-4">
+                <div key={item.label} className="rounded-2xl border border-border bg-elevated/40 p-3 sm:p-4">
                   <item.icon className={item.tone} size={18} />
                   <p className="mt-2 text-lg font-bold text-white">{item.value}</p>
                   <p className="text-xs text-muted">{item.label}</p>
                 </div>
               ))}
             </div>
-            <div className="rounded-lg border border-border bg-elevated/40 p-4">
+            <div className="rounded-2xl border border-border bg-elevated/40 p-3 sm:p-4">
               <div className="flex items-start gap-3">
                 <Radio className="mt-0.5 shrink-0 text-amber-300" size={16} />
                 <div>
@@ -110,9 +110,9 @@ export function LandingPage() {
       </div>
     </section>
 
-    <section className="mx-auto grid max-w-7xl gap-4 px-4 py-16 sm:px-6 md:grid-cols-4">
+    <section className="mobile-snap-row mx-auto max-w-7xl px-4 py-12 sm:grid sm:grid-cols-2 sm:gap-4 sm:px-6 md:grid-cols-4 md:py-16">
       {pillars.map((pillar) => (
-        <Card key={pillar.title} className="group transition duration-200 hover:-translate-y-1 hover:border-primary/30">
+        <Card key={pillar.title} className="group min-w-[82vw] snap-start transition duration-200 sm:min-w-0 hover:-translate-y-1 hover:border-primary/30">
           <div className="mb-4 inline-flex size-12 items-center justify-center rounded-lg bg-primary/10">
             <pillar.icon className="text-primary" size={22} aria-hidden />
           </div>
@@ -123,7 +123,7 @@ export function LandingPage() {
     </section>
 
     <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6">
-      <Card className="grid gap-6 overflow-hidden border-border-bright bg-gradient-to-r from-card via-card to-elevated p-8 md:grid-cols-[1fr_auto] md:items-center">
+      <Card className="grid gap-6 overflow-hidden border-border-bright bg-gradient-to-r from-card via-card to-elevated p-5 sm:p-8 md:grid-cols-[1fr_auto] md:items-center">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Ready for the next rep?</p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-gradient-fire">Build mastery before the alarm drops.</h2>
