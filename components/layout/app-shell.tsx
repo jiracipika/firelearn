@@ -4,7 +4,7 @@ import * as React from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BookOpen, Brain, Flame, GraduationCap, LayoutDashboard, Menu, Moon, Search, ShieldCheck, Sun, X } from 'lucide-react'
+import { BookOpen, Brain, Flame, GraduationCap, LayoutDashboard, Moon, Search, ShieldCheck, Sun } from 'lucide-react'
 import { educationalDisclaimer } from '@/data/academy'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 const CommandPalette = dynamic(() => import('@/components/search/command-palette').then((module) => module.CommandPalette), { ssr: false })
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Today', icon: LayoutDashboard },
   { href: '/courses', label: 'Academy', icon: GraduationCap },
   { href: '/quiz', label: 'Quiz', icon: Brain },
   { href: '/flashcards', label: 'Cards', icon: BookOpen },
@@ -20,7 +20,6 @@ const navItems = [
 
 export function AppShell({ children, fullBleed = false }: { children: React.ReactNode; fullBleed?: boolean }) {
   const pathname = usePathname()
-  const [mobileOpen, setMobileOpen] = React.useState(false)
   const [lightMode, setLightMode] = React.useState(() => {
     if (typeof window === 'undefined') return false
     return window.localStorage.getItem('firelearn.theme') === 'light'
@@ -35,10 +34,13 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
     return pathname === href || pathname.startsWith(href + '/')
   }
 
-  return <div className="min-h-screen pb-20 md:pb-0">
+  const mobileTabs = [...navItems, { href: '/profile', label: 'Profile', icon: ShieldCheck }]
+
+  return <div className="min-h-screen pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
+    <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-primary focus:px-4 focus:py-3 focus:text-sm focus:font-bold focus:text-primary-foreground">Skip to content</a>
     <CommandPalette />
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-2xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/86 pt-[env(safe-area-inset-top)] backdrop-blur-2xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-6">
           <Link href="/" className="group flex items-center gap-2.5" aria-label="FireLearn home">
             <span className="relative flex size-9 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-primary to-primary-dim shadow-[0_0_25px_rgb(255_74_46_/_0.35)] transition-shadow duration-300 group-hover:shadow-[0_0_35px_rgb(255_74_46_/_0.55)]">
@@ -74,54 +76,24 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
           <button
             type="button"
             onClick={() => setLightMode((value) => !value)}
-            className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg px-3 text-xs font-semibold text-muted-foreground transition hover:bg-elevated hover:text-white"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-xs font-semibold text-muted-foreground transition hover:bg-elevated hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
             aria-label="Toggle theme"
           >
             {lightMode ? <Moon size={16} /> : <Sun size={16} />}
             <span className="hidden lg:inline">{lightMode ? 'Dark' : 'Light'}</span>
           </button>
-          <Link href="/profile">
+          <Link href="/profile" className="hidden md:inline-flex">
             <Button variant="ghost" size="sm"><ShieldCheck size={16} /> <span className="hidden lg:inline">Profile</span></Button>
           </Link>
-          <button
-            className="inline-flex size-10 items-center justify-center rounded-lg border border-border-bright bg-elevated/60 text-white md:hidden"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle navigation menu"
-            aria-expanded={mobileOpen}
-          >
-            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
         </div>
       </div>
-      {mobileOpen && (
-        <nav className="border-t border-border bg-background/95 px-4 py-3 md:hidden" aria-label="Mobile navigation">
-          <div className="space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition',
-                  isActive(item.href)
-                    ? 'bg-elevated text-white'
-                    : 'text-muted-foreground hover:bg-elevated/60 hover:text-white'
-                )}
-              >
-                <item.icon size={18} />
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </nav>
-      )}
     </header>
-    <main className={fullBleed ? '' : 'mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-12'}>{children}</main>
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-2 py-2 backdrop-blur md:hidden" aria-label="Bottom navigation">
-      <div className="grid grid-cols-4 gap-1">
-        {navItems.map((item) => (
-          <Link key={item.href} href={item.href} className={cn('flex flex-col items-center gap-1 rounded-lg px-2 py-2 text-[11px] font-medium transition', isActive(item.href) ? 'bg-elevated text-white' : 'text-muted-foreground')}>
-            <item.icon size={18} />
+    <main id="main-content" className={fullBleed ? '' : 'mx-auto max-w-7xl px-4 py-6 sm:px-6 md:py-12'}>{children}</main>
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur-2xl md:hidden" aria-label="Primary navigation">
+      <div className="grid grid-cols-5 gap-1">
+        {mobileTabs.map((item) => (
+          <Link key={item.href} href={item.href} aria-current={isActive(item.href) ? 'page' : undefined} className={cn('flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60', isActive(item.href) ? 'bg-gradient-to-b from-primary/18 to-primary/8 text-white shadow-[inset_0_0_0_1px_rgb(255_74_46_/_0.22)]' : 'text-muted-foreground')}>
+            <item.icon size={19} aria-hidden />
             {item.label}
           </Link>
         ))}

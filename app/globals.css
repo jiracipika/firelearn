@@ -181,3 +181,55 @@ body::before {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+@layer utilities {
+  .mobile-snap-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-inline: -1rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding-inline: 1rem;
+    scroll-padding-inline: 1rem;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-snap-row::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (width >= 40rem) {
+  .mobile-snap-row {
+    margin-inline: 0;
+    overflow-x: visible;
+    padding-inline: 0;
+    scroll-snap-type: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --color-muted: #aeb8c8;
+    --color-muted-foreground: #e1e7f0;
+    --color-border: #617086;
+    --color-border-bright: #8b9ab0;
+  }
+
+  button, a, input, select, textarea {
+    outline-offset: 3px;
+  }
+}
+
+@media (forced-colors: active) {
+  * {
+    forced-color-adjust: auto;
+  }
+}
+
+button, a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
