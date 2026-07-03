@@ -14,6 +14,8 @@ function makeItem(entity: SyncQueueItem['entity'], payload: Record<string, unkno
 }
 
 describe('Supabase sync adapter', () => {
+  const userId = '00000000-0000-4000-8000-000000000001'
+
   it('replays lesson completions with upsert semantics', async () => {
     const calls: Array<{ table: string; method: string; payload: unknown }> = []
     const client: MinimalSupabaseSyncClient = {
@@ -31,7 +33,7 @@ describe('Supabase sync adapter', () => {
       },
     }
 
-    const result = await replaySyncQueueToSupabase(client, [makeItem('lesson_completion', { lessonId: 'lesson-1', courseId: 'course-1', xpAwarded: 25 })])
+    const result = await replaySyncQueueToSupabase(client, [makeItem('lesson_completion', { lessonId: 'lesson-1', courseId: 'course-1', xpAwarded: 25 })], userId)
 
     expect(result.syncedIds).toEqual(['lesson_completion-1'])
     expect(calls).toEqual([
@@ -39,6 +41,7 @@ describe('Supabase sync adapter', () => {
         table: 'lesson_completions',
         method: 'upsert',
         payload: {
+          user_id: userId,
           lesson_id: 'lesson-1',
           course_id: 'course-1',
           xp_awarded: 25,
@@ -73,7 +76,7 @@ describe('Supabase sync adapter', () => {
       reviewCount: 2,
       nextReview: '2026-07-01T00:00:00.000Z',
       reviewedAt: '2026-06-28T00:00:00.000Z',
-    })])
+    })], userId)
 
     expect(result.syncedIds).toEqual(['flashcard_review-1'])
     expect(calls).toEqual([
@@ -81,6 +84,7 @@ describe('Supabase sync adapter', () => {
         table: 'flashcard_reviews',
         method: 'insert',
         payload: {
+          user_id: userId,
           card_id: 'card-1',
           rating: 'good',
           ease_factor: 2.5,
@@ -108,7 +112,7 @@ describe('Supabase sync adapter', () => {
       },
     }
 
-    const result = await replaySyncQueueToSupabase(client, [makeItem('quiz_attempt', { quizId: 'quiz-1', scorePercent: 80, weakTopicIds: ['scba'], completedAt: '2026-06-28T00:00:00.000Z' })])
+    const result = await replaySyncQueueToSupabase(client, [makeItem('quiz_attempt', { quizId: 'quiz-1', scorePercent: 80, weakTopicIds: ['scba'], completedAt: '2026-06-28T00:00:00.000Z' })], userId)
 
     expect(result.syncedIds).toEqual([])
     expect(result.failed).toEqual([{ id: 'quiz_attempt-1', message: 'network down' }])

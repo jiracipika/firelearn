@@ -14,8 +14,9 @@ export type SyncReplayResult = {
   failed: Array<{ id: string; message: string }>
 }
 
-function lessonCompletionPayload(item: SyncQueueItem) {
+function lessonCompletionPayload(item: SyncQueueItem, userId: string) {
   return {
+    user_id: userId,
     lesson_id: String(item.payload.lessonId),
     course_id: String(item.payload.courseId),
     xp_awarded: Number(item.payload.xpAwarded ?? 0),
@@ -23,8 +24,9 @@ function lessonCompletionPayload(item: SyncQueueItem) {
   }
 }
 
-function quizAttemptPayload(item: SyncQueueItem) {
+function quizAttemptPayload(item: SyncQueueItem, userId: string) {
   return {
+    user_id: userId,
     quiz_id: String(item.payload.quizId),
     score_percent: Number(item.payload.scorePercent ?? 0),
     weak_topic_ids: Array.isArray(item.payload.weakTopicIds) ? item.payload.weakTopicIds : [],
@@ -38,8 +40,9 @@ async function normalizeMutationResult(result: unknown): Promise<SupabaseMutatio
   return { error: awaited?.error ?? null }
 }
 
-function flashcardReviewPayload(item: SyncQueueItem) {
+function flashcardReviewPayload(item: SyncQueueItem, userId: string) {
   return {
+    user_id: userId,
     card_id: String(item.payload.cardId),
     rating: String(item.payload.rating),
     ease_factor: Number(item.payload.easeFactor ?? 2.5),
@@ -51,28 +54,28 @@ function flashcardReviewPayload(item: SyncQueueItem) {
   }
 }
 
-async function replayItem(client: MinimalSupabaseSyncClient, item: SyncQueueItem): Promise<SupabaseMutationResult> {
+async function replayItem(client: MinimalSupabaseSyncClient, item: SyncQueueItem, userId: string): Promise<SupabaseMutationResult> {
   if (item.entity === 'lesson_completion') {
-    return normalizeMutationResult(client.from('lesson_completions').upsert(lessonCompletionPayload(item), { onConflict: 'user_id,lesson_id' }))
+    return normalizeMutationResult(client.from('lesson_completions').upsert(lessonCompletionPayload(item, userId), { onConflict: 'user_id,lesson_id' }))
   }
 
   if (item.entity === 'quiz_attempt') {
-    return normalizeMutationResult(client.from('quiz_attempts').insert(quizAttemptPayload(item)))
+    return normalizeMutationResult(client.from('quiz_attempts').insert(quizAttemptPayload(item, userId)))
   }
 
   if (item.entity === 'flashcard_review') {
-    return normalizeMutationResult(client.from('flashcard_reviews').insert(flashcardReviewPayload(item)))
+    return normalizeMutationResult(client.from('flashcard_reviews').insert(flashcardReviewPayload(item, userId)))
   }
 
   return { error: { message: `Unsupported sync entity: ${item.entity}` } }
 }
 
-export async function replaySyncQueueToSupabase(client: MinimalSupabaseSyncClient, queue: SyncQueueItem[]): Promise<SyncReplayResult> {
+export async function replaySyncQueueToSupabase(client: MinimalSupabaseSyncClient, queue: SyncQueueItem[], userId: string): Promise<SyncReplayResult> {
   const syncedIds: string[] = []
   const failed: SyncReplayResult['failed'] = []
 
   for (const item of queue.filter((queueItem) => queueItem.status === 'pending')) {
-    const result = await replayItem(client, item)
+    const result = await replayItem(client, item, userId)
     if (result.error) {
       failed.push({ id: item.id, message: result.error.message })
     } else {

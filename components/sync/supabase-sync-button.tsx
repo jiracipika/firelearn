@@ -23,12 +23,13 @@ export function SupabaseSyncButton({ onSynced }: { onSynced?: () => void }) {
     const repo = createOfflineProgressRepository(storage)
     const queue = repo.getSyncQueue()
     const { data: sessionData } = await supabase.auth.getSession()
-    if (!sessionData.session) {
+    const userId = sessionData.session?.user.id
+    if (!userId) {
       setStatus('blocked')
       return
     }
 
-    const result = await replaySyncQueueToSupabase(supabase, queue)
+    const result = await replaySyncQueueToSupabase(supabase, queue, userId)
     if (result.syncedIds.length > 0) repo.clearSyncedQueueItems(result.syncedIds)
     setStatus(result.failed.length > 0 ? 'error' : 'done')
     onSynced?.()
