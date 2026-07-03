@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, ClipboardCheck, ExternalLink, PlayCircle, ShieldCheck } from 'lucide-react'
 import type { Course, Lesson } from '@/types/learning'
 import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
+import { useOfflineProgress } from '@/hooks/use-offline-progress'
 import { getBrowserStorage } from '@/services/local-persistence'
 import { createOfflineProgressRepository } from '@/services/offline-progress'
 import { getLessonPracticeHref, getLessonSequence } from '@/services/lesson-navigation'
@@ -22,7 +23,8 @@ function lessonProgressPercent(completed: boolean, lesson: Lesson) {
 
 export function LessonView({ course, lesson }: { course: Course; lesson: Lesson }) {
   const { completedLessonIds, completeLesson, available, authenticated, loading, signIn, error, projectRef } = useSupabaseProgress()
-  const completed = completedLessonIds.includes(lesson.id)
+  const offlineProgress = useOfflineProgress()
+  const completed = completedLessonIds.includes(lesson.id) || offlineProgress.learnerState.completedLessonIds.includes(lesson.id)
   const progress = lessonProgressPercent(completed, lesson)
   const xpAwarded = Math.max(25, Math.round(course.xp / Math.max(1, course.modules.flatMap((module) => module.lessons).length)))
 
@@ -30,6 +32,17 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
   const sequence = getLessonSequence(course, lesson.id)
   const prevLesson = sequence.previous
   const nextLesson = sequence.next
+
+  function markComplete() {
+    const storage = getBrowserStorage()
+    if (storage) {
+      createOfflineProgressRepository(storage).completeLesson({ lessonId: lesson.id, courseId: course.id, xpAwarded })
+      offlineProgress.refresh()
+    }
+    if (authenticated) {
+      completeLesson({ lessonId: lesson.id, courseId: course.id, xpAwarded })
+    }
+  }
 
   return <AppShell>
     <article className="mx-auto max-w-4xl space-y-6">
@@ -53,23 +66,16 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
             <h2 className="font-bold text-white">Save progress</h2>
           </div>
           <p className="text-xs leading-5 text-muted-foreground">
-            {!available ? 'Supabase not configured in this deployment.'
-            : !authenticated ? `Sign in anonymously to save completion${projectRef ? ` on project ${projectRef}` : ''}.`
-            : completed ? 'Completed and saved.'
-            : 'Save this completion to Supabase.'}
+            {!available ? 'Supabase is not configured, so this completion will stay on this device until sync is available.'
+            : completed ? authenticated ? 'Completed and saved.' : 'Completed locally and queued for Supabase sync.'
+            : authenticated ? 'Save this completion locally and to Supabase.'
+            : `Mark complete locally now, or sign in anonymously to sync${projectRef ? ` on project ${projectRef}` : ''}.`}
           </p>
           {error && <p className="rounded-lg border border-red-500/30 bg-red-500/8 p-2.5 text-xs text-red-300">{error}</p>}
-          {!authenticated
-            ? <Button size="sm" disabled={!available || loading} onClick={signIn}>{loading ? 'Checking Supabase...' : 'Sign in to save'}</Button>
-            : <Button size="sm" disabled={completed} onClick={() => {
-              // Save to localStorage as offline backup
-              const storage = getBrowserStorage()
-              if (storage) {
-                createOfflineProgressRepository(storage).completeLesson({ lessonId: lesson.id, courseId: course.id, xpAwarded })
-              }
-              completeLesson({ lessonId: lesson.id, courseId: course.id, xpAwarded })
-            }}>{completed ? 'Completed' : `Mark complete · ${xpAwarded} XP`}</Button>
-          }
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" disabled={completed} onClick={markComplete}>{completed ? 'Completed' : `Mark complete · ${xpAwarded} XP`}</Button>
+            {!authenticated && <Button variant="outline" size="sm" disabled={!available || loading} onClick={signIn}>{loading ? 'Checking Supabase...' : 'Sign in to sync'}</Button>}
+          </div>
         </Card>
       </section>
 

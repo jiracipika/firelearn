@@ -6,11 +6,13 @@ import Link from 'next/link'
 import { academyCourses, getFeaturedLesson } from '@/data/academy'
 import { learnerProgress } from '@/data/progress'
 import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
+import { useOfflineProgress } from '@/hooks/use-offline-progress'
 import { useStudyActivity } from '@/hooks/use-study-activity'
 import { useFlashcardQueueSummary } from '@/hooks/use-flashcard-queue-summary'
 import { getWeakTopicSummary } from '@/services/offline-progress'
 import { aggregateLearnerStats } from '@/services/gamification-aggregator'
 import { chooseNextAction } from '@/services/next-action'
+import { mergeCompletedLessonIds, mergeQuizHistory } from '@/services/progress-merge'
 import { getWeeklyStudyInsight } from '@/services/study-insight'
 import type { LeaderboardEntry } from '@/services/gamification'
 import { AppShell } from '@/components/layout/app-shell'
@@ -30,7 +32,11 @@ function allLessonIds() {
 
 export function DashboardOverview() {
   const featuredLesson = getFeaturedLesson()
-  const { completedLessonIds, quizHistory, available, authenticated, loading, signIn, error, projectRef, refresh } = useSupabaseProgress()
+  const supabaseProgress = useSupabaseProgress()
+  const offlineProgress = useOfflineProgress()
+  const { available, authenticated, loading, signIn, error, projectRef, refresh } = supabaseProgress
+  const completedLessonIds = mergeCompletedLessonIds(supabaseProgress.completedLessonIds, offlineProgress.learnerState.completedLessonIds)
+  const quizHistory = mergeQuizHistory(supabaseProgress.quizHistory, offlineProgress.quizHistory)
   const studyActivity = useStudyActivity()
   const flashcardQueue = useFlashcardQueueSummary()
   const weakTopics = getWeakTopicSummary(quizHistory)
@@ -154,8 +160,13 @@ export function DashboardOverview() {
         <p className="text-xs leading-5 text-muted-foreground">
           {available ? `Project ${projectRef ?? 'unknown'} · Anonymous auth stores progress per user under RLS.` : 'Supabase env not configured.'}
         </p>
+        {offlineProgress.syncQueueCount > 0 && (
+          <p className="rounded-xl border border-amber-500/25 bg-amber-500/8 p-3 text-xs leading-5 text-amber-100">
+            {offlineProgress.syncQueueCount} local progress item{offlineProgress.syncQueueCount === 1 ? '' : 's'} waiting to sync.
+          </p>
+        )}
         {!authenticated && <Button size="sm" disabled={!available || loading} onClick={signIn}>{loading ? 'Checking Supabase...' : 'Sign in anonymously'}</Button>}
-        {authenticated && <SupabaseSyncButton onSynced={refresh} />}
+        {authenticated && <SupabaseSyncButton onSynced={() => { refresh(); offlineProgress.refresh() }} />}
         {error && <p className="rounded-xl border border-red-500/30 bg-red-500/8 p-3 text-xs leading-5 text-red-200">{error}</p>}
       </Card>
     </section>

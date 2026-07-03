@@ -4,8 +4,10 @@ import { Activity, Flame, LogOut, Trophy, UserCircle } from 'lucide-react'
 import { learnerProgress } from '@/data/progress'
 import { academyCourses } from '@/data/academy'
 import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
+import { useOfflineProgress } from '@/hooks/use-offline-progress'
 import { useStudyActivity } from '@/hooks/use-study-activity'
 import { aggregateLearnerStats } from '@/services/gamification-aggregator'
+import { mergeCompletedLessonIds, mergeQuizHistory } from '@/services/progress-merge'
 import type { LeaderboardEntry } from '@/services/gamification'
 import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
 import { AchievementProgressPanel, LeaderboardPanel, WeeklyChallengesPanel } from '@/components/dashboard/gamification-panels'
@@ -17,7 +19,11 @@ import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
 export default function ProfilePage() {
-  const { completedLessonIds, quizHistory, authenticated, refresh } = useSupabaseProgress()
+  const supabaseProgress = useSupabaseProgress()
+  const offlineProgress = useOfflineProgress()
+  const { authenticated, refresh } = supabaseProgress
+  const completedLessonIds = mergeCompletedLessonIds(supabaseProgress.completedLessonIds, offlineProgress.learnerState.completedLessonIds)
+  const quizHistory = mergeQuizHistory(supabaseProgress.quizHistory, offlineProgress.quizHistory)
   const studyActivity = useStudyActivity()
 
   const stats = (() => {
