@@ -9,6 +9,7 @@ import { recordStudyActivity } from '@/services/study-activity'
 import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
 import { recordFlashcardReviewInSupabase } from '@/services/supabase/progress'
 import { buildReviewQueue, cardStage, nextDueLabel, scheduleReview } from '@/services/spaced-repetition'
+import { summarizeFlashcardSession, type FlashcardReviewEvent } from '@/services/flashcard-session'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -28,6 +29,7 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
   const [index, setIndex] = React.useState(0)
   const [revealed, setRevealed] = React.useState(false)
   const [reviewed, setReviewed] = React.useState(0)
+  const [reviewEvents, setReviewEvents] = React.useState<FlashcardReviewEvent[]>([])
 
   React.useEffect(() => {
     const storage = getBrowserStorage()
@@ -73,6 +75,12 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
             reviewedAt: updatedCard.lastReviewed ?? reviewedAt.toISOString(),
           }).catch(() => undefined)
         }
+        setReviewEvents((events) => [...events, {
+          flashcardId: updatedCard!.id,
+          rating,
+          reviewedAt: updatedCard!.lastReviewed ?? reviewedAt.toISOString(),
+          nextReview: updatedCard!.nextReview,
+        }])
       }
       return nextCards
     })
@@ -100,9 +108,17 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
     setIndex(0)
     setReviewed(0)
     setRevealed(false)
+    setReviewEvents([])
   }
 
   if (complete) {
+    const sessionSummary = summarizeFlashcardSession(reviewEvents)
+    const retentionTone = sessionSummary.retentionPercent >= 80 ? 'text-success'
+      : sessionSummary.retentionPercent >= 60 ? 'text-amber-400'
+      : 'text-red-400'
+    const againTone = sessionSummary.againRatePercent <= 10 ? 'text-success'
+      : sessionSummary.againRatePercent <= 25 ? 'text-amber-400'
+      : 'text-red-400'
     return (
       <div className="mx-auto max-w-4xl space-y-5">
         <Card className="relative overflow-hidden p-8 text-center md:p-10">
@@ -112,6 +128,41 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
           <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">You reviewed {reviewed} card(s). Scheduled cards now carry updated ease factors, intervals, and next review dates.</p>
           <Button className="mt-6" onClick={restart}><RotateCcw size={18} /> Rebuild due queue</Button>
         </Card>
+        {sessionSummary.reviewedCount > 0 && (
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Session analytics</p>
+                <h2 className="mt-1 font-bold text-white">How this rep went</h2>
+              </div>
+              <Sparkles className="text-red-400" size={20} />
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-xl border border-border bg-elevated/40 p-3 text-center">
+                <p className={cn('text-2xl font-bold', retentionTone)}>{sessionSummary.retentionPercent}%</p>
+                <p className="text-xs text-muted">Retention</p>
+              </div>
+              <div className="rounded-xl border border-border bg-elevated/40 p-3 text-center">
+                <p className={cn('text-2xl font-bold', againTone)}>{sessionSummary.againRatePercent}%</p>
+                <p className="text-xs text-muted">Again rate</p>
+              </div>
+              <div className="rounded-xl border border-border bg-elevated/40 p-3 text-center">
+                <p className="text-2xl font-bold text-white">{sessionSummary.ratingCounts.good + sessionSummary.ratingCounts.easy}</p>
+                <p className="text-xs text-muted">Good/Easy</p>
+              </div>
+              <div className="rounded-xl border border-border bg-elevated/40 p-3 text-center">
+                <p className="text-2xl font-bold text-white">{sessionSummary.difficultFlashcardIds.length}</p>
+                <p className="text-xs text-muted">Difficult</p>
+              </div>
+            </div>
+            <p className="text-sm leading-6 text-muted-foreground">
+              {sessionSummary.difficultFlashcardIds.length > 0
+                ? `${sessionSummary.difficultFlashcardIds.length} card${sessionSummary.difficultFlashcardIds.length === 1 ? '' : 's'} flagged for extra reps (rated Again or Hard). They will resurface sooner with shorter intervals.`
+                : 'No cards flagged as difficult. Your schedule advances cleanly — keep the streak.'}
+              {sessionSummary.nextDueAt && ` Next review: ${new Date(sessionSummary.nextDueAt).toLocaleDateString()}.`}
+            </p>
+          </Card>
+        )}
         <QueueStats queue={queue} />
       </div>
     )
