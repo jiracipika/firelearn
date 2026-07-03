@@ -7,6 +7,7 @@ import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
 import { useOfflineProgress } from '@/hooks/use-offline-progress'
 import { useStudyActivity } from '@/hooks/use-study-activity'
 import { aggregateLearnerStats } from '@/services/gamification-aggregator'
+import { buildCompletedLessonAwards } from '@/services/lesson-xp'
 import { mergeCompletedLessonIds, mergeQuizHistory } from '@/services/progress-merge'
 import type { LeaderboardEntry } from '@/services/gamification'
 import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
@@ -27,12 +28,7 @@ export default function ProfilePage() {
   const studyActivity = useStudyActivity()
 
   const stats = (() => {
-    const completedLessons = completedLessonIds.map((lessonId) => {
-      const course = academyCourses.find((course) =>
-        course.modules.some((module) => module.lessons.some((lesson) => lesson.id === lessonId))
-      )
-      return { lessonId, courseId: course?.slug ?? 'unknown', xpAwarded: course?.xp ?? 50 }
-    })
+    const completedLessons = buildCompletedLessonAwards(academyCourses, completedLessonIds)
     return aggregateLearnerStats({ completedLessons, quizAttempts: quizHistory, flashcardsReviewed: 0, streakDays: studyActivity.streakDays })
   })()
 

@@ -11,6 +11,7 @@ import { useStudyActivity } from '@/hooks/use-study-activity'
 import { useFlashcardQueueSummary } from '@/hooks/use-flashcard-queue-summary'
 import { getWeakTopicSummary } from '@/services/offline-progress'
 import { aggregateLearnerStats } from '@/services/gamification-aggregator'
+import { buildCompletedLessonAwards } from '@/services/lesson-xp'
 import { chooseNextAction } from '@/services/next-action'
 import { mergeCompletedLessonIds, mergeQuizHistory } from '@/services/progress-merge'
 import { getWeeklyStudyInsight } from '@/services/study-insight'
@@ -52,16 +53,8 @@ export function DashboardOverview() {
   const completion = lessonIds.length === 0 ? 0 : Math.round((completedLessonIds.length / lessonIds.length) * 100)
 
   const stats = (() => {
-    const completedLessons = completedLessonIds.map((lessonId) => {
-      const course = academyCourses.find((course) =>
-        course.modules.some((module) => module.lessons.some((lesson) => lesson.id === lessonId))
-      )
-      return {
-        lessonId,
-        courseId: course?.slug ?? 'unknown',
-        xpAwarded: course?.xp ?? 50,
-      }
-    })
+    const completedLessons = buildCompletedLessonAwards(academyCourses, completedLessonIds)
+
     return aggregateLearnerStats({
       completedLessons,
       quizAttempts: quizHistory,

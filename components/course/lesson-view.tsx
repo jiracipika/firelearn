@@ -7,6 +7,7 @@ import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
 import { useOfflineProgress } from '@/hooks/use-offline-progress'
 import { getBrowserStorage } from '@/services/local-persistence'
 import { createOfflineProgressRepository } from '@/services/offline-progress'
+import { getLessonXpAward } from '@/services/lesson-xp'
 import { getLessonPracticeHref, getLessonSequence } from '@/services/lesson-navigation'
 import { AppShell } from '@/components/layout/app-shell'
 import { ContentBlock } from '@/components/course/content-block'
@@ -26,7 +27,7 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
   const offlineProgress = useOfflineProgress()
   const completed = completedLessonIds.includes(lesson.id) || offlineProgress.learnerState.completedLessonIds.includes(lesson.id)
   const progress = lessonProgressPercent(completed, lesson)
-  const xpAwarded = Math.max(25, Math.round(course.xp / Math.max(1, course.modules.flatMap((module) => module.lessons).length)))
+  const xpAwarded = getLessonXpAward(course)
 
   // Compute prev/next lessons for navigation
   const sequence = getLessonSequence(course, lesson.id)
