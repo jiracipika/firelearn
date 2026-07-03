@@ -35,6 +35,35 @@ describe('chooseNextAction', () => {
     expect(action.href).toBe('/flashcards')
   })
 
+  it('uses the newest quiz attempt for remediation even when history is merged in descending order', () => {
+    const action = chooseNextAction({
+      ...baseInput,
+      completedLessonIds: [academyCourses[0].modules[0].lessons[0].id],
+      quizHistory: [
+        { quizId: 'newer-failed', scorePercent: 62, weakTopicIds: ['ventilation'], completedAt: '2026-07-03T12:00:00.000Z' },
+        { quizId: 'older-passed', scorePercent: 96, weakTopicIds: [], completedAt: '2026-07-01T12:00:00.000Z' },
+      ],
+    })
+
+    expect(action.kind).toBe('quiz')
+    expect(action.title).toBe('Repeat the last missed quiz set')
+    expect(action.description).toContain('62%')
+  })
+
+  it('continues lessons when the newest quiz attempt is passing', () => {
+    const action = chooseNextAction({
+      ...baseInput,
+      completedLessonIds: [academyCourses[0].modules[0].lessons[0].id],
+      quizHistory: [
+        { quizId: 'newer-passed', scorePercent: 88, weakTopicIds: [], completedAt: '2026-07-03T12:00:00.000Z' },
+        { quizId: 'older-failed', scorePercent: 55, weakTopicIds: ['ppe'], completedAt: '2026-07-01T12:00:00.000Z' },
+      ],
+    })
+
+    expect(action.kind).toBe('lesson')
+    expect(action.description).not.toContain('55%')
+  })
+
   it('falls back to browsing when every lesson is complete', () => {
     const completedLessonIds = academyCourses.flatMap((course) => course.modules.flatMap((module) => module.lessons.map((lesson) => lesson.id)))
     const action = chooseNextAction({ ...baseInput, completedLessonIds })

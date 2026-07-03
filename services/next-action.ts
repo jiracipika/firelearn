@@ -69,8 +69,16 @@ function flashcardAction(dueFlashcardCount: number): NextAction | undefined {
   }
 }
 
+function latestQuizAttempt(quizHistory: QuizAttempt[]) {
+  return quizHistory.reduce<QuizAttempt | undefined>((latest, attempt) => {
+    if (!latest) return attempt
+
+    return new Date(attempt.completedAt).getTime() > new Date(latest.completedAt).getTime() ? attempt : latest
+  }, undefined)
+}
+
 function quizFollowupAction(quizHistory: QuizAttempt[]): NextAction | undefined {
-  const latest = quizHistory.at(-1)
+  const latest = latestQuizAttempt(quizHistory)
   if (!latest || latest.scorePercent >= 80) return undefined
 
   return {
@@ -78,7 +86,7 @@ function quizFollowupAction(quizHistory: QuizAttempt[]): NextAction | undefined 
     title: 'Repeat the last missed quiz set',
     description: `Latest score was ${latest.scorePercent}%. Review explanations and retake immediately.`,
     href: '/quiz',
-    priority: 88,
+    priority: 92,
   }
 }
 
