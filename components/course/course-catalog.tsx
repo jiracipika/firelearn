@@ -8,19 +8,18 @@ import { AppShell } from '@/components/layout/app-shell'
 import { CourseCard } from '@/components/course/course-card'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
+import { searchCourseCatalog } from '@/lib/search'
 import { cn } from '@/lib/utils'
 
 export function CourseCatalog() {
   const [query, setQuery] = React.useState('')
   const [activeCategory, setActiveCategory] = React.useState<string | null>(null)
   const searchInputRef = React.useRef<HTMLInputElement>(null)
-  const normalized = query.trim().toLowerCase()
+  const normalized = query.trim()
 
-  const courses = academyCourses.filter((course) => {
-    const matchesText = [course.title, course.description, course.categoryId].some((value) => value.toLowerCase().includes(normalized))
-    const matchesCategory = !activeCategory || course.categoryId === activeCategory
-    return matchesText && matchesCategory
-  })
+  const catalogMatches = React.useMemo(() => searchCourseCatalog(query), [query])
+  const visibleMatches = catalogMatches.filter(({ course }) => !activeCategory || course.categoryId === activeCategory)
+  const courses = visibleMatches.map(({ course }) => course)
 
   const categoryCounts = React.useMemo(() => {
     const counts: Record<string, number> = {}
@@ -117,8 +116,25 @@ export function CourseCatalog() {
       ))}
     </div>
 
+    {normalized && courses.length > 0 && (
+      <div className="rounded-2xl border border-border bg-elevated/35 px-4 py-3 text-sm text-muted-foreground">
+        Deep search found {visibleMatches.reduce((sum, match) => sum + match.matchCount, 0)} matching course, lesson, quiz, or flashcard signal{visibleMatches.reduce((sum, match) => sum + match.matchCount, 0) === 1 ? '' : 's'}.
+      </div>
+    )}
+
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {courses.map((course) => <CourseCard key={course.id} course={course} />)}
+      {visibleMatches.map((match) => (
+        <div key={match.course.id} className="space-y-2">
+          <CourseCard course={match.course} />
+          {normalized && match.topMatches.length > 0 && (
+            <div className="rounded-xl border border-border bg-card/50 px-3 py-2 text-xs text-muted-foreground">
+              <p className="font-semibold uppercase tracking-[0.12em] text-red-200">Best match</p>
+              <p className="mt-1 line-clamp-2 text-white">{match.topMatches[0].title}</p>
+              <p className="mt-1 capitalize text-muted">{match.matchedTypes.join(', ').replace(/-/g, ' ')} · {match.matchCount} signal{match.matchCount === 1 ? '' : 's'}</p>
+            </div>
+          )}
+        </div>
+      ))}
     </section>
 
     {courses.length === 0 ? (

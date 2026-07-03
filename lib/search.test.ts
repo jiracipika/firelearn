@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildSearchIndex, rankSearchResults, searchFireLearn } from '@/lib/search'
+import { buildSearchIndex, rankSearchResults, searchCourseCatalog, searchFireLearn } from '@/lib/search'
 
 describe('search', () => {
   it('indexes courses, lessons, flashcards, and quiz questions', () => {
@@ -43,5 +43,21 @@ describe('search', () => {
 
     expect(quizResult?.href).toMatch(/^\/quiz\?course=[^&]+&lesson=/)
     expect(flashcardResult?.href).toMatch(/^\/flashcards\?course=[^&]+&lesson=/)
+  })
+
+  it('groups deep lesson and quiz hits back into course catalog matches', () => {
+    const matches = searchCourseCatalog('smoke indicators')
+
+    expect(matches.length).toBeGreaterThan(0)
+    expect(matches[0].matchCount).toBeGreaterThan(0)
+    expect(matches[0].topMatches.some((match) => match.type === 'lesson' || match.type === 'quiz-question')).toBe(true)
+  })
+
+  it('returns every course for an empty catalog query', () => {
+    const matches = searchCourseCatalog('')
+    const indexedCourses = buildSearchIndex().filter((result) => result.type === 'course')
+
+    expect(matches).toHaveLength(indexedCourses.length)
+    expect(matches.every((match) => match.matchCount === 0)).toBe(true)
   })
 })

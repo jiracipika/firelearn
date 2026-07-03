@@ -1,15 +1,39 @@
 import { academyCourses } from '@/data/academy'
+import type { Course } from '@/types/learning'
 
 export type SearchResult = {
   id: string
   type: 'course' | 'lesson' | 'flashcard' | 'quiz-question' | 'topic'
+  courseId?: string
+  courseSlug?: string
   title: string
   description: string
   href: string
   keywords: string[]
 }
 
+export type CourseCatalogMatch = {
+  course: Course
+  matchCount: number
+  matchedTypes: SearchResult['type'][]
+  topMatches: SearchResult[]
+}
+
 type RankedSearchResult = SearchResult & { score: number }
+type ScoredCourseCatalogMatch = CourseCatalogMatch & { score: number }
+
+function stripScore(result: RankedSearchResult): SearchResult {
+  return {
+    id: result.id,
+    type: result.type,
+    courseId: result.courseId,
+    courseSlug: result.courseSlug,
+    title: result.title,
+    description: result.description,
+    href: result.href,
+    keywords: result.keywords,
+  }
+}
 
 function normalize(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
@@ -68,6 +92,8 @@ export function buildSearchIndex(): SearchResult[] {
     const courseResult: SearchResult = {
       id: course.id,
       type: 'course',
+      courseId: course.id,
+      courseSlug: course.slug,
       title: course.title,
       description: course.description,
       href: `/courses/${course.slug}`,
@@ -88,6 +114,8 @@ export function buildSearchIndex(): SearchResult[] {
       const lessonResult: SearchResult = {
         id: lesson.id,
         type: 'lesson',
+        courseId: course.id,
+        courseSlug: course.slug,
         title: lesson.title,
         description: lesson.summary.join(' '),
         href: `/courses/${course.slug}/${lesson.slug}`,
@@ -96,6 +124,8 @@ export function buildSearchIndex(): SearchResult[] {
       const quizResults: SearchResult[] = lesson.quiz.map((question) => ({
         id: question.id,
         type: 'quiz-question',
+        courseId: course.id,
+        courseSlug: course.slug,
         title: question.prompt,
         description: question.explanation,
         href: lessonScopedHref('/quiz', course.slug, lesson.slug),
@@ -104,6 +134,8 @@ export function buildSearchIndex(): SearchResult[] {
       const flashcardResults: SearchResult[] = lesson.flashcards.map((card) => ({
         id: card.id,
         type: 'flashcard',
+        courseId: course.id,
+        courseSlug: course.slug,
         title: card.front,
         description: card.back,
         href: lessonScopedHref('/flashcards', course.slug, lesson.slug),
@@ -132,4 +164,41 @@ export function rankSearchResults(query: string, index = buildSearchIndex()): Ra
 
 export function searchFireLearn(query: string, index = buildSearchIndex()) {
   return rankSearchResults(query, index).slice(0, query.trim() ? 24 : 12)
+}
+
+export function searchCourseCatalog(query: string, courses = academyCourses): CourseCatalogMatch[] {
+  if (!query.trim()) {
+    return courses.map((course) => ({ course, matchCount: 0, matchedTypes: [], topMatches: [] }))
+  }
+
+  const ranked = rankSearchResults(query)
+  const allowedCourseIds = new Set(courses.map((course) => course.id))
+  const grouped = new Map<string, RankedSearchResult[]>()
+
+  for (const result of ranked) {
+    const courseId = result.courseId ?? (result.type === 'course' ? result.id : undefined)
+    if (!courseId || !allowedCourseIds.has(courseId)) continue
+    grouped.set(courseId, [...(grouped.get(courseId) ?? []), result])
+  }
+
+  return Array.from(grouped.entries())
+    .map(([courseId, matches]) => {
+      const course = courses.find((candidate) => candidate.id === courseId)
+      if (!course) return null
+      return {
+        course,
+        matchCount: matches.length,
+        matchedTypes: unique(matches.map((match) => match.type)) as SearchResult['type'][],
+        topMatches: matches.slice(0, 3).map(stripScore),
+        score: matches[0]?.score ?? 0,
+      }
+    })
+    .filter((match): match is ScoredCourseCatalogMatch => Boolean(match))
+    .sort((a, b) => b.score - a.score || a.course.title.localeCompare(b.course.title))
+    .map((match) => ({
+      course: match.course,
+      matchCount: match.matchCount,
+      matchedTypes: match.matchedTypes,
+      topMatches: match.topMatches,
+    }))
 }
