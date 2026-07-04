@@ -9,6 +9,7 @@ import { recordQuizOutcome } from '@/services/quiz-recording'
 import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
 import { recordQuizAttemptInSupabase } from '@/services/supabase/progress'
 import { buildQuizResult, collectQuestionBank, isAnswerCorrect, supportsMultipleSelection, type QuizAnswer, type QuizMode } from '@/services/quiz-engine'
+import { computeTimerState, formatCountdown, hasVisibleCountdown } from '@/services/quiz-timer'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -22,6 +23,7 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
   const [answers, setAnswers] = React.useState<QuizAnswer[]>([])
   const [submitted, setSubmitted] = React.useState(false)
   const [showReview, setShowReview] = React.useState(false)
+  const [timerElapsed, setTimerElapsed] = React.useState(0)
 
   const bank = React.useMemo(() => collectQuestionBank(questions, mode), [mode, questions])
   const question = bank[index]
@@ -49,6 +51,38 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
     recordedResultKey.current = resultKey
   }, [answers.length, bank.length, result, title])
 
+  // Reset the per-question timer whenever the displayed question changes.
+  // Uses the "adjusting state during render" pattern from React docs rather
+  // than a useEffect so we avoid cascading renders and satisfy the lint rule.
+  const prevQuestionIdRef = React.useRef(question?.id)
+  if (prevQuestionIdRef.current !== question?.id) {
+    prevQuestionIdRef.current = question?.id
+    setTimerElapsed(0)
+  }
+
+  // Per-question countdown: ticks every second while a question with a time
+  // limit is showing and the answer has not been submitted yet.
+  React.useEffect(() => {
+    if (!hasVisibleCountdown(question?.timeLimitSeconds) || submitted) return
+    const interval = window.setInterval(() => setTimerElapsed((value) => value + 1), 1000)
+    return () => window.clearInterval(interval)
+  }, [question?.id, question?.timeLimitSeconds, submitted])
+
+  const timerState = hasVisibleCountdown(question?.timeLimitSeconds)
+    ? computeTimerState(question.timeLimitSeconds, timerElapsed)
+    : undefined
+
+  // Auto-submit when the countdown reaches zero. A timed-out question is
+  // recorded as incorrect (no selection), matching exam proctoring expectations.
+  const autoSubmitRef = React.useRef(submitAnswer)
+  React.useEffect(() => {
+    autoSubmitRef.current = submitAnswer
+  }, [submitAnswer])
+  React.useEffect(() => {
+    if (!timerState || timerState.urgency !== 'expired' || submitted) return
+    autoSubmitRef.current(true)
+  }, [timerState, submitted])
+
   function reset(nextMode: QuizMode = mode) {
     setMode(nextMode)
     setIndex(0)
@@ -68,10 +102,13 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
     setSelected([option])
   }
 
-  function submitAnswer() {
-    if (!question || selected.length === 0 || submitted) return
-    const correct = isAnswerCorrect(question, selected)
-    setAnswers((current) => [...current, { questionId: question.id, selectedAnswerIds: selected, correct, topicIds: question.topicIds }])
+  function submitAnswer(forcedIncorrect = false) {
+    if (!question || submitted) return
+    // Normal submission requires a selection; timed-out forced submissions
+    // are recorded as incorrect even with no selection.
+    if (!forcedIncorrect && (selected.length === 0)) return
+    const correct = forcedIncorrect ? false : isAnswerCorrect(question, selected)
+    setAnswers((current) => [...current, { questionId: question.id, selectedAnswerIds: forcedIncorrect ? [] : selected, correct, topicIds: question.topicIds }])
     setSubmitted(true)
   }
 
@@ -171,7 +208,21 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-lg border border-border bg-elevated/60 px-2.5 py-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{question.type.replace('-', ' ')}</span>
               {question.timeLimitSeconds && (
-                <span className="flex items-center gap-1 rounded-lg border border-border bg-elevated/60 px-2.5 py-1 text-xs text-muted-foreground"><Clock size={12} /> {question.timeLimitSeconds}s</span>
+                <span
+                  className={cn(
+                    'flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs tabular-nums transition-colors',
+                    timerState
+                      ? timerState.urgency === 'urgent'
+                        ? 'border-red-500/50 bg-red-500/15 text-red-200'
+                        : timerState.urgency === 'steady'
+                          ? 'border-accent/40 bg-accent/12 text-accent'
+                          : 'border-border bg-elevated/60 text-muted-foreground'
+                      : 'border-border bg-elevated/60 text-muted-foreground',
+                  )}
+                  aria-live="polite"
+                >
+                  <Clock size={12} /> {timerState ? formatCountdown(timerState.seconds) : `${question.timeLimitSeconds}s`}
+                </span>
               )}
             </div>
 
@@ -224,7 +275,7 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
 
             <div className="flex items-center justify-end gap-3">
               {!submitted ? (
-                <Button onClick={submitAnswer} disabled={selected.length === 0}>Submit answer</Button>
+                <Button onClick={() => submitAnswer()} disabled={selected.length === 0}>Submit answer</Button>
               ) : (
                 <Button onClick={nextQuestion}>
                   {index + 1 < bank.length ? <>Next question <ChevronRight size={16} /></> : <>See results <ChevronRight size={16} /></>}
