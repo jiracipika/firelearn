@@ -21,6 +21,7 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
   const [selected, setSelected] = React.useState<string[]>([])
   const [answers, setAnswers] = React.useState<QuizAnswer[]>([])
   const [submitted, setSubmitted] = React.useState(false)
+  const [showReview, setShowReview] = React.useState(false)
 
   const bank = React.useMemo(() => collectQuestionBank(questions, mode), [mode, questions])
   const question = bank[index]
@@ -54,6 +55,7 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
     setSelected([])
     setAnswers([])
     setSubmitted(false)
+    setShowReview(false)
     recordedResultKey.current = null
   }
 
@@ -103,8 +105,14 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
               </div>
             </div>
           )}
-          <Button className="mt-8" onClick={() => reset()}><RotateCcw size={18} /> Retake quiz</Button>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button onClick={() => reset()}><RotateCcw size={18} /> Retake quiz</Button>
+            <Button variant="outline" onClick={() => setShowReview((value) => !value)}>
+              {showReview ? 'Hide answer review' : `Review answers (${result.correctAnswers}/${result.totalQuestions})`}
+            </Button>
+          </div>
         </Card>
+        {showReview && <QuizAnswerReview bank={bank} answers={answers} />}
       </div>
     )
   }
@@ -198,5 +206,74 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
         </motion.div>
       </AnimatePresence>
     </div>
+  )
+}
+
+function QuizAnswerReview({ bank, answers }: { bank: QuizQuestion[]; answers: QuizAnswer[] }) {
+  return (
+    <Card className="space-y-4 p-5 md:p-7">
+      <div>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Answer review</p>
+        <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">Question-by-question breakdown</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Each question with the correct answer, your response, and the explanation.</p>
+      </div>
+      <div className="space-y-4">
+        {bank.map((question, questionIndex) => {
+          const answer = answers.find((item) => item.questionId === question.id)
+          const correct = answer?.correct ?? false
+          return (
+            <div key={question.id} className="rounded-2xl border border-border bg-elevated/40 p-4">
+              <div className="flex items-start gap-2.5">
+                <span className={cn('flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold', correct ? 'bg-success/20 text-success' : 'bg-red-500/20 text-red-400')}>
+                  {questionIndex + 1}
+                </span>
+                <h3 className="flex-1 text-sm font-bold leading-snug text-white">{question.prompt}</h3>
+                {correct ? <CheckCircle2 size={18} className="shrink-0 text-success" /> : <XCircle size={18} className="shrink-0 text-red-400" />}
+              </div>
+              <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-muted">{question.type.replace('-', ' ')}</p>
+              <div className="mt-3 grid gap-1.5">
+                {question.options.map((option, optionIndex) => {
+                  const isCorrect = question.correctAnswerIds.includes(option)
+                  const youPicked = answer?.selectedAnswerIds.includes(option)
+                  return (
+                    <div
+                      key={option}
+                      className={cn(
+                        'flex items-center gap-2.5 rounded-lg border px-3 py-2 text-sm',
+                        isCorrect ? 'border-success/40 bg-success/8 text-white' : youPicked ? 'border-red-500/40 bg-red-500/8 text-white' : 'border-border bg-elevated/20 text-muted-foreground'
+                      )}
+                    >
+                      <span className={cn('flex size-5 shrink-0 items-center justify-center rounded text-[10px] font-bold', isCorrect ? 'bg-success/30 text-success' : youPicked ? 'bg-red-500/30 text-red-400' : 'bg-elevated text-muted')}>
+                        {String.fromCharCode(65 + optionIndex)}
+                      </span>
+                      <span className="flex-1">{option}</span>
+                      {isCorrect && <span className="text-[10px] font-bold uppercase text-success">Correct</span>}
+                      {youPicked && !isCorrect && <span className="text-[10px] font-bold uppercase text-red-400">Your pick</span>}
+                      {youPicked && isCorrect && <span className="text-[10px] font-bold uppercase text-success">Your pick</span>}
+                    </div>
+                  )
+                })}
+              </div>
+              {!answer && <p className="mt-3 text-xs text-muted">Not answered.</p>}
+              {answer && !correct && (
+                <p className="mt-3 rounded-lg border border-red-500/20 bg-red-500/5 p-2.5 text-xs leading-5 text-red-200">
+                  You selected: {answer.selectedAnswerIds.length > 0 ? answer.selectedAnswerIds.map((id) => question.options.find((o) => o === id)).join(', ') : 'None'}
+                </p>
+              )}
+              <p className="mt-3 rounded-lg border border-border bg-background/40 p-2.5 text-xs leading-5 text-muted-foreground">
+                <span className="font-semibold text-white">Explanation: </span>{question.explanation}
+              </p>
+              {question.topicIds.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {question.topicIds.map((topic) => (
+                    <span key={topic} className="rounded border border-border bg-elevated/40 px-1.5 py-0.5 text-[10px] text-muted">{topic}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </Card>
   )
 }
