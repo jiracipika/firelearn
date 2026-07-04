@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, ChevronRight, Clock, RotateCcw, XCircle } from 'lucide-react'
+import { CheckCircle2, ChevronRight, Clock, Keyboard, RotateCcw, XCircle } from 'lucide-react'
 import type { QuizQuestion } from '@/types/learning'
 import { getBrowserStorage } from '@/services/local-persistence'
 import { recordQuizOutcome } from '@/services/quiz-recording'
@@ -81,6 +81,32 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
     setIndex((current) => current + 1)
   }
 
+  React.useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (result) return
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
+
+      const optionIndex = parseInt(event.key, 10) - 1
+      const isOptionKey = optionIndex >= 0 && optionIndex < 10
+
+      if (!submitted) {
+        if (isOptionKey && question && optionIndex < question.options.length) {
+          toggleOption(question.options[optionIndex])
+          return
+        }
+        if (event.key === 'Enter' && selected.length > 0) {
+          event.preventDefault()
+          submitAnswer()
+        }
+      } else if (event.key === 'Enter') {
+        event.preventDefault()
+        nextQuestion()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [question, selected, submitted, result])
+
   if (result) {
     return (
       <div className="mx-auto max-w-3xl space-y-5">
@@ -128,9 +154,12 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-white md:text-4xl">{title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Question {Math.min(index + 1, bank.length)} of {bank.length}{poolTotal && poolTotal > bank.length ? ` · ${poolTotal} in pool` : ''}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant={mode === 'practice' ? 'primary' : 'outline'} size="sm" onClick={() => reset('practice')}>Practice</Button>
-          <Button variant={mode === 'exam' ? 'primary' : 'outline'} size="sm" onClick={() => reset('exam')}>Exam</Button>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex gap-2">
+            <Button variant={mode === 'practice' ? 'primary' : 'outline'} size="sm" onClick={() => reset('practice')}>Practice</Button>
+            <Button variant={mode === 'exam' ? 'primary' : 'outline'} size="sm" onClick={() => reset('exam')}>Exam</Button>
+          </div>
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Keyboard size={12} /> {submitted ? 'Enter for next' : '1-9 select · Enter submit'}</p>
         </div>
       </div>
 
@@ -174,7 +203,7 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
                       correct && 'bg-success/20 text-success',
                       wrong && 'bg-red-500/20 text-red-400'
                     )}>
-                      {String.fromCharCode(65 + optionIndex)}
+                      {optionIndex + 1}
                     </span>
                     <span className="flex-1 text-white">{option}</span>
                     {correct && <CheckCircle2 size={18} className="text-success" />}
@@ -281,7 +310,7 @@ function QuizAnswerReview({ bank, answers }: { bank: QuizQuestion[]; answers: Qu
                       )}
                     >
                       <span className={cn('flex size-5 shrink-0 items-center justify-center rounded text-[10px] font-bold', isCorrect ? 'bg-success/30 text-success' : youPicked ? 'bg-red-500/30 text-red-400' : 'bg-elevated text-muted')}>
-                        {String.fromCharCode(65 + optionIndex)}
+                        {optionIndex + 1}
                       </span>
                       <span className="flex-1">{option}</span>
                       {isCorrect && <span className="text-[10px] font-bold uppercase text-success">Correct</span>}

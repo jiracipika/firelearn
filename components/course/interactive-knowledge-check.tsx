@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import type { QuizQuestion } from '@/types/learning'
-import { isAnswerCorrect } from '@/services/quiz-engine'
+import { isAnswerCorrect, supportsMultipleSelection } from '@/services/quiz-engine'
 import { cn } from '@/lib/utils'
 
 export function InteractiveKnowledgeCheck({ question }: { question: QuizQuestion }) {
@@ -12,7 +12,11 @@ export function InteractiveKnowledgeCheck({ question }: { question: QuizQuestion
 
   function toggleOption(option: string) {
     if (submitted) return
-    setSelected((current) => current.includes(option) ? current.filter((item) => item !== option) : [...current, option])
+    if (supportsMultipleSelection(question)) {
+      setSelected((current) => current.includes(option) ? current.filter((item) => item !== option) : [...current, option])
+      return
+    }
+    setSelected([option])
   }
 
   function submit() {
@@ -26,6 +30,31 @@ export function InteractiveKnowledgeCheck({ question }: { question: QuizQuestion
   }
 
   const correct = submitted && isAnswerCorrect(question, selected)
+
+  React.useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
+
+      const optionIndex = parseInt(event.key, 10) - 1
+      const isOptionKey = optionIndex >= 0 && optionIndex < 10
+
+      if (!submitted) {
+        if (isOptionKey && optionIndex < question.options.length) {
+          toggleOption(question.options[optionIndex])
+          return
+        }
+        if (event.key === 'Enter' && selected.length > 0) {
+          event.preventDefault()
+          submit()
+        }
+      } else if (event.key === 'Enter') {
+        event.preventDefault()
+        reset()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [question, selected, submitted])
 
   return (
     <div className="space-y-4">
@@ -57,7 +86,7 @@ export function InteractiveKnowledgeCheck({ question }: { question: QuizQuestion
                   isCorrect && 'bg-success/20 text-success',
                   isWrong && 'bg-red-500/20 text-red-400',
                 )}>
-                  {String.fromCharCode(65 + index)}
+                  {index + 1}
                 </span>
                 <span className="flex-1 text-white">{option}</span>
                 {isCorrect && <CheckCircle2 size={16} className="text-success" />}
@@ -79,10 +108,11 @@ export function InteractiveKnowledgeCheck({ question }: { question: QuizQuestion
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {!submitted
           ? <button onClick={submit} disabled={selected.length === 0} className="inline-flex min-h-10 items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary-dim disabled:opacity-40">Check answer</button>
           : <button onClick={reset} className="inline-flex min-h-10 items-center justify-center rounded-xl border border-border-bright bg-transparent px-4 py-2 text-sm font-semibold text-white transition hover:bg-elevated">Try again</button>}
+        <span className="text-xs text-muted-foreground">{submitted ? 'Enter to try again' : '1-9 select · Enter to check'}</span>
       </div>
     </div>
   )
