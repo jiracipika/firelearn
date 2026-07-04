@@ -209,7 +209,30 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
   )
 }
 
+type ReviewFilter = 'all' | 'incorrect' | 'correct'
+
 function QuizAnswerReview({ bank, answers }: { bank: QuizQuestion[]; answers: QuizAnswer[] }) {
+  const [filter, setFilter] = React.useState<ReviewFilter>('incorrect')
+
+  const answerByQuestion = React.useMemo(() => {
+    const map = new Map<string, QuizAnswer | undefined>()
+    for (const question of bank) {
+      map.set(question.id, answers.find((item) => item.questionId === question.id))
+    }
+    return map
+  }, [bank, answers])
+
+  const filteredBank = React.useMemo(() => {
+    if (filter === 'all') return bank
+    return bank.filter((question) => {
+      const correct = answerByQuestion.get(question.id)?.correct ?? false
+      return filter === 'incorrect' ? !correct : correct
+    })
+  }, [bank, filter, answerByQuestion])
+
+  const incorrectCount = bank.filter((q) => !(answerByQuestion.get(q.id)?.correct ?? false)).length
+  const correctCount = bank.length - incorrectCount
+
   return (
     <Card className="space-y-4 p-5 md:p-7">
       <div>
@@ -217,15 +240,29 @@ function QuizAnswerReview({ bank, answers }: { bank: QuizQuestion[]; answers: Qu
         <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">Question-by-question breakdown</h2>
         <p className="mt-1 text-sm text-muted-foreground">Each question with the correct answer, your response, and the explanation.</p>
       </div>
+
+      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter review by outcome">
+        <FilterChip active={filter === 'incorrect'} count={incorrectCount} onClick={() => setFilter('incorrect')} accent="danger">
+          Incorrect
+        </FilterChip>
+        <FilterChip active={filter === 'correct'} count={correctCount} onClick={() => setFilter('correct')} accent="success">
+          Correct
+        </FilterChip>
+        <FilterChip active={filter === 'all'} count={bank.length} onClick={() => setFilter('all')} accent="neutral">
+          All
+        </FilterChip>
+      </div>
+
       <div className="space-y-4">
-        {bank.map((question, questionIndex) => {
-          const answer = answers.find((item) => item.questionId === question.id)
+        {filteredBank.map((question) => {
+          const originalIndex = bank.indexOf(question)
+          const answer = answerByQuestion.get(question.id)
           const correct = answer?.correct ?? false
           return (
             <div key={question.id} className="rounded-2xl border border-border bg-elevated/40 p-4">
               <div className="flex items-start gap-2.5">
                 <span className={cn('flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold', correct ? 'bg-success/20 text-success' : 'bg-red-500/20 text-red-400')}>
-                  {questionIndex + 1}
+                  {originalIndex + 1}
                 </span>
                 <h3 className="flex-1 text-sm font-bold leading-snug text-white">{question.prompt}</h3>
                 {correct ? <CheckCircle2 size={18} className="shrink-0 text-success" /> : <XCircle size={18} className="shrink-0 text-red-400" />}
@@ -274,6 +311,47 @@ function QuizAnswerReview({ bank, answers }: { bank: QuizQuestion[]; answers: Qu
           )
         })}
       </div>
+      {filteredBank.length === 0 && (
+        <p className="rounded-lg border border-success/30 bg-success/5 p-4 text-center text-sm text-success">
+          No questions in this filter — you answered everything correctly!
+        </p>
+      )}
     </Card>
+  )
+}
+
+function FilterChip({
+  active,
+  count,
+  onClick,
+  accent,
+  children,
+}: {
+  active: boolean
+  count: number
+  onClick: () => void
+  accent: 'danger' | 'success' | 'neutral'
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+        active
+          ? accent === 'danger'
+            ? 'border-red-500/50 bg-red-500/15 text-red-200'
+            : accent === 'success'
+              ? 'border-success/50 bg-success/15 text-success'
+              : 'border-border bg-elevated/60 text-white'
+          : 'border-border bg-transparent text-muted-foreground hover:border-border/80 hover:text-white',
+      )}
+    >
+      {children}
+      <span className="rounded-full bg-black/30 px-1.5 text-[10px] tabular-nums">{count}</span>
+    </button>
   )
 }
