@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { ScrollProgress } from '@/components/ui/scroll-progress'
 
 function lessonProgressPercent(completed: boolean, lesson: Lesson) {
   if (completed) return 100
@@ -46,6 +47,7 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
   }
 
   return <AppShell>
+    <ScrollProgress />
     <article className="mx-auto max-w-4xl space-y-6">
       <Link href={`/courses/${course.slug}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-white">
         <ArrowLeft size={16} /> {course.title}
