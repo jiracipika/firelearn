@@ -7,9 +7,26 @@ const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'FireLearn — Train Smarter. Respond Better.',
+  metadataBase: new URL('https://fflearn.vercel.app'),
+  title: {
+    default: 'FireLearn — Train Smarter. Respond Better.',
+    template: '%s | FireLearn',
+  },
   description: 'A modern firefighter learning platform with courses, quizzes, spaced repetition, and progress tracking.',
   manifest: '/manifest.webmanifest',
+  applicationName: 'FireLearn',
+  openGraph: {
+    title: 'FireLearn — Train Smarter. Respond Better.',
+    description: 'A firefighter learning console with courses, scenario-heavy quizzes, spaced-repetition flashcards, and progress tracking.',
+    siteName: 'FireLearn',
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FireLearn — Train Smarter. Respond Better.',
+    description: 'A firefighter learning platform with courses, quizzes, flashcards, and progress tracking.',
+  },
 }
 
 export const viewport: Viewport = { themeColor: '#0F1115', colorScheme: 'dark' }
