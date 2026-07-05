@@ -14,6 +14,7 @@ import { aggregateLearnerStats } from '@/services/gamification-aggregator'
 import { buildCompletedLessonAwards } from '@/services/lesson-xp'
 import { chooseNextAction } from '@/services/next-action'
 import { mergeCompletedLessonIds, mergeQuizHistory } from '@/services/progress-merge'
+import { summarizeQuizHistory } from '@/services/quiz-history-summary'
 import { getWeeklyStudyInsight } from '@/services/study-insight'
 import type { LeaderboardEntry } from '@/services/gamification'
 import { AppShell } from '@/components/layout/app-shell'
@@ -41,6 +42,7 @@ export function DashboardOverview() {
   const studyActivity = useStudyActivity()
   const flashcardQueue = useFlashcardQueueSummary()
   const weakTopics = getWeakTopicSummary(quizHistory)
+  const quizSummary = summarizeQuizHistory(quizHistory)
   const flashcardsReviewed = studyActivity.activity.filter((entry) => entry.kind === 'flashcard_review').length
   const nextAction = chooseNextAction({
     courses: academyCourses,
@@ -194,15 +196,54 @@ export function DashboardOverview() {
 
     <section className="grid gap-5 lg:grid-cols-2">
       <Card className="space-y-3">
-        <h2 className="font-bold text-white">Quiz history</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-bold text-white">Quiz history</h2>
+          {quizSummary.totalAttempts > 0 && (
+            <span className={cn(
+              'rounded-md border px-2 py-0.5 text-[11px] font-semibold tabular-nums',
+              quizSummary.trend === 'improving'
+                ? 'border-success/30 bg-success/10 text-success'
+                : quizSummary.trend === 'declining'
+                  ? 'border-red-500/30 bg-red-500/10 text-red-300'
+                  : 'border-border bg-elevated/60 text-muted',
+            )}>
+              {quizSummary.trend === 'improving' ? '↗ Improving' : quizSummary.trend === 'declining' ? '↘ Declining' : quizSummary.trend === 'steady' ? '→ Steady' : ''}
+            </span>
+          )}
+        </div>
         {quizHistory.length === 0
           ? <p className="text-sm text-muted-foreground">No quiz attempts yet. Complete a quiz after signing in.</p>
-          : <div className="space-y-2">{quizHistory.slice(0, 5).map((attempt) => (
-              <div key={`${attempt.quizId}-${attempt.completedAt}`} className="rounded-xl border border-border bg-elevated/40 px-4 py-2.5 text-sm">
-                <p className="font-medium text-white">{attempt.quizId}</p>
-                <p className="text-xs text-muted">{attempt.scorePercent}% · {new Date(attempt.completedAt).toLocaleDateString()}</p>
-              </div>
-            ))}</div>
+          : <>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {[
+                { label: 'Average', value: `${quizSummary.averageScorePercent}%`, tone: quizSummary.averageScorePercent >= 70 ? 'text-success' : 'text-white' },
+                { label: 'Best', value: `${quizSummary.bestScorePercent}%`, tone: 'text-white' },
+                { label: 'Pass rate', value: `${quizSummary.passRatePercent}%`, tone: 'text-white' },
+                { label: 'Perfect', value: `${quizSummary.perfectCount}`, tone: 'text-amber-400' },
+              ].map((stat) => (
+                <div key={stat.label} className="rounded-xl border border-border bg-elevated/40 px-3 py-2.5 text-center">
+                  <p className={cn('text-xl font-bold tabular-nums', stat.tone)}>{stat.value}</p>
+                  <p className="text-[11px] text-muted">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs leading-5 text-muted-foreground">
+              {quizSummary.totalAttempts} attempt{quizSummary.totalAttempts === 1 ? '' : 's'} · recent average {quizSummary.recentAverageScorePercent}%
+              {quizSummary.trend !== 'insufficient' && quizSummary.trendDelta !== 0 && (
+                <span className={quizSummary.trend === 'improving' ? 'text-success' : 'text-red-300'}>
+                  {' '}({quizSummary.trendDelta > 0 ? '+' : ''}{quizSummary.trendDelta} pts)
+                </span>
+              )}
+            </p>
+            <div className="space-y-2 border-t border-border pt-2">
+              {quizHistory.slice(0, 5).map((attempt) => (
+                <div key={`${attempt.quizId}-${attempt.completedAt}`} className="rounded-xl border border-border bg-elevated/40 px-4 py-2.5 text-sm">
+                  <p className="font-medium text-white">{attempt.quizId}</p>
+                  <p className="text-xs text-muted">{attempt.scorePercent}% · {new Date(attempt.completedAt).toLocaleDateString()}</p>
+                </div>
+              ))}
+            </div>
+          </>
         }
       </Card>
       <Card className="space-y-3">
