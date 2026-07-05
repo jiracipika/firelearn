@@ -73,6 +73,7 @@ export function exportLocalFireLearnData(storage: StorageLike) {
     'firelearn.quizHistory.v1',
     'firelearn.flashcards.v1',
     'firelearn.syncQueue.v1',
+    'firelearn.studyTimer.v1',
     studyActivityKey,
   ]
   return keys.reduce<Record<string, unknown>>((data, key) => {
