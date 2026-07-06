@@ -3,10 +3,12 @@ import type { Flashcard } from '@/types/learning'
 import {
   createMemoryStorage,
   loadFlashcards,
+  loadLearnerName,
   loadLearnerState,
   loadQuizHistory,
   recordQuizResult,
   saveFlashcards,
+  saveLearnerName,
   saveLearnerState,
 } from '@/services/local-persistence'
 
@@ -72,5 +74,42 @@ describe('local persistence', () => {
     storage.setItem('firelearn.quizHistory.v1', '{bad json')
 
     expect(loadQuizHistory(storage)).toEqual([])
+  })
+
+  it('persists and restores the learner name for certificates', () => {
+    const storage = createMemoryStorage()
+
+    expect(loadLearnerName(storage)).toBeNull()
+
+    saveLearnerName(storage, 'Alex Rivera')
+
+    expect(loadLearnerName(storage)).toBe('Alex Rivera')
+  })
+
+  it('trims and caps the learner name at 80 characters', () => {
+    const storage = createMemoryStorage()
+    const longName = 'A'.repeat(100)
+
+    saveLearnerName(storage, `  ${longName}  `)
+
+    const loaded = loadLearnerName(storage)
+    expect(loaded).not.toBeNull()
+    expect(loaded!.length).toBe(80)
+  })
+
+  it('clears the learner name when saving empty or whitespace input', () => {
+    const storage = createMemoryStorage()
+    saveLearnerName(storage, 'Jordan Lee')
+    expect(loadLearnerName(storage)).toBe('Jordan Lee')
+
+    saveLearnerName(storage, '   ')
+    expect(loadLearnerName(storage)).toBeNull()
+  })
+
+  it('returns null for malformed learner name JSON', () => {
+    const storage = createMemoryStorage()
+    storage.setItem('firelearn.learnerName.v1', '{not a string}')
+
+    expect(loadLearnerName(storage)).toBeNull()
   })
 })
