@@ -51,6 +51,71 @@ function lessonScopedHref(base: string, courseSlug: string, lessonSlug: string) 
   return `${base}?course=${encodeURIComponent(courseSlug)}&lesson=${encodeURIComponent(lessonSlug)}`
 }
 
+/**
+ * Levenshtein edit distance — the minimum number of single-character
+ * insertions, deletions, or substitutions to transform `a` into `b`.
+ * Used as a fallback to rescue typoed queries that exact substring
+ * matching misses entirely (e.g. "SCUBA" vs "SCBA", "ventaltion" vs
+ * "ventilation"). Implemented with a single rolling array for O(n) space.
+ */
+function editDistance(a: string, b: string): number {
+  if (a === b) return 0
+  if (a.length === 0) return b.length
+  if (b.length === 0) return a.length
+
+  const previous = new Array<number>(b.length + 1)
+  for (let j = 0; j <= b.length; j++) previous[j] = j
+
+  for (let i = 1; i <= a.length; i++) {
+    let scratch = i
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      const tmp = previous[j]
+      previous[j] = Math.min(
+        previous[j] + 1,        // deletion
+        previous[j - 1] + 1,    // insertion
+        scratch + cost,          // substitution (or match)
+      )
+      scratch = tmp
+    }
+    previous[0] = i
+  }
+
+  return previous[b.length]
+}
+
+/**
+ * Maximum tolerated edit distance for a token of a given length. Short
+ * words (<=4 chars) allow only 1 typo so "fire" does not match "wire".
+ * Medium words allow 2; long words allow up to 2 as well. The threshold
+ * scales with length so common short words do not produce noise.
+ */
+function fuzzyThreshold(length: number): number {
+  if (length <= 4) return 1
+  return 2
+}
+
+/**
+ * Check whether `token` matches any word in `haystackWords` within the
+ * fuzzy edit-distance threshold. Returns true if an exact substring match
+ * exists OR if a word is close enough by edit distance. This is the typo
+ * rescue path — exact matches still win on score.
+ */
+function fuzzyMatchToken(token: string, haystackWords: string[]): boolean {
+  if (token.length === 0) return false
+  const threshold = fuzzyThreshold(token.length)
+
+  for (const word of haystackWords) {
+    if (word.includes(token)) return true
+    // Only compare against words of similar length — avoids spurious
+    // matches between very short tokens and very long words.
+    if (Math.abs(word.length - token.length) <= threshold) {
+      if (editDistance(token, word) <= threshold) return true
+    }
+  }
+  return false
+}
+
 function scoreResult(item: SearchResult, queryTokens: string[], normalizedQuery: string): number {
   if (queryTokens.length === 0) return 1
 
@@ -60,7 +125,19 @@ function scoreResult(item: SearchResult, queryTokens: string[], normalizedQuery:
   const keywords = item.keywords.map(normalize)
   const haystack = [title, description, type, ...keywords].join(' ')
 
-  if (!queryTokens.every((token) => haystack.includes(token))) return 0
+  // Fast path: every token must match. If even one token has no exact
+  // substring hit, fall back to fuzzy matching for typo tolerance.
+  const exactMatch = queryTokens.every((token) => haystack.includes(token))
+  let fuzzyBonus = 0
+
+  if (!exactMatch) {
+    const haystackWords = haystack.split(/\s+/).filter(Boolean)
+    if (!queryTokens.every((token) => fuzzyMatchToken(token, haystackWords))) return 0
+    // Fuzzy matches rank below exact matches but above no-match. The
+    // penalty is proportional to how many tokens needed fuzzy rescue.
+    const fuzzyCount = queryTokens.filter((token) => !haystack.includes(token)).length
+    fuzzyBonus = Math.round((1 - fuzzyCount / queryTokens.length) * 12)
+  }
 
   let score = 0
   if (title === normalizedQuery) score += 120
@@ -83,7 +160,9 @@ function scoreResult(item: SearchResult, queryTokens: string[], normalizedQuery:
     topic: 5,
   }
 
-  return score + typePriority[item.type]
+  // Only add fuzzyBonus for items that did NOT pass exact matching, so
+  // exact matches keep their higher score and outrank fuzzy rescues.
+  return exactMatch ? score + typePriority[item.type] : fuzzyBonus + typePriority[item.type]
 }
 
 export function buildSearchIndex(): SearchResult[] {

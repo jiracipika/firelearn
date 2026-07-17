@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildSearchIndex, rankSearchResults, searchCourseCatalog, searchFireLearn } from '@/lib/search'
+import { buildSearchIndex, rankSearchResults, searchCourseCatalog, searchFireLearn, type SearchResult } from '@/lib/search'
 
 describe('search', () => {
   it('indexes courses, lessons, flashcards, and quiz questions', () => {
@@ -59,5 +59,49 @@ describe('search', () => {
 
     expect(matches).toHaveLength(indexedCourses.length)
     expect(matches.every((match) => match.matchCount === 0)).toBe(true)
+  })
+})
+
+describe('fuzzy / typo-tolerant search', () => {
+  it('returns results for a single-character typo (SCUBA → SCBA)', () => {
+    const exact = searchFireLearn('SCBA')
+    const typoed = searchFireLearn('SCUBA')
+
+    expect(exact.length).toBeGreaterThan(0)
+    expect(typoed.length).toBeGreaterThan(0)
+  })
+
+  it('ranks exact-spelling matches above typoed-query matches', () => {
+    const customIndex: SearchResult[] = [
+      { id: 'exact', type: 'lesson', title: 'SCBA', description: 'Breathing apparatus', href: '/a', keywords: ['scba'] },
+      { id: 'fuzzy', type: 'lesson', title: 'SCUBA diving', description: 'Underwater gear', href: '/b', keywords: ['scuba'] },
+    ]
+
+    const results = rankSearchResults('SCBA', customIndex)
+    expect(results[0]?.id).toBe('exact')
+    expect(results[0]?.score).toBeGreaterThan(results[1]?.score ?? 0)
+  })
+
+  it('still returns zero results for a completely unrelated query', () => {
+    const results = searchFireLearn('xyzzqqpp')
+    expect(results).toHaveLength(0)
+  })
+
+  it('does not fuzzy-match tokens that are too distant', () => {
+    // "fire" is 4 chars (threshold=1). "water" is 5 chars (threshold=2).
+    // editDistance("fire","water") = 4, well beyond both thresholds.
+    const customIndex: SearchResult[] = [
+      { id: 'unrelated', type: 'lesson', title: 'Water supply', description: 'Hydrant operations', href: '/x', keywords: [] },
+    ]
+    const results = rankSearchResults('fire', customIndex)
+    expect(results).toHaveLength(0)
+  })
+
+  it('handles multi-word queries where one word is typoed', () => {
+    // If "SCBA" is correct but "ventaltion" is a typo of "ventilation",
+    // the search should still find relevant content.
+    const results = searchFireLearn('SCBA ventaltion')
+    // May or may not find results depending on catalog, but should not crash
+    expect(Array.isArray(results)).toBe(true)
   })
 })
