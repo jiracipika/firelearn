@@ -3,7 +3,9 @@ import { Award, BookOpen, Brain, Clock, Layers, LibraryBig, PlayCircle } from 'l
 import type { Course } from '@/types/learning'
 import { getCategoryTitle } from '@/data/academy'
 import { getCourseStats } from '@/lib/academy-selectors'
+import { courseJsonLd } from '@/lib/json-ld'
 import { AppShell } from '@/components/layout/app-shell'
+import { JsonLd } from '@/components/seo/json-ld'
 import { LessonCard } from '@/components/course/lesson-card'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -20,7 +22,7 @@ export function CourseDetail({ course }: { course: Course }) {
     { label: 'Questions', value: stats.quizQuestionCount, icon: Brain },
     { label: 'Cards', value: stats.flashcardCount, icon: LibraryBig },
   ]
-  return <AppShell><div className="space-y-9">
+  return <AppShell><JsonLd data={courseJsonLd(course)} /><div className="space-y-9">
     <section className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
       <Card className="relative overflow-hidden border-border-bright p-7">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-info" />

@@ -9,7 +9,9 @@ import { getBrowserStorage } from '@/services/local-persistence'
 import { createOfflineProgressRepository } from '@/services/offline-progress'
 import { getLessonXpAward } from '@/services/lesson-xp'
 import { getLessonPracticeHref, getLessonSequence } from '@/services/lesson-navigation'
+import { lessonJsonLd } from '@/lib/json-ld'
 import { AppShell } from '@/components/layout/app-shell'
+import { JsonLd } from '@/components/seo/json-ld'
 import { ContentBlock } from '@/components/course/content-block'
 import { InteractiveKnowledgeCheck } from '@/components/course/interactive-knowledge-check'
 import { Badge } from '@/components/ui/badge'
@@ -47,6 +49,7 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
   }
 
   return <AppShell>
+    <JsonLd data={lessonJsonLd(course, lesson)} />
     <ScrollProgress />
     <article className="mx-auto max-w-4xl space-y-6">
       <Link href={`/courses/${course.slug}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-white">
