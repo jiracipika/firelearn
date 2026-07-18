@@ -1,15 +1,30 @@
 import { TrendingUp } from 'lucide-react'
 import { learnerProgress } from '@/data/progress'
+import type { StudyActivityDayLabel } from '@/hooks/use-study-activity'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
-const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+// Fallback labels when no `dayLabels` prop is supplied. Matches the layout of
+// `weeklyActivityDayLabels` (oldest-first, today last) but uses short, neutral
+// day-ordinal labels so the heatmap still renders correctly before hydration
+// without committing to a weekday that may not match the user's `now`.
+const PLACEHOLDER_LABELS: StudyActivityDayLabel[] = Array.from({ length: 7 }, (_, index) => ({
+  label: `D${index + 1}`,
+  isToday: index === 6,
+}))
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
-export function StudyHeatmap({ weeklyActivity }: { weeklyActivity: number[] }) {
+export function StudyHeatmap({
+  weeklyActivity,
+  dayLabels,
+}: {
+  weeklyActivity: number[]
+  dayLabels?: StudyActivityDayLabel[]
+}) {
+  const labels = dayLabels && dayLabels.length === 7 ? dayLabels : PLACEHOLDER_LABELS
   const max = Math.max(1, ...weeklyActivity)
   const total = weeklyActivity.reduce((sum, value) => sum + value, 0)
   const average = weeklyActivity.length === 0 ? 0 : total / weeklyActivity.length
@@ -48,6 +63,7 @@ export function StudyHeatmap({ weeklyActivity }: { weeklyActivity: number[] }) {
         {weeklyActivity.map((minutes, index) => {
           const intensity = minutes / max
           const hitGoal = minutes >= goal && goal > 0
+          const day = labels[index]
           return (
             <div key={index} className="group flex flex-1 flex-col items-center gap-2">
               <div className="flex w-full items-end justify-center" style={{ height: '100px' }}>
@@ -57,12 +73,12 @@ export function StudyHeatmap({ weeklyActivity }: { weeklyActivity: number[] }) {
                     hitGoal ? 'from-success/40 to-success/90' : 'from-primary/30 to-primary/90 group-hover:from-primary/50'
                   )}
                   style={{ height: `${Math.max(8, intensity * 100)}px`, filter: intensity > 0.6 ? 'drop-shadow(0 0 6px rgb(255 74 46 / 0.4))' : undefined }}
-                  aria-label={`${minutes} minutes`}
+                  aria-label={`${minutes} minutes${day?.isToday ? ' (today)' : ''}`}
                 />
               </div>
               <div className="text-center transition-colors group-hover:text-white">
                 <p className={cn('text-xs font-medium', hitGoal ? 'text-success' : 'text-white')}>{minutes}m</p>
-                <p className="text-[10px] text-muted">{days[index]}</p>
+                <p className={cn('text-[10px] uppercase', day?.isToday ? 'font-bold text-primary' : 'text-muted')}>{day?.label}</p>
               </div>
             </div>
           )
@@ -86,7 +102,7 @@ export function StudyHeatmap({ weeklyActivity }: { weeklyActivity: number[] }) {
 
       {total > 0 && (
         <p className="text-xs text-muted-foreground">
-          Best day: <span className="font-semibold text-white">{days[bestDayIndex]}</span> ({weeklyActivity[bestDayIndex]}m)
+          Best day: <span className="font-semibold text-white">{labels[bestDayIndex]?.label}</span> ({weeklyActivity[bestDayIndex]}m)
         </p>
       )}
     </Card>

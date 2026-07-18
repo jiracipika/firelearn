@@ -172,7 +172,7 @@ export function DashboardOverview() {
     </section>
 
     <section className="grid gap-5 lg:grid-cols-[1fr_0.85fr]">
-      <StudyHeatmap weeklyActivity={studyActivity.weeklyMinutes} />
+      <StudyHeatmap weeklyActivity={studyActivity.weeklyMinutes} dayLabels={studyActivity.dayLabels} />
       <AchievementProgressPanel achievements={stats.achievements} />
     </section>
 

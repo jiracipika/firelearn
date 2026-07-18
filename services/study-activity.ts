@@ -34,6 +34,8 @@ export function recordStudyActivity(storage: StorageLike, entry: Omit<StudyActiv
   return nextEntry
 }
 
+const SHORT_DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+
 function dayKey(value: Date) {
   return value.toISOString().slice(0, 10)
 }
@@ -42,6 +44,30 @@ function daysAgo(days: number, now = new Date()) {
   const date = new Date(now)
   date.setUTCDate(date.getUTCDate() - days)
   return dayKey(date)
+}
+
+/**
+ * Day-of-week short labels (e.g. "Mon") for the seven entries returned by
+ * `weeklyMinutes`, oldest first (index 0 = 6 days ago, index 6 = today).
+ *
+ * `weeklyMinutes` is a trailing-7-day window, not a fixed Mon–Sun week, so
+ * pairing its values with a constant `['Mon', ... 'Sun']` array mislabels
+ * every bar except on Sundays. This helper keeps the labels aligned with the
+ * same UTC date math used by `daysAgo` / `weeklyMinutes`, and marks the
+ * current day so the UI can highlight it without recomputing the date.
+ */
+export function weeklyActivityDayLabels(
+  now: Date = new Date(),
+): ReadonlyArray<{ label: string; isToday: boolean }> {
+  return Array.from({ length: 7 }, (_, index) => {
+    const daysBack = 6 - index
+    const date = new Date(now)
+    date.setUTCDate(date.getUTCDate() - daysBack)
+    return {
+      label: SHORT_DAY_NAMES[date.getUTCDay()],
+      isToday: daysBack === 0,
+    }
+  })
 }
 
 export function weeklyMinutes(activity: StudyActivityEntry[], now = new Date()) {
