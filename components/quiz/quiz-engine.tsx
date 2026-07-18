@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, ChevronRight, Clock, Keyboard, RotateCcw, XCircle } from 'lucide-react'
+import { CheckCircle2, ChevronRight, Clock, Keyboard, RotateCcw, Target, XCircle } from 'lucide-react'
 import type { QuizQuestion } from '@/types/learning'
 import { getBrowserStorage } from '@/services/local-persistence'
 import { recordQuizOutcome } from '@/services/quiz-recording'
@@ -24,8 +24,10 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
   const [submitted, setSubmitted] = React.useState(false)
   const [showReview, setShowReview] = React.useState(false)
   const [timerElapsed, setTimerElapsed] = React.useState(0)
+  const [questionsOverride, setQuestionsOverride] = React.useState<QuizQuestion[] | null>(null)
 
-  const bank = React.useMemo(() => collectQuestionBank(questions, mode), [mode, questions])
+  const effectiveQuestions = questionsOverride ?? questions
+  const bank = React.useMemo(() => collectQuestionBank(effectiveQuestions, mode), [mode, effectiveQuestions])
   const question = bank[index]
   const finished = answers.length === bank.length && index >= bank.length
   const selectedCorrect = question ? isAnswerCorrect(question, selected) : false
@@ -83,14 +85,23 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
     autoSubmitRef.current(true)
   }, [timerState, submitted])
 
-  function reset(nextMode: QuizMode = mode) {
+  function reset(nextMode: QuizMode = mode, overrideQuestions?: QuizQuestion[]) {
     setMode(nextMode)
+    setQuestionsOverride(overrideQuestions ?? null)
     setIndex(0)
     setSelected([])
     setAnswers([])
     setSubmitted(false)
     setShowReview(false)
     recordedResultKey.current = null
+  }
+
+  function retryMissed() {
+    if (!result) return
+    const missedIds = new Set(answers.filter((a) => !a.correct).map((a) => a.questionId))
+    const missedQuestions = bank.filter((q) => missedIds.has(q.id))
+    if (missedQuestions.length === 0) return
+    reset('practice', missedQuestions)
   }
 
   function toggleOption(option: string) {
@@ -170,6 +181,9 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
           )}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button onClick={() => reset()}><RotateCcw size={18} /> Retake quiz</Button>
+            {result.correctAnswers < result.totalQuestions && (
+              <Button variant="secondary" onClick={retryMissed}><Target size={18} /> Retry {result.totalQuestions - result.correctAnswers} missed</Button>
+            )}
             <Button variant="outline" onClick={() => setShowReview((value) => !value)}>
               {showReview ? 'Hide answer review' : `Review answers (${result.correctAnswers}/${result.totalQuestions})`}
             </Button>
@@ -187,7 +201,7 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
     <div className="mx-auto max-w-3xl space-y-5">
       <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
         <div>
-          <Badge>{mode === 'practice' ? 'Practice mode' : 'Exam mode'}</Badge>
+          <Badge>{questionsOverride ? 'Missed-questions retry' : mode === 'practice' ? 'Practice mode' : 'Exam mode'}</Badge>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-white md:text-4xl">{title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Question {Math.min(index + 1, bank.length)} of {bank.length}{poolTotal && poolTotal > bank.length ? ` · ${poolTotal} in pool` : ''}</p>
         </div>
