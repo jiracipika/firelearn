@@ -2,13 +2,14 @@
 
 import * as React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, ChevronRight, Clock, Keyboard, RotateCcw, Target, XCircle } from 'lucide-react'
+import { CheckCircle2, ChevronRight, Clock, Keyboard, RotateCcw, Sparkles, Target, TrendingDown, TrendingUp, XCircle } from 'lucide-react'
 import type { QuizQuestion } from '@/types/learning'
 import { getBrowserStorage } from '@/services/local-persistence'
 import { recordQuizOutcome } from '@/services/quiz-recording'
 import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
 import { recordQuizAttemptInSupabase } from '@/services/supabase/progress'
 import { buildQuizResult, collectQuestionBank, isAnswerCorrect, supportsMultipleSelection, type QuizAnswer, type QuizMode } from '@/services/quiz-engine'
+import { summarizeQuizSession, type QuizPerformanceBand } from '@/services/quiz-session-summary'
 import { computeTimerState, formatCountdown, hasVisibleCountdown } from '@/services/quiz-timer'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -32,6 +33,10 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
   const finished = answers.length === bank.length && index >= bank.length
   const selectedCorrect = question ? isAnswerCorrect(question, selected) : false
   const result = finished ? buildQuizResult(bank, answers) : null
+  const sessionSummary = React.useMemo(
+    () => (result ? summarizeQuizSession(bank, answers) : null),
+    [result, bank, answers],
+  )
   const recordedResultKey = React.useRef<string | null>(null)
 
   React.useEffect(() => {
@@ -189,6 +194,7 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
             </Button>
           </div>
         </Card>
+        {sessionSummary && <QuizSessionAnalytics summary={sessionSummary} />}
         {showReview && <QuizAnswerReview bank={bank} answers={answers} />}
       </div>
     )
@@ -300,6 +306,118 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
         </motion.div>
       </AnimatePresence>
     </div>
+  )
+}
+
+const performanceBandCopy: Record<QuizPerformanceBand, { label: string; tone: string; bg: string; border: string }> = {
+  excellent: { label: 'Exam-ready', tone: 'text-success', bg: 'bg-success/10', border: 'border-success/30' },
+  passing: { label: 'Passing', tone: 'text-emerald-300', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+  'needs-work': { label: 'Needs work', tone: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
+  failing: { label: 'Review required', tone: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' },
+}
+
+function QuizSessionAnalytics({ summary }: { summary: import('@/services/quiz-session-summary').QuizSessionSummary }) {
+  const band = performanceBandCopy[summary.performanceBand]
+  const showTypeBreakdown = summary.questionTypeStats.length > 1
+  const showTopicBreakdown = summary.topicStats.length > 1
+
+  return (
+    <Card className="space-y-4 p-5 md:p-7">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Session analytics</p>
+          <h2 className="mt-1 font-bold text-white">How this attempt went</h2>
+        </div>
+        <Sparkles className="text-red-400" size={20} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className={cn('rounded-xl border p-3 text-center', band.border, band.bg)}>
+          <p className={cn('text-xs font-semibold uppercase tracking-wider', band.tone)}>{band.label}</p>
+          <p className="mt-1 text-[11px] text-muted">Performance band</p>
+        </div>
+        <div className="rounded-xl border border-border bg-elevated/40 p-3 text-center">
+          <p className="text-2xl font-bold text-white tabular-nums">{summary.accuracyPercent}%</p>
+          <p className="text-[11px] text-muted">Overall accuracy</p>
+        </div>
+        {summary.strongestTopic && (
+          <div className="rounded-xl border border-success/30 bg-success/8 p-3 text-center">
+            <p className="text-sm font-bold text-success">{summary.strongestTopic.topicId}</p>
+            <p className="text-[11px] text-muted">Strongest · {summary.strongestTopic.accuracyPercent}%</p>
+          </div>
+        )}
+        {summary.weakestTopic && (
+          <div className="rounded-xl border border-red-500/25 bg-red-500/8 p-3 text-center">
+            <p className="text-sm font-bold text-red-300">{summary.weakestTopic.topicId}</p>
+            <p className="text-[11px] text-muted">Weakest · {summary.weakestTopic.accuracyPercent}%</p>
+          </div>
+        )}
+        {summary.strongestTopic && !summary.weakestTopic && (
+          <div className="rounded-xl border border-border bg-elevated/40 p-3 text-center">
+            <p className="text-2xl font-bold text-white tabular-nums">{summary.correctAnswers}</p>
+            <p className="text-[11px] text-muted">Correct answers</p>
+          </div>
+        )}
+      </div>
+
+      {showTypeBreakdown && (
+        <div>
+          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted">
+            <TrendingUp size={12} /> Accuracy by question type
+          </p>
+          <div className="mt-2 space-y-2">
+            {summary.questionTypeStats.map((stat) => (
+              <div key={stat.type} className="rounded-lg border border-border bg-elevated/40 px-3 py-2">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="font-medium capitalize text-white">{stat.type.replace('-', ' ')}</span>
+                  <span className={cn('tabular-nums', stat.accuracyPercent === 100 ? 'text-success' : stat.accuracyPercent < 50 ? 'text-red-400' : 'text-muted')}>
+                    {stat.correct}/{stat.total} · {stat.accuracyPercent}%
+                  </span>
+                </div>
+                <Progress value={stat.accuracyPercent} className="mt-2 h-1.5" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {showTopicBreakdown && (
+        <div>
+          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted">
+            <TrendingDown size={12} /> Topic breakdown
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {summary.topicStats.map((topic) => (
+              <span
+                key={topic.topicId}
+                className={cn(
+                  'rounded-lg border px-2.5 py-1 text-xs tabular-nums',
+                  topic.accuracyPercent === 100
+                    ? 'border-success/30 bg-success/8 text-success'
+                    : topic.accuracyPercent < 50
+                      ? 'border-red-500/30 bg-red-500/8 text-red-300'
+                      : 'border-border bg-elevated/40 text-white',
+                )}
+                title={`${topic.correct} of ${topic.total} correct`}
+              >
+                {topic.topicId} · {topic.accuracyPercent}%
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(summary.masteredQuestionTypes.length > 0 || summary.strugglingQuestionTypes.length > 0) && (
+        <p className="text-sm leading-6 text-muted-foreground">
+          {summary.masteredQuestionTypes.length > 0 && (
+            <>Mastered {summary.masteredQuestionTypes.map((type) => type.replace('-', ' ')).join(', ')}.</>
+          )}{' '}
+          {summary.strugglingQuestionTypes.length > 0 && (
+            <>Focus next on {summary.strugglingQuestionTypes.map((type) => type.replace('-', ' ')).join(', ')}.</>
+          )}
+        </p>
+      )}
+    </Card>
   )
 }
 
