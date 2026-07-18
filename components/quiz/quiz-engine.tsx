@@ -453,19 +453,13 @@ function QuizAnswerReview({ bank, answers }: { bank: QuizQuestion[]; answers: Qu
         <p className="mt-1 text-sm text-muted-foreground">Each question with the correct answer, your response, and the explanation.</p>
       </div>
 
-      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter review by outcome">
-        <FilterChip active={filter === 'incorrect'} count={incorrectCount} onClick={() => setFilter('incorrect')} accent="danger">
-          Incorrect
-        </FilterChip>
-        <FilterChip active={filter === 'correct'} count={correctCount} onClick={() => setFilter('correct')} accent="success">
-          Correct
-        </FilterChip>
-        <FilterChip active={filter === 'all'} count={bank.length} onClick={() => setFilter('all')} accent="neutral">
-          All
-        </FilterChip>
-      </div>
+      <FilterRadioGroup value={filter} onChange={setFilter} options={[
+        { value: 'incorrect', label: 'Incorrect', count: incorrectCount, accent: 'danger' },
+        { value: 'correct', label: 'Correct', count: correctCount, accent: 'success' },
+        { value: 'all', label: 'All', count: bank.length, accent: 'neutral' },
+      ]} />
 
-      <div className="space-y-4">
+      <div className="space-y-4" role="region" aria-label="Filtered review questions">
         {filteredBank.map((question) => {
           const originalIndex = bank.indexOf(question)
           const answer = answerByQuestion.get(question.id)
@@ -532,38 +526,100 @@ function QuizAnswerReview({ bank, answers }: { bank: QuizQuestion[]; answers: Qu
   )
 }
 
-function FilterChip({
-  active,
-  count,
-  onClick,
-  accent,
-  children,
-}: {
-  active: boolean
+type FilterAccent = 'danger' | 'success' | 'neutral'
+
+type FilterOption = {
+  value: ReviewFilter
+  label: string
   count: number
-  onClick: () => void
-  accent: 'danger' | 'success' | 'neutral'
-  children: React.ReactNode
-}) {
+  accent: FilterAccent
+}
+
+const accentActive: Record<FilterAccent, string> = {
+  danger: 'border-red-500/50 bg-red-500/15 text-red-200',
+  success: 'border-success/50 bg-success/15 text-success',
+  neutral: 'border-border bg-elevated/60 text-white',
+}
+
+const accentCheckedIcon: Record<FilterAccent, string> = {
+  danger: 'border-red-400/60 bg-red-500 text-white',
+  success: 'border-success/60 bg-success text-black',
+  neutral: 'border-border-bright bg-white text-black',
+}
+
+function accentForChecked(checked: boolean, accent: FilterAccent) {
+  return checked ? accentCheckedIcon[accent] : 'border-border bg-transparent'
+}
+
+/**
+ * Single-select filter for the answer review.
+ *
+ * Uses radiogroup/radio semantics (not tablist) because this is a one-choice
+ * filter that swaps the contents of the labelled region below, not a panel
+ * navigation widget. Arrow keys move between options and Home/End jump to the
+ * ends, matching the WAI-ARIA radiogroup keyboard pattern. Roving tabindex
+ * keeps only one option in the tab order.
+ */
+function FilterRadioGroup({ value, onChange, options }: { value: ReviewFilter; onChange: (next: ReviewFilter) => void; options: FilterOption[] }) {
+  const refs = React.useRef<(HTMLButtonElement | null)[]>([])
+  const activeIndex = Math.max(0, options.findIndex((option) => option.value === value))
+
+  function focusOption(index: number) {
+    const clamped = (index + options.length) % options.length
+    const node = refs.current[clamped]
+    node?.focus()
+    onChange(options[clamped].value)
+  }
+
+  function onKeyDown(event: React.KeyboardEvent) {
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        event.preventDefault()
+        focusOption(activeIndex + 1)
+        break
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        event.preventDefault()
+        focusOption(activeIndex - 1)
+        break
+      case 'Home':
+        event.preventDefault()
+        focusOption(0)
+        break
+      case 'End':
+        event.preventDefault()
+        focusOption(options.length - 1)
+        break
+    }
+  }
+
   return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={cn(
-        'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
-        active
-          ? accent === 'danger'
-            ? 'border-red-500/50 bg-red-500/15 text-red-200'
-            : accent === 'success'
-              ? 'border-success/50 bg-success/15 text-success'
-              : 'border-border bg-elevated/60 text-white'
-          : 'border-border bg-transparent text-muted-foreground hover:border-border/80 hover:text-white',
-      )}
-    >
-      {children}
-      <span className="rounded-full bg-black/30 px-1.5 text-[10px] tabular-nums">{count}</span>
-    </button>
+    <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Filter review by outcome" onKeyDown={onKeyDown}>
+      {options.map((option, index) => {
+        const checked = option.value === value
+        return (
+          <button
+            key={option.value}
+            ref={(node) => { refs.current[index] = node }}
+            type="button"
+            role="radio"
+            aria-checked={checked}
+            tabIndex={checked ? 0 : -1}
+            onClick={() => { onChange(option.value); refs.current[index]?.focus() }}
+            className={cn(
+              'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+              checked ? accentActive[option.accent] : 'border-border bg-transparent text-muted-foreground hover:border-border/80 hover:text-white',
+            )}
+          >
+            <span aria-hidden className={cn('flex size-3 shrink-0 items-center justify-center rounded-full border transition-colors', accentForChecked(checked, option.accent))}>
+              {checked && <span className="size-1.5 rounded-full bg-current" />}
+            </span>
+            {option.label}
+            <span className="rounded-full bg-black/30 px-1.5 text-[10px] tabular-nums">{option.count}</span>
+          </button>
+        )
+      })}
+    </div>
   )
 }
