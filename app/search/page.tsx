@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { GlobalSearch } from '@/components/search/global-search'
 
 export const metadata: Metadata = {
@@ -8,5 +9,12 @@ export const metadata: Metadata = {
 }
 
 export default function SearchPage() {
-  return <GlobalSearch />
+  // GlobalSearch now reads `?q=` from the URL via useSearchParams, which needs
+  // a Suspense boundary so the static shell can render without bailing out
+  // the whole route to client-only rendering.
+  return (
+    <Suspense fallback={null}>
+      <GlobalSearch />
+    </Suspense>
+  )
 }

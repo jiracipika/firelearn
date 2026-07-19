@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Search } from 'lucide-react'
 import { buildSearchIndex, searchFireLearn } from '@/lib/search'
 import { AppShell } from '@/components/layout/app-shell'
@@ -10,9 +11,23 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 
 export function GlobalSearch() {
-  const [query, setQuery] = React.useState('')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  // Seed the query from `?q=` so deep links (e.g. the dashboard weak-topic
+  // chips) land on a pre-filled results view. Kept in sync with the URL so
+  // the box reflects what the link promised.
+  const [query, setQuery] = React.useState(searchParams.get('q') ?? '')
   const index = React.useMemo(() => buildSearchIndex(), [])
   const results = React.useMemo(() => searchFireLearn(query, index), [index, query])
+
+  function handleChange(value: string) {
+    setQuery(value)
+    const params = new URLSearchParams(searchParams.toString())
+    if (value) params.set('q', value)
+    else params.delete('q')
+    const next = params.toString()
+    router.replace(next ? `/search?${next}` : '/search', { scroll: false })
+  }
 
   return <AppShell><div className="mx-auto max-w-3xl space-y-6">
     <div className="space-y-2">
@@ -22,7 +37,7 @@ export function GlobalSearch() {
     </div>
     <div className="relative">
       <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" size={18} />
-      <Input className="pl-11" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Try SCBA, smoke, SOP, Mayday..." autoFocus aria-label="Search FireLearn" />
+      <Input className="pl-11" value={query} onChange={(event) => handleChange(event.target.value)} placeholder="Try SCBA, smoke, SOP, Mayday..." autoFocus aria-label="Search FireLearn" />
     </div>
     <div className="grid gap-3">
       {results.map((result) => (

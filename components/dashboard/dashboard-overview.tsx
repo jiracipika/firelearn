@@ -10,6 +10,7 @@ import { useOfflineProgress } from '@/hooks/use-offline-progress'
 import { useStudyActivity } from '@/hooks/use-study-activity'
 import { useFlashcardQueueSummary } from '@/hooks/use-flashcard-queue-summary'
 import { getWeakTopicSummary } from '@/services/offline-progress'
+import { formatTopicLabel } from '@/services/topics'
 import { aggregateLearnerStats } from '@/services/gamification-aggregator'
 import { buildCompletedLessonAwards } from '@/services/lesson-xp'
 import { chooseNextAction } from '@/services/next-action'
@@ -247,11 +248,24 @@ export function DashboardOverview() {
         }
       </Card>
       <Card className="space-y-3">
-        <h2 className="font-bold text-white">Weak-topic recommendations</h2>
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-bold text-white">Weak-topic recommendations</h2>
+          {weakTopics.length > 0 && (
+            <span className="text-xs text-muted">{weakTopics.length} topic{weakTopics.length === 1 ? '' : 's'} flagged</span>
+          )}
+        </div>
         {weakTopics.length === 0
           ? <p className="text-sm text-muted-foreground">No weak topics yet. FireLearn surfaces repeated misses after quizzes.</p>
           : <div className="flex flex-wrap gap-2">{weakTopics.slice(0, 8).map((topic) => (
-              <span key={topic.topicId} className="rounded-lg border border-primary/30 bg-primary/8 px-3 py-1 text-xs text-red-200">{topic.topicId} · {topic.misses}</span>
+              <Link
+                key={topic.topicId}
+                href={`/search?q=${encodeURIComponent(formatTopicLabel(topic.topicId))}`}
+                className="group inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/8 px-3 py-1.5 text-xs text-red-200 transition hover:border-primary/60 hover:bg-primary/15 hover:text-white"
+                title={`Review ${formatTopicLabel(topic.topicId)} — ${topic.misses} miss${topic.misses === 1 ? '' : 'es'}`}
+              >
+                <span className="font-medium">{formatTopicLabel(topic.topicId)}</span>
+                <span className="rounded bg-primary/20 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-red-100">{topic.misses}</span>
+              </Link>
             ))}</div>
         }
       </Card>

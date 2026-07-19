@@ -11,6 +11,7 @@ import { recordQuizAttemptInSupabase } from '@/services/supabase/progress'
 import { buildQuizResult, collectQuestionBank, isAnswerCorrect, supportsMultipleSelection, type QuizAnswer, type QuizMode } from '@/services/quiz-engine'
 import { summarizeQuizSession, type QuizPerformanceBand } from '@/services/quiz-session-summary'
 import { computeTimerState, formatCountdown, hasVisibleCountdown } from '@/services/quiz-timer'
+import { formatTopicLabel } from '@/services/topics'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -179,7 +180,7 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
               <p className="text-sm font-semibold text-white">Weak topics detected</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {result.weakTopicIds.map((topic) => (
-                  <span key={topic} className="rounded-lg border border-primary/30 bg-primary/8 px-2.5 py-1 text-xs text-red-200">{topic}</span>
+                  <span key={topic} className="rounded-lg border border-primary/30 bg-primary/8 px-2.5 py-1 text-xs text-red-200">{formatTopicLabel(topic)}</span>
                 ))}
               </div>
             </div>
@@ -342,13 +343,13 @@ function QuizSessionAnalytics({ summary }: { summary: import('@/services/quiz-se
         </div>
         {summary.strongestTopic && (
           <div className="rounded-xl border border-success/30 bg-success/8 p-3 text-center">
-            <p className="text-sm font-bold text-success">{summary.strongestTopic.topicId}</p>
+            <p className="text-sm font-bold text-success">{formatTopicLabel(summary.strongestTopic.topicId)}</p>
             <p className="text-[11px] text-muted">Strongest · {summary.strongestTopic.accuracyPercent}%</p>
           </div>
         )}
         {summary.weakestTopic && (
           <div className="rounded-xl border border-red-500/25 bg-red-500/8 p-3 text-center">
-            <p className="text-sm font-bold text-red-300">{summary.weakestTopic.topicId}</p>
+            <p className="text-sm font-bold text-red-300">{formatTopicLabel(summary.weakestTopic.topicId)}</p>
             <p className="text-[11px] text-muted">Weakest · {summary.weakestTopic.accuracyPercent}%</p>
           </div>
         )}
@@ -400,7 +401,7 @@ function QuizSessionAnalytics({ summary }: { summary: import('@/services/quiz-se
                 )}
                 title={`${topic.correct} of ${topic.total} correct`}
               >
-                {topic.topicId} · {topic.accuracyPercent}%
+                {formatTopicLabel(topic.topicId)} · {topic.accuracyPercent}%
               </span>
             ))}
           </div>
@@ -509,7 +510,7 @@ function QuizAnswerReview({ bank, answers }: { bank: QuizQuestion[]; answers: Qu
               {question.topicIds.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {question.topicIds.map((topic) => (
-                    <span key={topic} className="rounded border border-border bg-elevated/40 px-1.5 py-0.5 text-[10px] text-muted">{topic}</span>
+                    <span key={topic} className="rounded border border-border bg-elevated/40 px-1.5 py-0.5 text-[10px] text-muted">{formatTopicLabel(topic)}</span>
                   ))}
                 </div>
               )}
