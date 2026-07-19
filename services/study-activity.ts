@@ -87,9 +87,26 @@ export function minutesStudiedToday(activity: StudyActivityEntry[], now = new Da
 }
 
 export function streakDays(activity: StudyActivityEntry[], now = new Date()) {
-  const activeDays = new Set(activity.filter((entry) => entry.minutes > 0).map((entry) => dayKey(new Date(entry.createdAt))))
+  const activeDays = new Set(
+    activity.filter((entry) => entry.minutes > 0).map((entry) => dayKey(new Date(entry.createdAt))),
+  )
+
+  // Today does not count as a broken streak until the day actually ends: if
+  // there is no activity yet today but yesterday was active, the streak is
+  // "at risk" but not lost. We start counting from the most recent active day
+  // that is today or yesterday; anything older means the chain already broke.
+  // Without this grace, a learner who studied every day this week would see
+  // their streak reset to 0 the moment they open the app before studying.
+  const startOffset = activeDays.has(daysAgo(0, now))
+    ? 0
+    : activeDays.has(daysAgo(1, now))
+      ? 1
+      : -1
+
+  if (startOffset === -1) return 0
+
   let streak = 0
-  while (activeDays.has(daysAgo(streak, now))) streak += 1
+  while (activeDays.has(daysAgo(startOffset + streak, now))) streak += 1
   return streak
 }
 

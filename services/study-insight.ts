@@ -34,6 +34,23 @@ export function getWeeklyStudyInsight({ weeklyMinutes, dailyGoalMinutes, streakD
     }
   }
 
+  // Streak at risk: a real streak (2+ days) was built on previous days but
+  // nothing has been logged yet today. The grace window in streakDays()
+  // keeps the number alive across midnight rather than resetting it to 0, so
+  // this is exactly the moment to nudge the learner to extend the chain
+  // before the day ends and the streak actually breaks. Without this branch
+  // the learner would see a preserved streak number but no urgent prompt to
+  // act on it today.
+  if (todayMinutes === 0 && streakDays >= 2) {
+    return {
+      title: `Your ${streakDays}-day streak is on the line today`,
+      summary: `You've kept a ${streakDays}-day streak alive. Log one lesson, quiz, or timer rep before midnight to extend it — miss today and the chain resets.`,
+      metricLabel: 'streak to extend',
+      metricValue: `${streakDays} day${streakDays === 1 ? '' : 's'}`,
+      status: 'catch-up',
+    }
+  }
+
   if (remainingToday > 0) {
     return {
       title: 'Close today\'s readiness gap',
