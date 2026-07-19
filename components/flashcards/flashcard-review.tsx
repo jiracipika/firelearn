@@ -91,10 +91,20 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      // Ignore shortcuts when the user is typing in a form field so we do not
+      // steal Space/Enter from inputs (matches the catalog `/` shortcut guard).
+      const target = event.target as HTMLElement | null
+      const typing = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable
+      if (typing) return
+      // Ignore modifier-chorded keys (e.g. Ctrl/Cmd/Alt+digit for browser
+      // shortcuts, Shift+1 = "!") so we only act on clean number presses.
+      if (event.ctrlKey || event.metaKey || event.altKey) return
       if (event.key === ' ' || event.key === 'Enter') {
         event.preventDefault()
         setRevealed(true)
+        return
       }
+      if (event.shiftKey) return
       const rating = ratings.find((item) => item.shortcut === event.key)
       if (rating) rate(rating.value)
     }
@@ -170,6 +180,11 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
+      {/* Polite live region so screen readers announce each card transition and
+          reveal/rate action. Visually hidden, not suppressed. */}
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        Card {index + 1} of {reviewIds.length}. {revealed ? `Answer: ${current.back}` : `Prompt: ${current.front}`}
+      </p>
       <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
         <div>
           <Badge>{cardStage(current)} card</Badge>
@@ -180,6 +195,10 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
       </div>
 
       <Progress value={progress} />
+      <div className="flex items-center justify-between gap-2 text-xs text-muted">
+        <span aria-live="polite">{reviewed} of {reviewIds.length} reviewed</span>
+        <span>Card {index + 1} of {reviewIds.length}</span>
+      </div>
       <QueueStats queue={queue} />
 
       <AnimatePresence mode="wait">
@@ -190,12 +209,15 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
             <p className="mx-auto mt-8 max-w-2xl text-2xl font-bold leading-snug tracking-tight text-white md:text-3xl">{revealed ? current.back : current.front}</p>
             {!revealed && <Button className="mt-8" onClick={() => setRevealed(true)}>Show answer <Sparkles size={16} /></Button>}
             {revealed && (
-              <div className="mt-8 grid gap-2.5 sm:grid-cols-4">
+              <div className="mt-8 grid gap-2.5 sm:grid-cols-4" role="group" aria-label="Rate this card">
                 {ratings.map((rating) => (
                   <button
                     key={rating.value}
+                    type="button"
                     onClick={() => rate(rating.value)}
-                    className={cn('flex flex-col items-center gap-1 rounded-xl border border-border bg-elevated/40 py-3 transition', rating.border, rating.bg)}
+                    aria-label={`Rate ${rating.label.toLowerCase()} (press ${rating.shortcut})`}
+                    aria-keyshortcuts={rating.shortcut}
+                    className={cn('flex flex-col items-center gap-1 rounded-xl border border-border bg-elevated/40 py-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60', rating.border, rating.bg)}
                   >
                     <span className={cn('text-sm font-bold', rating.tone)}>{rating.label}</span>
                     <span className="text-xs text-muted">{rating.shortcut}</span>
