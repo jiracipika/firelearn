@@ -31,6 +31,17 @@ export function InteractiveKnowledgeCheck({ question }: { question: QuizQuestion
 
   const correct = submitted && isAnswerCorrect(question, selected)
 
+  // Keep latest handlers in refs so the keydown effect can mount once and does
+  // not need to re-subscribe on every keystroke.
+  const toggleOptionRef = React.useRef(toggleOption)
+  const submitRef = React.useRef(submit)
+  const resetRef = React.useRef(reset)
+  React.useEffect(() => {
+    toggleOptionRef.current = toggleOption
+    submitRef.current = submit
+    resetRef.current = reset
+  })
+
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
@@ -40,16 +51,16 @@ export function InteractiveKnowledgeCheck({ question }: { question: QuizQuestion
 
       if (!submitted) {
         if (isOptionKey && optionIndex < question.options.length) {
-          toggleOption(question.options[optionIndex])
+          toggleOptionRef.current(question.options[optionIndex])
           return
         }
         if (event.key === 'Enter' && selected.length > 0) {
           event.preventDefault()
-          submit()
+          submitRef.current()
         }
       } else if (event.key === 'Enter') {
         event.preventDefault()
-        reset()
+        resetRef.current()
       }
     }
     window.addEventListener('keydown', onKeyDown)

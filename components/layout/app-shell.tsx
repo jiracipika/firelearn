@@ -56,6 +56,7 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive(item.href) ? 'page' : undefined}
                 className={cn(
                   'inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                   isActive(item.href)

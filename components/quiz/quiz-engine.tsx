@@ -82,14 +82,26 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
 
   // Auto-submit when the countdown reaches zero. A timed-out question is
   // recorded as incorrect (no selection), matching exam proctoring expectations.
+  // The submit handler is captured in a ref so the timer effect can stay
+  // focused on the countdown state without re-running on every render.
   const autoSubmitRef = React.useRef(submitAnswer)
   React.useEffect(() => {
     autoSubmitRef.current = submitAnswer
-  }, [submitAnswer])
+  })
   React.useEffect(() => {
     if (!timerState || timerState.urgency !== 'expired' || submitted) return
     autoSubmitRef.current(true)
   }, [timerState, submitted])
+
+  // Keep the latest submit/toggle handlers in refs so the keydown effect can
+  // stay mounted once (no listener churn on every keystroke) without pulling
+  // the handlers into its dependency array and retriggering on each render.
+  const toggleOptionRef = React.useRef(toggleOption)
+  const submitAnswerRef = React.useRef(submitAnswer)
+  React.useEffect(() => {
+    toggleOptionRef.current = toggleOption
+    submitAnswerRef.current = submitAnswer
+  })
 
   function reset(nextMode: QuizMode = mode, overrideQuestions?: QuizQuestion[]) {
     setMode(nextMode)
@@ -145,12 +157,12 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
 
       if (!submitted) {
         if (isOptionKey && question && optionIndex < question.options.length) {
-          toggleOption(question.options[optionIndex])
+          toggleOptionRef.current(question.options[optionIndex])
           return
         }
         if (event.key === 'Enter' && selected.length > 0) {
           event.preventDefault()
-          submitAnswer()
+          submitAnswerRef.current()
         }
       } else if (event.key === 'Enter') {
         event.preventDefault()
