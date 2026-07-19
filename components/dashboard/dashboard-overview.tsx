@@ -16,6 +16,7 @@ import { buildCompletedLessonAwards } from '@/services/lesson-xp'
 import { chooseNextAction } from '@/services/next-action'
 import { mergeCompletedLessonIds, mergeQuizHistory } from '@/services/progress-merge'
 import { summarizeQuizHistory } from '@/services/quiz-history-summary'
+import { describeQuizAttempt } from '@/services/quiz-attempt-display'
 import { getWeeklyStudyInsight } from '@/services/study-insight'
 import type { LeaderboardEntry } from '@/services/gamification'
 import { AppShell } from '@/components/layout/app-shell'
@@ -237,12 +238,30 @@ export function DashboardOverview() {
               )}
             </p>
             <div className="space-y-2 border-t border-border pt-2">
-              {quizHistory.slice(0, 5).map((attempt) => (
-                <div key={`${attempt.quizId}-${attempt.completedAt}`} className="rounded-xl border border-border bg-elevated/40 px-4 py-2.5 text-sm">
-                  <p className="font-medium text-white">{attempt.quizId}</p>
-                  <p className="text-xs text-muted">{attempt.scorePercent}% · {new Date(attempt.completedAt).toLocaleDateString()}</p>
-                </div>
-              ))}
+              {quizHistory.slice(0, 5).map((attempt) => {
+                const display = describeQuizAttempt(attempt)
+                return (
+                  <Link
+                    key={`${attempt.quizId}-${attempt.completedAt}`}
+                    href="/quiz"
+                    className="block rounded-xl border border-border bg-elevated/40 px-4 py-2.5 text-sm transition hover:border-border-bright hover:bg-elevated/60"
+                    title={`${display.shortTitle} · ${display.isoDate}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="truncate font-medium text-white">{display.shortTitle}</p>
+                      <span className={cn('shrink-0 text-sm font-bold tabular-nums', display.toneClass)}>
+                        {attempt.scorePercent}%
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted">
+                      {display.whenLabel}
+                      {display.outcome === 'perfect' && ' · Perfect'}
+                      {display.outcome === 'failed' && ' · Below pass'}
+                      {attempt.weakTopicIds.length > 0 && ` · ${attempt.weakTopicIds.length} weak topic${attempt.weakTopicIds.length === 1 ? '' : 's'}`}
+                    </p>
+                  </Link>
+                )
+              })}
             </div>
           </>
         }
