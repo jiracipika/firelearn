@@ -13,6 +13,7 @@ import { lessonJsonLd } from '@/lib/json-ld'
 import { AppShell } from '@/components/layout/app-shell'
 import { JsonLd } from '@/components/seo/json-ld'
 import { ContentBlock } from '@/components/course/content-block'
+import { VideoFacade } from '@/components/course/video-facade'
 import { InteractiveKnowledgeCheck } from '@/components/course/interactive-knowledge-check'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -96,20 +97,11 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
         <div className="grid gap-4 lg:grid-cols-3">
           {lesson.videos.map((video) => (
             <div key={video.id} className="overflow-hidden rounded-lg border border-border bg-card/90">
-              <div className="aspect-video bg-black">
-                <iframe
-                  className="h-full w-full"
-                  src={video.embedUrl}
-                  title={video.title}
-                  loading="lazy"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-              </div>
+              <VideoFacade video={video} />
               <div className="flex min-h-20 items-start justify-between gap-3 p-3">
                 <div>
                   <p className="text-sm font-semibold leading-snug text-white">{video.title}</p>
-                  <p className="mt-1 text-xs text-muted">YouTube tutorial</p>
+                  <p className="mt-1 text-xs text-muted">YouTube tutorial · click to load</p>
                 </div>
                 <a className="rounded-md border border-border bg-elevated p-2 text-muted-foreground transition hover:border-border-bright hover:text-white" href={video.url} target="_blank" rel="noreferrer" aria-label={`Open ${video.title} on YouTube`}>
                   <ExternalLink size={14} />
