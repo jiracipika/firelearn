@@ -40,12 +40,13 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
 
   function markComplete() {
     const storage = getBrowserStorage()
+    let clientMutationId: string | undefined
     if (storage) {
-      createOfflineProgressRepository(storage).completeLesson({ lessonId: lesson.id, courseId: course.id, xpAwarded })
+      clientMutationId = createOfflineProgressRepository(storage).completeLesson({ lessonId: lesson.id, courseId: course.id, xpAwarded })
       offlineProgress.refresh()
     }
     if (authenticated) {
-      completeLesson({ lessonId: lesson.id, courseId: course.id, xpAwarded })
+      void completeLesson({ lessonId: lesson.id, courseId: course.id, xpAwarded }, clientMutationId)
     }
   }
 

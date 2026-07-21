@@ -52,20 +52,28 @@ describe('Supabase progress service', () => {
     })
   })
 
-  it('upserts lesson completion rows', async () => {
+  it('upserts lesson completion rows with the local mutation id', async () => {
     const { client, calls } = createFakeClient()
 
-    await completeLessonInSupabase(client, { courseId: 'course-1', lessonId: 'lesson-1', xpAwarded: 50 })
+    await completeLessonInSupabase(client, { courseId: 'course-1', lessonId: 'lesson-1', xpAwarded: 50 }, 'lesson-mutation-1')
 
-    expect(calls[0]).toMatchObject({ table: 'lesson_completions', method: 'upsert' })
+    expect(calls[0]).toMatchObject({
+      table: 'lesson_completions',
+      method: 'upsert',
+      payload: { client_mutation_id: 'lesson-mutation-1' },
+    })
   })
 
-  it('inserts quiz attempts', async () => {
+  it('inserts quiz attempts with the local mutation id', async () => {
     const { client, calls } = createFakeClient()
 
-    await recordQuizAttemptInSupabase(client, { quizId: 'quiz-1', scorePercent: 90, weakTopicIds: [], completedAt: '2026-06-28T00:00:00.000Z' })
+    await recordQuizAttemptInSupabase(client, { quizId: 'quiz-1', scorePercent: 90, weakTopicIds: [], completedAt: '2026-06-28T00:00:00.000Z' }, 'quiz-mutation-1')
 
-    expect(calls[0]).toMatchObject({ table: 'quiz_attempts', method: 'insert' })
+    expect(calls[0]).toMatchObject({
+      table: 'quiz_attempts',
+      method: 'insert',
+      payload: { client_mutation_id: 'quiz-mutation-1' },
+    })
   })
 
   it('formats disabled anonymous-auth errors with actionable guidance', () => {

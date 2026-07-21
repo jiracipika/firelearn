@@ -51,7 +51,7 @@ export async function loadSupabaseProgress(client: FireLearnSupabaseClient): Pro
   }
 }
 
-export async function completeLessonInSupabase(client: FireLearnSupabaseClient, input: CompleteLessonInput) {
+export async function completeLessonInSupabase(client: FireLearnSupabaseClient, input: CompleteLessonInput, clientMutationId?: string) {
   const userId = await getUserId(client)
   if (!userId) throw new Error('You must be signed in before saving lesson progress.')
 
@@ -61,12 +61,13 @@ export async function completeLessonInSupabase(client: FireLearnSupabaseClient, 
     lesson_id: input.lessonId,
     xp_awarded: input.xpAwarded,
     completed_at: new Date().toISOString(),
+    client_mutation_id: clientMutationId,
   }, { onConflict: 'user_id,lesson_id' })
 
   if (error) throw new Error(error.message)
 }
 
-export async function recordQuizAttemptInSupabase(client: FireLearnSupabaseClient, attempt: QuizAttempt) {
+export async function recordQuizAttemptInSupabase(client: FireLearnSupabaseClient, attempt: QuizAttempt, clientMutationId?: string) {
   const userId = await getUserId(client)
   if (!userId) throw new Error('You must be signed in before saving quiz history.')
 
@@ -76,6 +77,7 @@ export async function recordQuizAttemptInSupabase(client: FireLearnSupabaseClien
     score_percent: attempt.scorePercent,
     weak_topic_ids: attempt.weakTopicIds,
     completed_at: attempt.completedAt,
+    client_mutation_id: clientMutationId,
   })
 
   if (error) throw new Error(error.message)
@@ -91,7 +93,7 @@ export type FlashcardReviewRecord = {
   reviewedAt: string
 }
 
-export async function recordFlashcardReviewInSupabase(client: FireLearnSupabaseClient, review: FlashcardReviewRecord) {
+export async function recordFlashcardReviewInSupabase(client: FireLearnSupabaseClient, review: FlashcardReviewRecord, clientMutationId?: string) {
   const userId = await getUserId(client)
   if (!userId) throw new Error('You must be signed in before saving flashcard reviews.')
 
@@ -104,6 +106,7 @@ export async function recordFlashcardReviewInSupabase(client: FireLearnSupabaseC
     review_count: review.reviewCount,
     next_review: review.nextReview,
     reviewed_at: review.reviewedAt,
+    client_mutation_id: clientMutationId,
   })
 
   if (error) throw new Error(error.message)

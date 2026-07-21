@@ -1,8 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import type { QuizAttempt } from '@/services/local-persistence'
-import type { CompleteLessonInput } from '@/services/offline-progress'
+import { getBrowserStorage, type QuizAttempt } from '@/services/local-persistence'
+import { createOfflineProgressRepository, type CompleteLessonInput } from '@/services/offline-progress'
 import { createFireLearnBrowserSupabaseClient, getSupabaseProjectRef } from '@/services/supabase/client'
 import {
   completeLessonInSupabase,
@@ -64,11 +64,13 @@ export function useSupabaseProgress() {
     }
   }, [refresh])
 
-  const completeLesson = React.useCallback(async (input: CompleteLessonInput) => {
+  const completeLesson = React.useCallback(async (input: CompleteLessonInput, clientMutationId?: string) => {
     const client = createFireLearnBrowserSupabaseClient()
     if (!client) return
     try {
-      await completeLessonInSupabase(client, input)
+      await completeLessonInSupabase(client, input, clientMutationId)
+      const storage = getBrowserStorage()
+      if (storage && clientMutationId) createOfflineProgressRepository(storage).clearSyncedQueueItems([clientMutationId])
       await refresh()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Unable to save lesson progress')

@@ -27,6 +27,16 @@ export type CompleteLessonInput = {
   xpAwarded: number
 }
 
+export type QueueFlashcardReviewInput = {
+  cardId: string
+  rating: 'again' | 'hard' | 'good' | 'easy'
+  easeFactor: number
+  intervalDays: number
+  reviewCount: number
+  nextReview: string
+  reviewedAt: string
+}
+
 const syncQueueKey = 'firelearn.syncQueue.v1'
 
 function safeParse<T>(value: string | null, fallback: T): T {
@@ -55,6 +65,7 @@ function queueOperation(storage: StorageLike, item: Omit<SyncQueueItem, 'id' | '
     createdAt,
   }
   saveSyncQueue(storage, [...loadSyncQueue(storage), queueItem])
+  return queueItem.id
 }
 
 export function createOfflineProgressRepository(storage: StorageLike) {
@@ -69,7 +80,7 @@ export function createOfflineProgressRepository(storage: StorageLike) {
           xp: state.xp + input.xpAwarded,
         })
         recordStudyActivity(storage, { kind: 'lesson_complete', minutes: 5, entityId: input.lessonId })
-        queueOperation(storage, {
+        return queueOperation(storage, {
           entity: 'lesson_completion',
           operation: 'upsert',
           payload: input,
@@ -90,6 +101,20 @@ export function createOfflineProgressRepository(storage: StorageLike) {
     },
     getQuizHistory() {
       return loadQuizHistory(storage)
+    },
+    queueQuizAttempt(attempt: QuizAttempt) {
+      return queueOperation(storage, {
+        entity: 'quiz_attempt',
+        operation: 'insert',
+        payload: attempt,
+      })
+    },
+    queueFlashcardReview(review: QueueFlashcardReviewInput) {
+      return queueOperation(storage, {
+        entity: 'flashcard_review',
+        operation: 'insert',
+        payload: review,
+      })
     },
     getSyncQueue() {
       return loadSyncQueue(storage)

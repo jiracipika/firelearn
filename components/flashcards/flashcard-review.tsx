@@ -6,6 +6,7 @@ import { Keyboard, RotateCcw, Sparkles } from 'lucide-react'
 import type { Flashcard, FlashcardRating } from '@/types/learning'
 import { getBrowserStorage, loadFlashcards, saveFlashcards } from '@/services/local-persistence'
 import { recordStudyActivity } from '@/services/study-activity'
+import { createOfflineProgressRepository } from '@/services/offline-progress'
 import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
 import { recordFlashcardReviewInSupabase } from '@/services/supabase/progress'
 import { buildReviewQueue, cardStage, nextDueLabel, scheduleReview } from '@/services/spaced-repetition'
@@ -63,17 +64,25 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
         recordStudyActivity(storage, { kind: 'flashcard_review', minutes: 1, entityId: current.id, createdAt: reviewedAt.toISOString() })
       }
       if (updatedCard) {
+        const review = {
+          cardId: updatedCard.id,
+          rating,
+          easeFactor: updatedCard.easeFactor,
+          intervalDays: updatedCard.intervalDays,
+          reviewCount: updatedCard.reviewCount,
+          nextReview: updatedCard.nextReview,
+          reviewedAt: updatedCard.lastReviewed ?? reviewedAt.toISOString(),
+        }
+        const clientMutationId = storage
+          ? createOfflineProgressRepository(storage).queueFlashcardReview(review)
+          : undefined
         const supabase = createFireLearnBrowserSupabaseClient()
         if (supabase) {
-          void recordFlashcardReviewInSupabase(supabase, {
-            cardId: updatedCard.id,
-            rating,
-            easeFactor: updatedCard.easeFactor,
-            intervalDays: updatedCard.intervalDays,
-            reviewCount: updatedCard.reviewCount,
-            nextReview: updatedCard.nextReview,
-            reviewedAt: updatedCard.lastReviewed ?? reviewedAt.toISOString(),
-          }).catch(() => undefined)
+          void recordFlashcardReviewInSupabase(supabase, review, clientMutationId)
+            .then(() => {
+              if (storage && clientMutationId) createOfflineProgressRepository(storage).clearSyncedQueueItems([clientMutationId])
+            })
+            .catch(() => undefined)
         }
         setReviewEvents((events) => [...events, {
           flashcardId: updatedCard!.id,

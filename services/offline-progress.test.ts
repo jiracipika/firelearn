@@ -36,6 +36,34 @@ describe('offline progress repository', () => {
     ])
   })
 
+  it('returns queue ids and queues quiz and flashcard mutations for retry', () => {
+    const storage = createMemoryStorage()
+    const repo = createOfflineProgressRepository(storage)
+
+    const lessonQueueId = repo.completeLesson({ lessonId: 'lesson-1', courseId: 'course-1', xpAwarded: 25 })
+    const quizQueueId = repo.queueQuizAttempt({ quizId: 'quiz-1', scorePercent: 80, weakTopicIds: ['scba'], completedAt: '2026-06-28T00:00:00.000Z' })
+    const flashcardQueueId = repo.queueFlashcardReview({
+      cardId: 'card-1', rating: 'good', easeFactor: 2.5, intervalDays: 3,
+      reviewCount: 2, nextReview: '2026-07-01T00:00:00.000Z', reviewedAt: '2026-06-28T00:00:00.000Z',
+    })
+
+    expect(lessonQueueId).toMatch(/^lesson_completion-/)
+    expect(quizQueueId).toMatch(/^quiz_attempt-/)
+    expect(flashcardQueueId).toMatch(/^flashcard_review-/)
+    expect(repo.getSyncQueue().map((item) => item.entity)).toEqual([
+      'lesson_completion', 'quiz_attempt', 'flashcard_review',
+    ])
+  })
+
+  it('does not enqueue an already-completed lesson twice', () => {
+    const storage = createMemoryStorage()
+    const repo = createOfflineProgressRepository(storage)
+
+    expect(repo.completeLesson({ lessonId: 'lesson-1', courseId: 'course-1', xpAwarded: 25 })).toBeTypeOf('string')
+    expect(repo.completeLesson({ lessonId: 'lesson-1', courseId: 'course-1', xpAwarded: 25 })).toBeUndefined()
+    expect(repo.getSyncQueue()).toHaveLength(1)
+  })
+
   it('computes course progress from completed lesson ids', () => {
     const percent = getCourseProgressPercent({
       lessonIds: ['a', 'b', 'c', 'd'],

@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, ChevronRight, Clock, Keyboard, RotateCcw, Sparkles, Target, TrendingDown, TrendingUp, XCircle } from 'lucide-react'
 import type { QuizQuestion } from '@/types/learning'
 import { getBrowserStorage } from '@/services/local-persistence'
+import { createOfflineProgressRepository } from '@/services/offline-progress'
 import { recordQuizOutcome } from '@/services/quiz-recording'
 import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
 import { recordQuizAttemptInSupabase } from '@/services/supabase/progress'
@@ -46,6 +47,7 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
     if (recordedResultKey.current === resultKey) return
     const attempt = { quizId: title, scorePercent: result.scorePercent, weakTopicIds: result.weakTopicIds, completedAt: new Date().toISOString() }
     const storage = getBrowserStorage()
+    let clientMutationId: string | undefined
     if (storage) {
       recordQuizOutcome(storage, {
         quizId: title,
@@ -53,9 +55,14 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
         questionCount: bank.length,
         completedAt: attempt.completedAt,
       })
+      clientMutationId = createOfflineProgressRepository(storage).queueQuizAttempt(attempt)
     }
     const supabase = createFireLearnBrowserSupabaseClient()
-    if (supabase) void recordQuizAttemptInSupabase(supabase, attempt).catch(() => undefined)
+    if (supabase) void recordQuizAttemptInSupabase(supabase, attempt, clientMutationId)
+      .then(() => {
+        if (storage && clientMutationId) createOfflineProgressRepository(storage).clearSyncedQueueItems([clientMutationId])
+      })
+      .catch(() => undefined)
     recordedResultKey.current = resultKey
   }, [answers.length, bank.length, result, title])
 
