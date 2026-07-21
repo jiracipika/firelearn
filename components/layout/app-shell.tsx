@@ -18,17 +18,37 @@ const navItems = [
   { href: '/flashcards', label: 'Cards', icon: BookOpen },
 ]
 
+const themeChangeEvent = 'firelearn-theme-change'
+
+function subscribeToTheme(onStoreChange: () => void) {
+  window.addEventListener(themeChangeEvent, onStoreChange)
+  return () => window.removeEventListener(themeChangeEvent, onStoreChange)
+}
+
+function getLightThemeSnapshot() {
+  return document.documentElement.dataset.theme === 'light'
+}
+
+function getServerLightThemeSnapshot() {
+  return false
+}
+
 export function AppShell({ children, fullBleed = false }: { children: React.ReactNode; fullBleed?: boolean }) {
   const pathname = usePathname()
-  const [lightMode, setLightMode] = React.useState(() => {
-    if (typeof window === 'undefined') return false
-    return window.localStorage.getItem('firelearn.theme') === 'light'
-  })
+  const lightMode = React.useSyncExternalStore(subscribeToTheme, getLightThemeSnapshot, getServerLightThemeSnapshot)
 
-  React.useEffect(() => {
-    document.documentElement.dataset.theme = lightMode ? 'light' : 'dark'
-    window.localStorage.setItem('firelearn.theme', lightMode ? 'light' : 'dark')
-  }, [lightMode])
+  function toggleTheme() {
+    const nextLightMode = !lightMode
+    const theme = nextLightMode ? 'light' : 'dark'
+    document.documentElement.dataset.theme = theme
+    document.documentElement.style.colorScheme = theme
+    try {
+      window.localStorage.setItem('firelearn.theme', theme)
+    } catch {
+      // The visual preference still works when storage is blocked or unavailable.
+    }
+    window.dispatchEvent(new Event(themeChangeEvent))
+  }
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(href + '/')
@@ -76,9 +96,9 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
           </Link>
           <button
             type="button"
-            onClick={() => setLightMode((value) => !value)}
+            onClick={toggleTheme}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-xs font-semibold text-muted-foreground transition hover:bg-elevated hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-            aria-label="Toggle theme"
+            aria-label={`Switch to ${lightMode ? 'dark' : 'light'} theme`}
           >
             {lightMode ? <Moon size={16} /> : <Sun size={16} />}
             <span className="hidden lg:inline">{lightMode ? 'Dark' : 'Light'}</span>

@@ -31,6 +31,20 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: '#0F1115', colorScheme: 'dark' }
 
+const themeBootstrap = `(() => {
+  try {
+    const saved = localStorage.getItem('firelearn.theme');
+    const theme = saved === 'light' || saved === 'dark'
+      ? saved
+      : matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {}
+})()`
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}><body>{children}<RegisterServiceWorker /></body></html>
+  return <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <head><script dangerouslySetInnerHTML={{ __html: themeBootstrap }} /></head>
+    <body>{children}<RegisterServiceWorker /></body>
+  </html>
 }
