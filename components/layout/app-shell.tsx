@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { BookOpen, Brain, Flame, GraduationCap, LayoutDashboard, Moon, Search, ShieldCheck, Sun } from 'lucide-react'
 import { educationalDisclaimer } from '@/data/academy'
+import { NetworkStatusBanner } from '@/components/pwa/network-status-banner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -109,6 +110,7 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
         </div>
       </div>
     </header>
+    <NetworkStatusBanner />
     <main id="main-content" className={fullBleed ? '' : 'mx-auto max-w-7xl px-4 py-6 sm:px-6 md:py-12'}>{children}</main>
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur-2xl md:hidden" aria-label="Primary navigation">
       <div className="grid grid-cols-5 gap-1">
