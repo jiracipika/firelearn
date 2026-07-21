@@ -17,6 +17,14 @@ export type ValidationResult = {
   data: ExportedData
 }
 
+const restorableKeys = [
+  'firelearn.learnerState.v1',
+  'firelearn.quizHistory.v1',
+  'firelearn.flashcards.v1',
+  'firelearn.syncQueue.v1',
+  'firelearn.studyActivity.v1',
+] as const
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -113,4 +121,29 @@ export function validateStorageIntegrity(storage: StorageLike): ValidationResult
   }
 
   return validateExportedData(exported)
+}
+
+/**
+ * Atomically restores the allowlisted values from a FireLearn JSON export.
+ * Validation happens before any writes, so a malformed file cannot partially
+ * replace a learner's working local progress. Unknown keys are never copied.
+ */
+export function restoreExportedData(storage: StorageLike, raw: unknown): { restoredKeys: number } {
+  const validation = validateExportedData(raw)
+  if (!validation.valid) {
+    throw new Error(`FireLearn data could not be restored: ${validation.errors.join('; ')}`)
+  }
+
+  const presentKeys = restorableKeys.filter((key) => Object.prototype.hasOwnProperty.call(validation.data, key))
+  if (presentKeys.length === 0) {
+    throw new Error('FireLearn data could not be restored: no recognized progress data was found')
+  }
+
+  presentKeys.forEach((key) => {
+    const value = validation.data[key]
+    if (value === null || value === undefined) storage.removeItem(key)
+    else storage.setItem(key, JSON.stringify(value))
+  })
+
+  return { restoredKeys: presentKeys.length }
 }

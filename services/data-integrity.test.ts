@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validateExportedData, validateStorageIntegrity } from '@/services/data-integrity'
+import { restoreExportedData, validateExportedData, validateStorageIntegrity } from '@/services/data-integrity'
 import { createMemoryStorage } from '@/services/local-persistence'
 
 describe('data integrity validation', () => {
@@ -74,5 +74,37 @@ describe('data integrity validation', () => {
 
     const result = validateStorageIntegrity(storage)
     expect(result.valid).toBe(false)
+  })
+
+  it('restores validated progress without copying unknown keys', () => {
+    const storage = createMemoryStorage()
+    const result = restoreExportedData(storage, {
+      exportedAt: '2026-06-30T12:00:00.000Z',
+      'firelearn.learnerState.v1': {
+        completedLessonIds: ['lesson-1'],
+        dailyGoalMinutes: 25,
+        xp: 100,
+        streakDays: 1,
+      },
+      'firelearn.quizHistory.v1': [],
+      'firelearn.studyActivity.v1': [],
+      'untrusted.key': 'must not be restored',
+    })
+
+    expect(result).toEqual({ restoredKeys: 3 })
+    expect(JSON.parse(storage.getItem('firelearn.learnerState.v1') ?? '')).toMatchObject({ xp: 100 })
+    expect(storage.getItem('untrusted.key')).toBeNull()
+  })
+
+  it('leaves existing progress untouched when the import is invalid', () => {
+    const storage = createMemoryStorage()
+    storage.setItem('firelearn.learnerState.v1', JSON.stringify({
+      completedLessonIds: ['existing'], dailyGoalMinutes: 25, xp: 50, streakDays: 2,
+    }))
+
+    expect(() => restoreExportedData(storage, {
+      'firelearn.learnerState.v1': { completedLessonIds: 'not-an-array' },
+    })).toThrow(/could not be restored/i)
+    expect(JSON.parse(storage.getItem('firelearn.learnerState.v1') ?? '')).toMatchObject({ xp: 50 })
   })
 })
