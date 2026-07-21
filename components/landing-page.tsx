@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ArrowRight, BookOpenCheck, Brain, CheckCircle2, Flame, Gauge, PlayCircle, Radio, ShieldAlert, Sparkles, Trophy } from 'lucide-react'
 import { academyCourses } from '@/data/academy'
 import { AppShell } from '@/components/layout/app-shell'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 
@@ -48,11 +48,11 @@ export function LandingPage() {
             A firefighter learning console with embedded video tutorials, scenario-heavy quizzes, flashcards, and progress tracking built around supervised training and local SOPs.
           </p>
           <div className="grid gap-3 sm:flex sm:flex-wrap">
-            <Link href="/dashboard">
-              <Button size="lg">Start learning <ArrowRight size={18} /></Button>
+            <Link href="/dashboard" className={buttonVariants({ size: 'lg' })}>
+              Start learning <ArrowRight size={18} aria-hidden />
             </Link>
-            <Link href="/courses">
-              <Button variant="outline" size="lg">Browse academy</Button>
+            <Link href="/courses" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+              Browse academy
             </Link>
           </div>
           <div className="mobile-snap-row max-w-3xl sm:grid sm:grid-cols-5 sm:gap-3">
@@ -129,8 +129,8 @@ export function LandingPage() {
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-gradient-fire">Build mastery before the alarm drops.</h2>
           <p className="mt-2 max-w-2xl text-muted-foreground">Jump into the dashboard, run mixed practice, or clear today&apos;s review queue.</p>
         </div>
-        <Link href="/dashboard">
-          <Button size="lg">Open dashboard <CheckCircle2 size={18} /></Button>
+        <Link href="/dashboard" className={buttonVariants({ size: 'lg' })}>
+          Open dashboard <CheckCircle2 size={18} aria-hidden />
         </Link>
       </Card>
     </section>

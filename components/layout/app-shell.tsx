@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { BookOpen, Brain, Flame, GraduationCap, LayoutDashboard, Moon, Search, ShieldCheck, Sun } from 'lucide-react'
 import { educationalDisclaimer } from '@/data/academy'
 import { NetworkStatusBanner } from '@/components/pwa/network-status-banner'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 const CommandPalette = dynamic(() => import('@/components/search/command-palette').then((module) => module.CommandPalette), { ssr: false })
@@ -92,8 +92,8 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/search" aria-label="Open global search">
-            <Button variant="ghost" size="sm"><Search size={16} /> <span className="hidden lg:inline">Search</span><span className="hidden rounded border border-border px-1.5 py-0.5 text-[10px] text-muted xl:inline">⌘K</span></Button>
+          <Link href="/search" aria-label="Open global search" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+            <Search size={16} aria-hidden /> <span className="hidden lg:inline">Search</span><span className="hidden rounded border border-border px-1.5 py-0.5 text-[10px] text-muted xl:inline">⌘K</span>
           </Link>
           <button
             type="button"
@@ -104,8 +104,8 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
             {lightMode ? <Moon size={16} /> : <Sun size={16} />}
             <span className="hidden lg:inline">{lightMode ? 'Dark' : 'Light'}</span>
           </button>
-          <Link href="/profile" className="hidden md:inline-flex">
-            <Button variant="ghost" size="sm"><ShieldCheck size={16} /> <span className="hidden lg:inline">Profile</span></Button>
+          <Link href="/profile" className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'hidden md:inline-flex')}>
+            <ShieldCheck size={16} aria-hidden /> <span className="hidden lg:inline">Profile</span>
           </Link>
         </div>
       </div>
