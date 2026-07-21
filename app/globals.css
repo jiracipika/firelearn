@@ -182,6 +182,60 @@ body::before {
   }
 }
 
+/*
+ * Print styles.
+ *
+ * The certificate page offers a "Print / save PDF" action, and learners may
+ * also print lessons or quiz review screens for offline study. Without these
+ * rules the sticky header, mobile bottom tab bar, footer, command palette
+ * wrapper, and the heavy radial-gradient body background all bleed onto the
+ * page. Here we flatten the canvas to a clean white sheet and show only the
+ * main content region. Per-element `print:` utilities on the certificate
+ * (e.g. `print:text-black`) compose with this to flip text back to ink-black.
+ */
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Strip the layered radial/linear gradients so the sheet stays clean. */
+  body::before {
+    content: none !important;
+  }
+
+  /* Hide app chrome: header, both primary navs (desktop + mobile tab bar),
+     footer, and the skip-to-content link. */
+  header,
+  footer,
+  nav[aria-label='Primary navigation'],
+  a[href='#main-content'] {
+    display: none !important;
+  }
+
+  /* Cancel the bottom padding that reserves space for the mobile tab bar. */
+  #main-content {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Avoid breaking inside cards/figures wherever the engine supports it. */
+  figure,
+  img,
+  tr,
+  [class*='rounded'] {
+    break-inside: avoid;
+  }
+
+  /* Reveal the URL of anchor links is intentionally NOT added (no need), but
+     ensure links keep readable underline-free printing and inherit ink. */
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}
+
 
 @layer utilities {
   .mobile-snap-row {
