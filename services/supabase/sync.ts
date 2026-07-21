@@ -75,11 +75,18 @@ export async function replaySyncQueueToSupabase(client: MinimalSupabaseSyncClien
   const failed: SyncReplayResult['failed'] = []
 
   for (const item of queue.filter((queueItem) => queueItem.status === 'pending')) {
-    const result = await replayItem(client, item, userId)
-    if (result.error) {
-      failed.push({ id: item.id, message: result.error.message })
-    } else {
-      syncedIds.push(item.id)
+    try {
+      const result = await replayItem(client, item, userId)
+      if (result.error) {
+        failed.push({ id: item.id, message: result.error.message })
+      } else {
+        syncedIds.push(item.id)
+      }
+    } catch (error) {
+      failed.push({
+        id: item.id,
+        message: error instanceof Error ? error.message : 'Unexpected sync failure',
+      })
     }
   }
 

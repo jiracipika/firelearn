@@ -117,4 +117,30 @@ describe('Supabase sync adapter', () => {
     expect(result.syncedIds).toEqual([])
     expect(result.failed).toEqual([{ id: 'quiz_attempt-1', message: 'network down' }])
   })
+
+  it('isolates thrown network failures and continues replaying later items', async () => {
+    const client: MinimalSupabaseSyncClient = {
+      from(table) {
+        return {
+          upsert() {
+            if (table === 'lesson_completions') throw new Error('connection lost')
+            return { error: null }
+          },
+          insert() {
+            return { error: null }
+          },
+        }
+      },
+    }
+
+    const result = await replaySyncQueueToSupabase(client, [
+      makeItem('lesson_completion', { lessonId: 'lesson-1', courseId: 'course-1', xpAwarded: 25 }),
+      makeItem('quiz_attempt', { quizId: 'quiz-1', scorePercent: 80, weakTopicIds: [], completedAt: '2026-06-28T00:00:00.000Z' }),
+    ], userId)
+
+    expect(result).toEqual({
+      syncedIds: ['quiz_attempt-1'],
+      failed: [{ id: 'lesson_completion-1', message: 'connection lost' }],
+    })
+  })
 })
