@@ -50,9 +50,13 @@ curl -fsSL https://fflearn.vercel.app/courses/reading-smoke-and-fire-growth | gr
 
 If a route still serves old content, wait for Vercel to finish deployment and retry before declaring production verified.
 
-## Supabase
+## Supabase and learner completion
 
-Progress sync is Supabase-first when environment variables are configured. See `docs/supabase-setup.md` and `supabase/migrations/001_firelearn_progress.sql`.
+Progress is written locally first so lesson completion remains reliable offline, then synchronized to Supabase when an authenticated session is available. Course pages merge local and Supabase completion records, resume at the first unfinished lesson, and expose queued-sync state without hiding local progress.
+
+Completion certificates are unlocked only after every lesson in the course has been verified from the merged progress record. This certificate remains an educational study record, not an official certification.
+
+See `docs/supabase-setup.md` and `supabase/migrations/001_firelearn_progress.sql` for backend setup.
 
 ## v0
 

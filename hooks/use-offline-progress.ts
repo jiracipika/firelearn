@@ -15,14 +15,19 @@ export function useOfflineProgress() {
   const [learnerState, setLearnerState] = React.useState<LearnerState>(emptyState)
   const [quizHistory, setQuizHistory] = React.useState<QuizAttempt[]>([])
   const [syncQueueCount, setSyncQueueCount] = React.useState(0)
+  const [ready, setReady] = React.useState(false)
 
   const refresh = React.useCallback(() => {
     const storage = getBrowserStorage()
-    if (!storage) return
+    if (!storage) {
+      setReady(true)
+      return
+    }
     const repo = createOfflineProgressRepository(storage)
     setLearnerState(loadLearnerState(storage))
     setQuizHistory(loadQuizHistory(storage))
     setSyncQueueCount(repo.getSyncQueue().filter((item) => item.status === 'pending').length)
+    setReady(true)
   }, [])
 
   React.useEffect(() => {
@@ -37,6 +42,7 @@ export function useOfflineProgress() {
   }, [refresh])
 
   return {
+    ready,
     learnerState,
     quizHistory,
     weakTopics: getWeakTopicSummary(quizHistory),
