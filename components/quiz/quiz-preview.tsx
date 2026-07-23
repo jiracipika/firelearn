@@ -16,5 +16,9 @@ export function QuizPreview({ courseSlug, lessonSlug }: QuizPreviewProps) {
   const title = lesson
     ? `${lesson.title} quiz · ${questions.length} questions`
     : `FireLearn mixed practice · ${questions.length} questions`
-  return <AppShell><QuizEngine title={title} questions={questions} /></AppShell>
+  const quizId = lesson && course
+    ? `lesson:${course.slug}:${lesson.slug}`
+    : 'mixed-practice'
+
+  return <AppShell><QuizEngine quizId={quizId} title={title} questions={questions} /></AppShell>
 }

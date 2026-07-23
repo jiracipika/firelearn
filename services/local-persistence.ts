@@ -76,7 +76,11 @@ export function saveFlashcards(storage: StorageLike, cards: Flashcard[]) {
 
 export function getBrowserStorage(): StorageLike | undefined {
   if (typeof window === 'undefined') return undefined
-  return window.localStorage
+  try {
+    return window.localStorage
+  } catch {
+    return undefined
+  }
 }
 
 const MAX_NAME_LENGTH = 80

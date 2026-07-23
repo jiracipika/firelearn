@@ -10,6 +10,7 @@ import { recordQuizOutcome } from '@/services/quiz-recording'
 import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client'
 import { recordQuizAttemptInSupabase } from '@/services/supabase/progress'
 import { buildQuizResult, collectQuestionBank, isAnswerCorrect, supportsMultipleSelection, type QuizAnswer, type QuizMode } from '@/services/quiz-engine'
+import { clearQuizSession, loadQuizSession, saveQuizSession } from '@/services/quiz-session'
 import { summarizeQuizSession, type QuizPerformanceBand } from '@/services/quiz-session-summary'
 import { computeTimerState, formatCountdown, hasVisibleCountdown } from '@/services/quiz-timer'
 import { formatTopicLabel } from '@/services/topics'
@@ -19,7 +20,14 @@ import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
-export function QuizEngine({ title, questions, poolTotal }: { title: string; questions: QuizQuestion[]; poolTotal?: number }) {
+type QuizEngineProps = {
+  quizId: string
+  title: string
+  questions: QuizQuestion[]
+  poolTotal?: number
+}
+
+export function QuizEngine({ quizId, title, questions, poolTotal }: QuizEngineProps) {
   const [mode, setMode] = React.useState<QuizMode>('practice')
   const [index, setIndex] = React.useState(0)
   const [selected, setSelected] = React.useState<string[]>([])
@@ -28,6 +36,9 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
   const [showReview, setShowReview] = React.useState(false)
   const [timerElapsed, setTimerElapsed] = React.useState(0)
   const [questionsOverride, setQuestionsOverride] = React.useState<QuizQuestion[] | null>(null)
+  const [sessionReady, setSessionReady] = React.useState(false)
+  const [resumeNotice, setResumeNotice] = React.useState(false)
+  const [sessionStorageFailed, setSessionStorageFailed] = React.useState(false)
 
   const effectiveQuestions = questionsOverride ?? questions
   const bank = React.useMemo(() => collectQuestionBank(effectiveQuestions, mode), [mode, effectiveQuestions])
@@ -42,15 +53,79 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
   const recordedResultKey = React.useRef<string | null>(null)
 
   React.useEffect(() => {
+    const storage = getBrowserStorage()
+    const saved = storage ? loadQuizSession(storage, quizId, questions) : null
+    let cancelled = false
+
+    queueMicrotask(() => {
+      if (cancelled) return
+
+      if (saved) {
+        const questionById = new Map(questions.map((item) => [item.id, item]))
+        const restoredQuestions = saved.activeQuestionIds
+          .map((id) => questionById.get(id))
+          .filter((item): item is QuizQuestion => Boolean(item))
+        const usesFullBank = restoredQuestions.length === questions.length
+          && restoredQuestions.every((item, itemIndex) => item.id === questions[itemIndex]?.id)
+
+        setMode(saved.mode)
+        setQuestionsOverride(usesFullBank ? null : restoredQuestions)
+        setIndex(saved.index)
+        setSelected(saved.selectedAnswerIds)
+        setAnswers(saved.answers)
+        setSubmitted(saved.submitted)
+        setTimerElapsed(saved.timerElapsed)
+        setResumeNotice(true)
+      }
+
+      setSessionStorageFailed(!storage)
+      setSessionReady(true)
+    })
+
+    return () => { cancelled = true }
+  }, [questions, quizId])
+
+  const persistedTimerElapsed = submitted ? timerElapsed : timerElapsed - (timerElapsed % 5)
+  React.useEffect(() => {
+    if (!sessionReady) return
+    const storage = getBrowserStorage()
+    if (!storage) {
+      queueMicrotask(() => setSessionStorageFailed(true))
+      return
+    }
+
+    if (result || finished) {
+      clearQuizSession(storage, quizId)
+      return
+    }
+
+    const hasStarted = index > 0 || answers.length > 0 || selected.length > 0 || submitted || persistedTimerElapsed > 0
+    if (!hasStarted) return
+
+    const saved = saveQuizSession(storage, {
+      quizId,
+      mode,
+      activeQuestionIds: bank.map((item) => item.id),
+      index,
+      selectedAnswerIds: selected,
+      answers,
+      submitted,
+      timerElapsed: persistedTimerElapsed,
+      updatedAt: new Date().toISOString(),
+    })
+    queueMicrotask(() => setSessionStorageFailed(!saved))
+  }, [answers, bank, finished, index, mode, persistedTimerElapsed, quizId, result, selected, sessionReady, submitted])
+
+  React.useEffect(() => {
     if (!result) return
-    const resultKey = `${title}-${answers.length}-${result.scorePercent}`
+    const resultKey = `${quizId}-${answers.length}-${result.scorePercent}`
     if (recordedResultKey.current === resultKey) return
-    const attempt = { quizId: title, scorePercent: result.scorePercent, weakTopicIds: result.weakTopicIds, completedAt: new Date().toISOString() }
+    const attempt = { quizId, scorePercent: result.scorePercent, weakTopicIds: result.weakTopicIds, completedAt: new Date().toISOString() }
     const storage = getBrowserStorage()
     let clientMutationId: string | undefined
     if (storage) {
       recordQuizOutcome(storage, {
-        quizId: title,
+        quizId,
         result,
         questionCount: bank.length,
         completedAt: attempt.completedAt,
@@ -64,24 +139,15 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
       })
       .catch(() => undefined)
     recordedResultKey.current = resultKey
-  }, [answers.length, bank.length, result, title])
-
-  // Reset the per-question timer whenever the displayed question changes.
-  // Uses the "adjusting state during render" pattern from React docs rather
-  // than a useEffect so we avoid cascading renders and satisfy the lint rule.
-  const prevQuestionIdRef = React.useRef(question?.id)
-  if (prevQuestionIdRef.current !== question?.id) {
-    prevQuestionIdRef.current = question?.id
-    setTimerElapsed(0)
-  }
+  }, [answers.length, bank.length, quizId, result])
 
   // Per-question countdown: ticks every second while a question with a time
   // limit is showing and the answer has not been submitted yet.
   React.useEffect(() => {
-    if (!hasVisibleCountdown(question?.timeLimitSeconds) || submitted) return
+    if (!sessionReady || !hasVisibleCountdown(question?.timeLimitSeconds) || submitted) return
     const interval = window.setInterval(() => setTimerElapsed((value) => value + 1), 1000)
     return () => window.clearInterval(interval)
-  }, [question?.id, question?.timeLimitSeconds, submitted])
+  }, [question?.id, question?.timeLimitSeconds, sessionReady, submitted])
 
   const timerState = hasVisibleCountdown(question?.timeLimitSeconds)
     ? computeTimerState(question.timeLimitSeconds, timerElapsed)
@@ -111,13 +177,17 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
   })
 
   function reset(nextMode: QuizMode = mode, overrideQuestions?: QuizQuestion[]) {
+    const storage = getBrowserStorage()
+    if (storage) clearQuizSession(storage, quizId)
     setMode(nextMode)
     setQuestionsOverride(overrideQuestions ?? null)
     setIndex(0)
     setSelected([])
     setAnswers([])
     setSubmitted(false)
+    setTimerElapsed(0)
     setShowReview(false)
+    setResumeNotice(false)
     recordedResultKey.current = null
   }
 
@@ -151,12 +221,13 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
   function nextQuestion() {
     setSubmitted(false)
     setSelected([])
+    setTimerElapsed(0)
     setIndex((current) => current + 1)
   }
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (result) return
+      if (!sessionReady || result) return
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
 
       const optionIndex = parseInt(event.key, 10) - 1
@@ -178,7 +249,11 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [question, selected, submitted, result])
+  }, [question, selected, submitted, result, sessionReady])
+
+  if (!sessionReady) {
+    return <Card role="status" aria-live="polite" className="mx-auto max-w-3xl py-12 text-center text-muted-foreground">Restoring quiz progress…</Card>
+  }
 
   if (result) {
     return (
@@ -225,6 +300,24 @@ export function QuizEngine({ title, questions, poolTotal }: { title: string; que
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
+      {resumeNotice && (
+        <div role="status" className="flex flex-col gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-sky-100">Quiz restored</p>
+            <p className="mt-1 text-sky-100/75">Continuing at question {index + 1} of {bank.length}. Progress is saved on this device for 7 days.</p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setResumeNotice(false)}>Dismiss</Button>
+            <Button variant="outline" size="sm" onClick={() => reset(mode)}>Start over</Button>
+          </div>
+        </div>
+      )}
+      {sessionStorageFailed && (
+        <div role="status" className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+          <p className="font-semibold">Device progress saving is unavailable</p>
+          <p className="mt-1 text-amber-100/75">Keep this tab open until you finish. Check browser storage permissions before relying on refresh recovery.</p>
+        </div>
+      )}
       <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
         <div>
           <Badge>{questionsOverride ? 'Missed-questions retry' : mode === 'practice' ? 'Practice mode' : 'Exam mode'}</Badge>

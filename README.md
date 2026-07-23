@@ -54,6 +54,8 @@ If a route still serves old content, wait for Vercel to finish deployment and re
 
 Progress is written locally first so lesson completion remains reliable offline, then synchronized to Supabase when an authenticated session is available. Course pages merge local and Supabase completion records, resume at the first unfinished lesson, and expose queued-sync state without hiding local progress.
 
+Completed quiz attempts use the same offline queue and Supabase sync path. An unfinished quiz is intentionally stored only on the current device: practice, exam, and missed-question sessions resume after refresh for up to seven days, validate against the current question catalog before restoring, and clear when the learner finishes or chooses **Start over**.
+
 Completion certificates are unlocked only after every lesson in the course has been verified from the merged progress record. This certificate remains an educational study record, not an official certification.
 
 See `docs/supabase-setup.md` and `supabase/migrations/001_firelearn_progress.sql` for backend setup.
