@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Activity, BookOpen, Brain, ClipboardCheck, Flame, Target, Trophy, UploadCloud } from 'lucide-react'
+import { Activity, ArrowRight, BookOpen, Brain, ClipboardCheck, Flame, Target, Trophy, UploadCloud } from 'lucide-react'
 import Link from 'next/link'
 import { academyCourses, getFeaturedLesson } from '@/data/academy'
 import { learnerProgress } from '@/data/progress'
@@ -18,6 +18,7 @@ import { mergeCompletedLessonIds, mergeQuizHistory } from '@/services/progress-m
 import { summarizeQuizHistory } from '@/services/quiz-history-summary'
 import { describeQuizAttempt } from '@/services/quiz-attempt-display'
 import { getWeeklyStudyInsight } from '@/services/study-insight'
+import { buildAdaptiveStudyPlan, type StudyRecommendationReason } from '@/services/adaptive-study-plan'
 import type { LeaderboardEntry } from '@/services/gamification'
 import { AppShell } from '@/components/layout/app-shell'
 import { CourseCard } from '@/components/course/course-card'
@@ -32,6 +33,21 @@ import { cn } from '@/lib/utils'
 
 function allLessonIds() {
   return academyCourses.flatMap((course) => course.modules.flatMap((module) => module.lessons.map((lesson) => lesson.id)))
+}
+
+const recommendationCopy: Record<StudyRecommendationReason, { eyebrow: string; description: string }> = {
+  'reinforce-weak-topic': {
+    eyebrow: 'Targeted review',
+    description: 'Strengthen a topic that has shown up in recent quiz misses.',
+  },
+  'continue-course': {
+    eyebrow: 'Keep momentum',
+    description: 'Pick up the next unfinished lesson in a course you already started.',
+  },
+  'start-course': {
+    eyebrow: 'Build your base',
+    description: 'Start a new learning path and establish a strong foundation.',
+  },
 }
 
 export function DashboardOverview() {
@@ -52,6 +68,11 @@ export function DashboardOverview() {
     quizHistory,
     weakTopicIds: weakTopics.map((topic) => topic.topicId),
     dueFlashcardCount: flashcardQueue.dueCount,
+  })
+  const studyPlan = buildAdaptiveStudyPlan({
+    courses: academyCourses,
+    completedLessonIds,
+    quizHistory,
   })
   const lessonIds = allLessonIds()
   const completion = lessonIds.length === 0 ? 0 : Math.round((completedLessonIds.length / lessonIds.length) * 100)
@@ -99,7 +120,7 @@ export function DashboardOverview() {
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Command dashboard</p>
         <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-[-0.03em] md:text-5xl text-gradient-fire">Keep your fireground knowledge mission-ready.</h1>
         <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Track completions, quiz history, and weak topics from one focused cockpit.</p>
-        <div className="mt-6 grid gap-3 sm:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {statTiles.map((stat) => (
             <div key={stat.label} className="stat-tile-hover rounded-2xl border border-border bg-elevated/40 p-4">
               <div className={cn('inline-flex size-10 items-center justify-center rounded-xl', stat.bg)}>
@@ -134,13 +155,65 @@ export function DashboardOverview() {
     </section>
 
     <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+      <Card className="relative overflow-hidden p-0">
+        <div className="absolute right-0 top-0 size-48 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative border-b border-border px-5 py-5 sm:px-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Your next reps</p>
+              <h2 className="mt-1 text-2xl font-bold tracking-tight text-gradient-fire">A clear path for today.</h2>
+            </div>
+            <Brain className="mt-1 shrink-0 text-red-400" size={24} />
+          </div>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Recommendations adapt to your quiz history and the courses already in progress.</p>
+        </div>
+        {studyPlan.length > 0 ? (
+          <div className="relative p-4 sm:p-5">
+            {studyPlan.slice(0, 1).map((recommendation) => {
+              const copy = recommendationCopy[recommendation.reason]
+              return <Link
+                key={recommendation.lessonId}
+                href={recommendation.href}
+                className="group block rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/14 via-primary/5 to-transparent p-5 transition hover:border-primary/50 hover:shadow-[0_12px_34px_rgb(255_74_46_/_0.1)]"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red-200">{copy.eyebrow}</p>
+                    <h3 className="mt-2 text-xl font-bold text-white group-hover:text-red-100">{recommendation.lessonTitle}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{recommendation.courseTitle}</p>
+                  </div>
+                  <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary transition group-hover:translate-x-0.5"><ArrowRight size={18} /></span>
+                </div>
+                <p className="mt-4 text-sm leading-6 text-muted-foreground">{copy.description}</p>
+                {recommendation.weakTopicIds.length > 0 && <div className="mt-4 flex flex-wrap gap-2">
+                  {recommendation.weakTopicIds.map((topicId) => <span key={topicId} className="rounded-md border border-primary/25 bg-background/45 px-2.5 py-1 text-xs font-medium text-red-100">Review: {formatTopicLabel(topicId)}</span>)}
+                </div>}
+                <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">Open lesson <ArrowRight size={15} /></span>
+              </Link>
+            })}
+            {studyPlan.length > 1 && <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {studyPlan.slice(1).map((recommendation) => <Link key={recommendation.lessonId} href={recommendation.href} className="group rounded-xl border border-border bg-elevated/35 px-4 py-3 transition hover:border-border-bright hover:bg-elevated/65">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{recommendationCopy[recommendation.reason].eyebrow}</p>
+                <div className="mt-1 flex items-center justify-between gap-3">
+                  <div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{recommendation.lessonTitle}</p><p className="truncate text-xs text-muted">{recommendation.courseTitle}</p></div>
+                  <ArrowRight className="shrink-0 text-muted transition group-hover:translate-x-0.5 group-hover:text-primary" size={16} />
+                </div>
+              </Link>)}
+            </div>}
+          </div>
+        ) : <div className="relative px-5 py-8 sm:px-6">
+          <p className="text-sm text-muted-foreground">You’ve completed every available lesson. Revisit the academy or use flashcards to keep your recall sharp.</p>
+          <Link href="/flashcards" className="mt-4 inline-flex"><Button size="sm">Open flashcard review</Button></Link>
+        </div>}
+      </Card>
+      <div className="grid gap-5">
       <Card className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Continue learning</p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight text-gradient-fire">{featuredLesson?.title ?? 'Start your first lesson'}</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Study signal</p>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-gradient-fire">Keep the next action small.</h2>
           </div>
-          <Brain className="text-red-400" size={24} />
+          <Activity className="text-red-400" size={24} />
         </div>
         <p className="text-sm leading-6 text-muted-foreground">{nextAction.description}</p>
         <Progress value={featuredLesson && completedLessonIds.includes(featuredLesson.id) ? 100 : (featuredLesson?.completion.percent ?? 0)} />
@@ -166,6 +239,7 @@ export function DashboardOverview() {
         {authenticated && <SupabaseSyncButton onSynced={() => { refresh(); offlineProgress.refresh() }} />}
         {error && <p className="rounded-xl border border-red-500/30 bg-red-500/8 p-3 text-xs leading-5 text-red-200">{error}</p>}
       </Card>
+      </div>
     </section>
 
     <section className="grid gap-5 lg:grid-cols-[1fr_0.85fr]">
