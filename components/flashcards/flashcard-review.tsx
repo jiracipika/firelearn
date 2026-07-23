@@ -11,6 +11,7 @@ import { createFireLearnBrowserSupabaseClient } from '@/services/supabase/client
 import { recordFlashcardReviewInSupabase } from '@/services/supabase/progress'
 import { buildReviewQueue, cardStage, nextDueLabel, scheduleReview } from '@/services/spaced-repetition'
 import { summarizeFlashcardSession, type FlashcardReviewEvent } from '@/services/flashcard-session'
+import { clearFlashcardReviewSession, loadFlashcardReviewSession, saveFlashcardReviewSession } from '@/services/flashcard-review-session'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -24,79 +25,119 @@ const ratings: { value: FlashcardRating; label: string; shortcut: string; tone: 
   { value: 'easy', label: 'Easy', shortcut: '4', tone: 'text-sky-400', border: 'border-sky-500/30', bg: 'hover:bg-sky-500/8' },
 ]
 
-export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] }) {
+export function FlashcardReview({ initialCards, sessionId }: { initialCards: Flashcard[]; sessionId: string }) {
   const [cards, setCards] = React.useState(initialCards)
   const [reviewIds, setReviewIds] = React.useState(() => initialCards.filter((card) => card.reviewCount === 0 || new Date(card.nextReview).getTime() <= Date.now()).map((card) => card.id))
   const [index, setIndex] = React.useState(0)
   const [revealed, setRevealed] = React.useState(false)
   const [reviewed, setReviewed] = React.useState(0)
   const [reviewEvents, setReviewEvents] = React.useState<FlashcardReviewEvent[]>([])
+  const [sessionReady, setSessionReady] = React.useState(false)
+  const [resumeNotice, setResumeNotice] = React.useState(false)
+  const [sessionStorageFailed, setSessionStorageFailed] = React.useState(false)
+  const ratingInProgress = React.useRef(false)
 
   React.useEffect(() => {
     const storage = getBrowserStorage()
-    if (!storage) return
+    if (!storage) {
+      window.queueMicrotask(() => {
+        setSessionStorageFailed(true)
+        setSessionReady(true)
+      })
+      return
+    }
     window.queueMicrotask(() => {
       const storedCards = loadFlashcards(storage)
       const mergedCards = initialCards.map((card) => storedCards[card.id] ?? card)
+      const saved = loadFlashcardReviewSession(storage, sessionId, initialCards)
       setCards(mergedCards)
-      setReviewIds(mergedCards.filter((card) => card.reviewCount === 0 || new Date(card.nextReview).getTime() <= Date.now()).map((card) => card.id))
+      if (saved) {
+        setReviewIds(saved.reviewIds)
+        setIndex(saved.index)
+        setReviewed(saved.index)
+        setReviewEvents(saved.reviewEvents)
+        setResumeNotice(true)
+      } else {
+        setReviewIds(mergedCards.filter((card) => card.reviewCount === 0 || new Date(card.nextReview).getTime() <= Date.now()).map((card) => card.id))
+      }
+      setSessionReady(true)
     })
-  }, [initialCards])
+  }, [initialCards, sessionId])
+
+  React.useEffect(() => {
+    if (!sessionReady) return
+    const storage = getBrowserStorage()
+    if (!storage) return
+    if (reviewIds.length === 0 || index >= reviewIds.length) {
+      clearFlashcardReviewSession(storage, sessionId)
+      return
+    }
+    if (index === 0) return
+
+    const saved = saveFlashcardReviewSession(storage, {
+      sessionId,
+      reviewIds,
+      index,
+      reviewEvents,
+      updatedAt: new Date().toISOString(),
+    })
+    window.queueMicrotask(() => setSessionStorageFailed(!saved))
+  }, [index, reviewEvents, reviewIds, sessionId, sessionReady])
 
   const queue = buildReviewQueue(cards)
   const current = cards.find((card) => card.id === reviewIds[index])
   const complete = !current
   const progress = reviewIds.length === 0 ? 100 : Math.round((reviewed / reviewIds.length) * 100)
 
+  React.useEffect(() => {
+    ratingInProgress.current = false
+  }, [current?.id])
+
   const rate = React.useCallback((rating: FlashcardRating) => {
-    if (!current || !revealed) return
-    setCards((existing) => {
-      const reviewedAt = new Date()
-      let updatedCard: Flashcard | undefined
-      const nextCards = existing.map((card) => {
-        if (card.id !== current.id) return card
-        updatedCard = scheduleReview(card, rating, reviewedAt)
-        return updatedCard
-      })
-      const storage = getBrowserStorage()
-      if (storage) {
-        saveFlashcards(storage, nextCards)
-        recordStudyActivity(storage, { kind: 'flashcard_review', minutes: 1, entityId: current.id, createdAt: reviewedAt.toISOString() })
-      }
-      if (updatedCard) {
-        const review = {
-          cardId: updatedCard.id,
-          rating,
-          easeFactor: updatedCard.easeFactor,
-          intervalDays: updatedCard.intervalDays,
-          reviewCount: updatedCard.reviewCount,
-          nextReview: updatedCard.nextReview,
-          reviewedAt: updatedCard.lastReviewed ?? reviewedAt.toISOString(),
-        }
-        const clientMutationId = storage
-          ? createOfflineProgressRepository(storage).queueFlashcardReview(review)
-          : undefined
-        const supabase = createFireLearnBrowserSupabaseClient()
-        if (supabase) {
-          void recordFlashcardReviewInSupabase(supabase, review, clientMutationId)
-            .then(() => {
-              if (storage && clientMutationId) createOfflineProgressRepository(storage).clearSyncedQueueItems([clientMutationId])
-            })
-            .catch(() => undefined)
-        }
-        setReviewEvents((events) => [...events, {
-          flashcardId: updatedCard!.id,
-          rating,
-          reviewedAt: updatedCard!.lastReviewed ?? reviewedAt.toISOString(),
-          nextReview: updatedCard!.nextReview,
-        }])
-      }
-      return nextCards
-    })
+    if (!current || !revealed || ratingInProgress.current) return
+    ratingInProgress.current = true
+
+    const reviewedAt = new Date()
+    const updatedCard = scheduleReview(current, rating, reviewedAt)
+    const nextCards = cards.map((card) => card.id === current.id ? updatedCard : card)
+    const storage = getBrowserStorage()
+
+    setCards(nextCards)
+    if (storage) {
+      saveFlashcards(storage, nextCards)
+      recordStudyActivity(storage, { kind: 'flashcard_review', minutes: 1, entityId: current.id, createdAt: reviewedAt.toISOString() })
+    }
+
+    const review = {
+      cardId: updatedCard.id,
+      rating,
+      easeFactor: updatedCard.easeFactor,
+      intervalDays: updatedCard.intervalDays,
+      reviewCount: updatedCard.reviewCount,
+      nextReview: updatedCard.nextReview,
+      reviewedAt: updatedCard.lastReviewed ?? reviewedAt.toISOString(),
+    }
+    const clientMutationId = storage
+      ? createOfflineProgressRepository(storage).queueFlashcardReview(review)
+      : undefined
+    const supabase = createFireLearnBrowserSupabaseClient()
+    if (supabase) {
+      void recordFlashcardReviewInSupabase(supabase, review, clientMutationId)
+        .then(() => {
+          if (storage && clientMutationId) createOfflineProgressRepository(storage).clearSyncedQueueItems([clientMutationId])
+        })
+        .catch(() => undefined)
+    }
+    setReviewEvents((events) => [...events, {
+      flashcardId: updatedCard.id,
+      rating,
+      reviewedAt: updatedCard.lastReviewed ?? reviewedAt.toISOString(),
+      nextReview: updatedCard.nextReview,
+    }])
     setRevealed(false)
     setReviewed((value) => value + 1)
-    window.setTimeout(() => setIndex((value) => value + 1), 120)
-  }, [current, revealed])
+    setIndex((value) => value + 1)
+  }, [cards, current, revealed])
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -122,12 +163,19 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
   }, [rate])
 
   function restart() {
+    const storage = getBrowserStorage()
+    if (storage) clearFlashcardReviewSession(storage, sessionId)
     const dueIds = cards.filter((card) => card.reviewCount === 0 || new Date(card.nextReview).getTime() <= Date.now()).map((card) => card.id)
     setReviewIds(dueIds)
     setIndex(0)
     setReviewed(0)
     setRevealed(false)
     setReviewEvents([])
+    setResumeNotice(false)
+  }
+
+  if (!sessionReady) {
+    return <Card role="status" aria-live="polite" className="mx-auto max-w-4xl py-12 text-center text-muted-foreground">Restoring flashcard progress…</Card>
   }
 
   if (complete) {
@@ -189,6 +237,24 @@ export function FlashcardReview({ initialCards }: { initialCards: Flashcard[] })
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
+      {resumeNotice && (
+        <div role="status" className="flex flex-col gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-sky-100">Flashcard review restored</p>
+            <p className="mt-1 text-sky-100/75">Continuing at card {index + 1} of {reviewIds.length}. This device keeps unfinished sessions for 7 days.</p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setResumeNotice(false)}>Dismiss</Button>
+            <Button variant="outline" size="sm" onClick={restart}>Restart due queue</Button>
+          </div>
+        </div>
+      )}
+      {sessionStorageFailed && (
+        <div role="status" className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+          <p className="font-semibold">Device session recovery is unavailable</p>
+          <p className="mt-1 text-amber-100/75">Keep this tab open until you finish. Completed ratings will still sync to Supabase when a connection and signed-in session are available.</p>
+        </div>
+      )}
       {/* Polite live region so screen readers announce each card transition and
           reveal/rate action. Visually hidden, not suppressed. */}
       <p className="sr-only" aria-live="polite" aria-atomic="true">

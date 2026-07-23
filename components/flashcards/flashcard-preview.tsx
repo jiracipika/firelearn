@@ -13,5 +13,9 @@ export function FlashcardPreview({ courseSlug, lessonSlug }: FlashcardPreviewPro
   const cards = lesson
     ? lesson.flashcards
     : academyCourses.flatMap((course) => course.modules.flatMap((module) => module.lessons.flatMap((lesson) => lesson.flashcards)))
-  return <AppShell><FlashcardReview initialCards={cards.slice(0, lesson ? cards.length : 18)} /></AppShell>
+  const sessionId = lesson && course
+    ? `lesson:${course.slug}:${lesson.slug}`
+    : 'daily-review'
+
+  return <AppShell><FlashcardReview initialCards={cards.slice(0, lesson ? cards.length : 18)} sessionId={sessionId} /></AppShell>
 }

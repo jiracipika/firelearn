@@ -56,6 +56,8 @@ Progress is written locally first so lesson completion remains reliable offline,
 
 Completed quiz attempts use the same offline queue and Supabase sync path. An unfinished quiz is intentionally stored only on the current device: practice, exam, and missed-question sessions resume after refresh for up to seven days, validate against the current question catalog before restoring, and clear when the learner finishes or chooses **Start over**.
 
+Flashcard ratings remain local-first and flow through the offline mutation queue to Supabase. Unfinished daily and lesson-specific review queues are isolated from one another, resume on the current device for up to seven days, reject stale or catalog-incompatible snapshots, and clear after completion or when the learner restarts the due queue.
+
 Completion certificates are unlocked only after every lesson in the course has been verified from the merged progress record. This certificate remains an educational study record, not an official certification.
 
 See `docs/supabase-setup.md` and `supabase/migrations/001_firelearn_progress.sql` for backend setup.
