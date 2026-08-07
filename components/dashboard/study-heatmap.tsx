@@ -2,6 +2,7 @@ import { TrendingUp } from 'lucide-react'
 import { learnerProgress } from '@/data/progress'
 import type { StudyActivityDayLabel } from '@/hooks/use-study-activity'
 import { Card } from '@/components/ui/card'
+import { Reveal, Stagger } from '@/components/ui/motion'
 import { cn } from '@/lib/utils'
 
 // Fallback labels when no `dayLabels` prop is supplied. Matches the layout of
@@ -48,7 +49,7 @@ export function StudyHeatmap({
         </div>
       </div>
 
-      <div className="relative flex items-end justify-between gap-2" style={{ height: '116px' }}>
+      <Stagger className="relative flex items-end justify-between gap-2" stagger={0.05} style={{ height: '116px' }}>
         {goal > 0 && max > 0 && (
           <div
             className="pointer-events-none absolute inset-x-0 z-10 border-t border-dashed border-success/40"
@@ -65,11 +66,11 @@ export function StudyHeatmap({
           const hitGoal = minutes >= goal && goal > 0
           const day = labels[index]
           return (
-            <div key={index} className="group flex flex-1 flex-col items-center gap-2">
+            <Reveal key={index} as="div" className="group flex flex-1 flex-col items-center gap-2">
               <div className="flex w-full items-end justify-center" style={{ height: '100px' }}>
                 <div
                   className={cn(
-                    'w-full max-w-10 rounded-t-lg bg-gradient-to-t transition-all duration-300 group-hover:to-accent/90',
+                    'w-full max-w-10 rounded-t-lg bg-gradient-to-t transition-[height,filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:to-accent/90',
                     hitGoal ? 'from-success/40 to-success/90' : 'from-primary/30 to-primary/90 group-hover:from-primary/50'
                   )}
                   style={{ height: `${Math.max(8, intensity * 100)}px`, filter: intensity > 0.6 ? 'drop-shadow(0 0 6px rgb(255 74 46 / 0.4))' : undefined }}
@@ -77,13 +78,13 @@ export function StudyHeatmap({
                 />
               </div>
               <div className="text-center transition-colors group-hover:text-white">
-                <p className={cn('text-xs font-medium', hitGoal ? 'text-success' : 'text-white')}>{minutes}m</p>
+                <p className={cn('text-xs font-medium tabular-nums', hitGoal ? 'text-success' : 'text-white')}>{minutes}m</p>
                 <p className={cn('text-[10px] uppercase', day?.isToday ? 'font-bold text-primary' : 'text-muted')}>{day?.label}</p>
               </div>
-            </div>
+            </Reveal>
           )
         })}
-      </div>
+      </Stagger>
 
       <div className="grid grid-cols-3 gap-2 border-t border-border pt-3 text-center">
         <div>

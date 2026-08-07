@@ -137,6 +137,150 @@ body::before {
   animation: flame-flicker 2.5s ease-in-out infinite;
 }
 
+/* === Premium polish additions === */
+
+/* Skeleton shimmer used by loading states. */
+@keyframes skeleton-shimmer {
+  0% { background-position: -160% 0; }
+  100% { background-position: 160% 0; }
+}
+
+.skeleton {
+  background-image: linear-gradient(
+    100deg,
+    rgb(255 255 255 / 0.0) 30%,
+    rgb(255 255 255 / 0.06) 50%,
+    rgb(255 255 255 / 0.0) 70%
+  );
+  background-size: 220% 100%;
+  background-color: rgb(255 255 255 / 0.03);
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+:root[data-theme='light'] .skeleton {
+  background-image: linear-gradient(
+    100deg,
+    rgb(15 23 42 / 0.0) 30%,
+    rgb(15 23 42 / 0.05) 50%,
+    rgb(15 23 42 / 0.0) 70%
+  );
+  background-color: rgb(15 23 42 / 0.04);
+}
+
+/* Pop-in micro-interaction for chips/badges/stat tiles. */
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.92); }
+  60% { transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-pop-in {
+  animation: pop-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Celebratory bounce used by unlocked achievements and result scores. */
+@keyframes celebratory-bounce {
+  0% { opacity: 0; transform: scale(0.6) translateY(10px); }
+  55% { transform: scale(1.08) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-celebratory-bounce {
+  animation: celebratory-bounce 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Diagonal sheen that sweeps across premium cards on hover. */
+@keyframes sheen-sweep {
+  0% { transform: translateX(-120%) skewX(-18deg); }
+  100% { transform: translateX(220%) skewX(-18deg); }
+}
+
+.sheen-on-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.sheen-on-hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 0.08),
+    transparent
+  );
+  transform: translateX(-120%) skewX(-18deg);
+  pointer-events: none;
+}
+
+.sheen-on-hover:hover::after {
+  animation: sheen-sweep 0.85s ease-out;
+}
+
+/* A soft radial glow that pulses on the badge/medal area of an unlocked achievement. */
+@keyframes achievement-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(255 200 87 / 0.0); }
+  50% { box-shadow: 0 0 24px 2px rgb(255 200 87 / 0.25); }
+}
+
+.animate-achievement-glow {
+  animation: achievement-glow 3.4s ease-in-out infinite;
+}
+
+/* Subtle floating bob used on hero icons and featured cards. */
+@keyframes float-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-float-bob {
+  animation: float-bob 4.5s ease-in-out infinite;
+}
+
+/* Animated progress fill shine — used by the progress bar fill element. */
+@keyframes progress-shine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* Ripples emanating from the rank pill on the leaderboard. */
+@keyframes rank-pulse {
+  0% { box-shadow: 0 0 0 0 rgb(255 200 87 / 0.45); }
+  70% { box-shadow: 0 0 0 8px rgb(255 200 87 / 0.0); }
+  100% { box-shadow: 0 0 0 0 rgb(255 200 87 / 0.0); }
+}
+
+.animate-rank-pulse {
+  animation: rank-pulse 2.6s ease-out infinite;
+}
+
+/* Gentle scale-in for sheets/banners appearing in place. */
+@keyframes scale-in {
+  0% { opacity: 0; transform: scale(0.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Shake micro-interaction for incorrect quiz answers. */
+@keyframes answer-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(1px); }
+}
+
+.animate-answer-shake {
+  animation: answer-shake 0.36s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
 /* Gradient text for headlines */
 .text-gradient-fire {
   background: linear-gradient(135deg, #fff 0%, #ffc857 45%, #ff4a2e 100%);

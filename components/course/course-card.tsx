@@ -5,20 +5,22 @@ import { getCategoryTitle } from '@/data/academy'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { cn } from '@/lib/utils'
 
 export function CourseCard({ course }: { course: Course }) {
   const lessonCount = course.modules.reduce((total, module) => total + module.lessons.length, 0)
   const questionCount = course.modules.reduce((total, module) => total + module.lessons.reduce((lessonTotal, lesson) => lessonTotal + lesson.quiz.length, 0), 0)
   const videoCount = course.modules.reduce((total, module) => total + module.lessons.reduce((lessonTotal, lesson) => lessonTotal + lesson.videos.length, 0), 0)
+  const complete = course.progressPercent >= 100
   return (
     <Link href={`/courses/${course.slug}`} className="block">
-      <Card className="group flex h-full flex-col gap-4 border-border-bright/80 transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_20px_60px_rgb(255_74_46_/_0.12)]">
+      <Card interactive className="group flex h-full flex-col gap-4 border-border-bright/80 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_20px_60px_rgb(255_74_46_/_0.12)]">
         <div className="flex items-start justify-between gap-3">
           <Badge>{getCategoryTitle(course.categoryId)}</Badge>
           <span className="rounded-md border border-border bg-elevated/60 px-2 py-0.5 text-xs text-muted-foreground">{course.difficulty}</span>
         </div>
         <div className="flex-1 space-y-2">
-          <h3 className="text-lg font-bold leading-snug tracking-tight text-white">{course.title}</h3>
+          <h3 className="text-lg font-bold leading-snug tracking-tight text-white transition-colors duration-200 group-hover:text-red-50">{course.title}</h3>
           <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{course.description}</p>
         </div>
         <div className="space-y-3">
@@ -30,7 +32,13 @@ export function CourseCard({ course }: { course: Course }) {
             <span className="flex items-center gap-1.5 sm:col-span-2"><Brain size={13} /> {questionCount} questions</span>
           </div>
           <Progress value={course.progressPercent} />
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition group-hover:gap-2.5">Open course <ArrowRight size={14} /></span>
+          <span className={cn(
+            'inline-flex items-center gap-1.5 text-sm font-semibold transition-all duration-200',
+            complete ? 'text-success' : 'text-primary',
+            'group-hover:gap-2.5',
+          )}>
+            {complete ? 'Review course' : 'Open course'} <ArrowRight size={14} />
+          </span>
         </div>
       </Card>
     </Link>

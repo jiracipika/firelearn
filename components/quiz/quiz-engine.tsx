@@ -17,6 +17,7 @@ import { formatTopicLabel } from '@/services/topics'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { ConfettiBurst } from '@/components/ui/confetti'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
@@ -259,10 +260,15 @@ export function QuizEngine({ quizId, title, questions, poolTotal }: QuizEnginePr
     return (
       <div className="mx-auto max-w-3xl space-y-5">
         <Card className="relative overflow-hidden p-8 text-center md:p-12">
+          <ConfettiBurst fire={result.scorePercent === 100} />
           <div className="absolute inset-x-20 top-0 h-28 bg-primary/15 blur-3xl" />
           <Badge className="mx-auto">{title}</Badge>
           <div className="mt-6">
-            <p className={cn('text-7xl font-bold tracking-tight md:text-8xl', result.passed ? 'text-success' : 'text-primary')}>
+            <p className={cn(
+              'text-7xl font-bold tracking-tight md:text-8xl',
+              result.passed ? 'text-success' : 'text-primary',
+              result.scorePercent === 100 && 'animate-celebratory-bounce',
+            )}>
               {result.scorePercent}%
             </p>
             <p className="mt-3 text-base text-muted-foreground">
@@ -398,7 +404,7 @@ export function QuizEngine({ quizId, title, questions, poolTotal }: QuizEnginePr
             </div>
 
             {submitted && mode === 'practice' && (
-              <div className={cn('rounded-xl border p-4', selectedCorrect ? 'border-success/30 bg-success/8' : 'border-red-500/30 bg-red-500/8')}>
+              <div className={cn('rounded-xl border p-4', selectedCorrect ? 'border-success/30 bg-success/8' : 'border-red-500/30 bg-red-500/8 animate-answer-shake')}>
                 <p className="flex items-center gap-2 text-sm font-semibold text-white">
                   {selectedCorrect ? <><CheckCircle2 size={16} className="text-success" /> Correct</> : <><XCircle size={16} className="text-red-400" /> Not quite</>}
                 </p>

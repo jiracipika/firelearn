@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import { motion, useReducedMotion, type HTMLMotionProps, type Variants } from 'framer-motion'
-import { cn } from '@/lib/utils'
 
 /**
  * Staggered reveal container + item pair, tuned for card grids, stat tiles, and

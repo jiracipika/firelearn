@@ -26,9 +26,12 @@ import { AchievementProgressPanel, LeaderboardPanel, WeeklyChallengesPanel } fro
 import { StudyHeatmap } from '@/components/dashboard/study-heatmap'
 import { StudyTimerPanel } from '@/components/dashboard/study-timer-panel'
 import { SupabaseSyncButton } from '@/components/sync/supabase-sync-button'
+import { AnimatedNumber } from '@/components/ui/animated-number'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Progress } from '@/components/ui/progress'
+import { Reveal, RevealOnMount, Stagger } from '@/components/ui/motion'
 import { cn } from '@/lib/utils'
 
 function allLessonIds() {
@@ -107,51 +110,58 @@ export function DashboardOverview() {
   const dailyProgress = Math.round((studyActivity.minutesToday / learnerProgress.dailyGoalMinutes) * 100)
   const displayLevel = Math.floor(totalXp / 750) + 1
   const statTiles = [
-    { label: 'Daily streak', value: `${studyActivity.streakDays}`, suffix: 'days', icon: Flame, color: 'text-red-400', bg: 'bg-red-500/10' },
-    { label: 'Total XP', value: totalXp.toLocaleString(), suffix: '', icon: Trophy, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-    { label: 'Level', value: displayLevel.toString(), suffix: '', icon: Target, color: 'text-green-400', bg: 'bg-green-500/10' },
-    { label: 'Completion', value: completion.toString(), suffix: '%', icon: BookOpen, color: 'text-sky-400', bg: 'bg-sky-500/10' },
+    { label: 'Daily streak', numeric: studyActivity.streakDays, suffix: ' days', icon: Flame, color: 'text-red-400', bg: 'bg-red-500/10' },
+    { label: 'Total XP', numeric: totalXp, suffix: '', icon: Trophy, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+    { label: 'Level', numeric: displayLevel, suffix: '', icon: Target, color: 'text-green-400', bg: 'bg-green-500/10' },
+    { label: 'Completion', numeric: completion, suffix: '%', icon: BookOpen, color: 'text-sky-400', bg: 'bg-sky-500/10' },
   ]
 
   return <AppShell><div className="space-y-8">
     <section className="grid gap-5 lg:grid-cols-[1fr_0.38fr] lg:items-stretch">
-      <Card className="relative overflow-hidden p-6 md:p-8">
-        <div className="absolute right-0 top-0 size-40 rounded-full bg-primary/15 blur-3xl" />
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Command dashboard</p>
-        <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-[-0.03em] md:text-5xl text-gradient-fire">Keep your fireground knowledge mission-ready.</h1>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Track completions, quiz history, and weak topics from one focused cockpit.</p>
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {statTiles.map((stat) => (
-            <div key={stat.label} className="stat-tile-hover rounded-2xl border border-border bg-elevated/40 p-4">
-              <div className={cn('inline-flex size-10 items-center justify-center rounded-xl', stat.bg)}>
-                <stat.icon className={stat.color} size={20} />
+      <RevealOnMount as="div">
+        <Card className="relative overflow-hidden p-6 md:p-8">
+          <div className="absolute right-0 top-0 size-40 rounded-full bg-primary/15 blur-3xl" />
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Command dashboard</p>
+          <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-[-0.03em] md:text-5xl text-gradient-fire">Keep your fireground knowledge mission-ready.</h1>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Track completions, quiz history, and weak topics from one focused cockpit.</p>
+          <Stagger className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4" stagger={0.07}>
+            {statTiles.map((stat) => (
+              <Reveal key={stat.label} as="div" className="stat-tile-hover rounded-2xl border border-border bg-elevated/40 p-4">
+                <div className={cn('inline-flex size-10 items-center justify-center rounded-xl', stat.bg)}>
+                  <stat.icon className={stat.color} size={20} />
+                </div>
+                <p className="mt-3 text-2xl font-bold tabular-nums text-white">
+                  <AnimatedNumber value={stat.numeric} />
+                  <span className="text-sm text-muted">{stat.suffix}</span>
+                </p>
+                <p className="text-xs text-muted">{stat.label}</p>
+              </Reveal>
+            ))}
+          </Stagger>
+        </Card>
+      </RevealOnMount>
+      <RevealOnMount as="div" delay={0.08}>
+        <Card className="flex h-full flex-col justify-between gap-4 bg-gradient-to-br from-primary/8 to-transparent">
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Daily goal</p>
+                <p className="mt-1 text-3xl font-bold tabular-nums text-white"><AnimatedNumber value={studyActivity.minutesToday} /><span className="text-lg text-muted">/{learnerProgress.dailyGoalMinutes}m</span></p>
               </div>
-              <p className="mt-3 text-2xl font-bold text-white">{stat.value}<span className="text-sm text-muted">{stat.suffix}</span></p>
-              <p className="text-xs text-muted">{stat.label}</p>
+              <Activity className="text-red-400 animate-pulse-glow" size={24} />
             </div>
-          ))}
-        </div>
-      </Card>
-      <Card className="flex flex-col justify-between gap-4 bg-gradient-to-br from-primary/8 to-transparent">
-        <div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Daily goal</p>
-              <p className="mt-1 text-3xl font-bold text-white">{studyActivity.minutesToday}<span className="text-lg text-muted">/{learnerProgress.dailyGoalMinutes}m</span></p>
-            </div>
-            <Activity className="text-red-400 animate-pulse-glow" size={24} />
+            <Progress value={dailyProgress} className="mt-4" />
           </div>
-          <Progress value={dailyProgress} className="mt-4" />
-        </div>
-        <div className="grid gap-2 text-xs leading-5 text-muted-foreground">
-          <p>Short reps win. Clear one lesson, one quiz, or one flashcard queue today.</p>
-          <Link href="/flashcards" className="rounded-xl border border-border bg-elevated/40 px-3 py-2 transition hover:border-primary/50 hover:text-white">
-            {flashcardQueue.dueCount > 0
-              ? `${flashcardQueue.dueCount} flashcard${flashcardQueue.dueCount === 1 ? '' : 's'} due (${flashcardQueue.overdue} overdue)`
-              : `${flashcardQueue.totalCards} flashcards scheduled · queue clear`}
-          </Link>
-        </div>
-      </Card>
+          <div className="grid gap-2 text-xs leading-5 text-muted-foreground">
+            <p>Short reps win. Clear one lesson, one quiz, or one flashcard queue today.</p>
+            <Link href="/flashcards" className="rounded-xl border border-border bg-elevated/40 px-3 py-2 transition hover:border-primary/50 hover:text-white">
+              {flashcardQueue.dueCount > 0
+                ? `${flashcardQueue.dueCount} flashcard${flashcardQueue.dueCount === 1 ? '' : 's'} due (${flashcardQueue.overdue} overdue)`
+                : `${flashcardQueue.totalCards} flashcards scheduled · queue clear`}
+            </Link>
+          </div>
+        </Card>
+      </RevealOnMount>
     </section>
 
     <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
@@ -369,14 +379,16 @@ export function DashboardOverview() {
         <h2 className="text-2xl font-bold text-white">Courses in progress</h2>
         <p className="mt-1 text-sm text-muted-foreground">Prioritized modules based on current progress.</p>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {academyCourses.filter((course) => course.modules.some((module) => module.lessons.some((lesson) => completedLessonIds.includes(lesson.id)))).slice(0, 6).map((course) => <CourseCard key={course.id} course={course} />)}
-      </div>
+      <Stagger className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" stagger={0.06}>
+        {academyCourses.filter((course) => course.modules.some((module) => module.lessons.some((lesson) => completedLessonIds.includes(lesson.id)))).slice(0, 6).map((course) => <Reveal key={course.id} as="div"><CourseCard course={course} /></Reveal>)}
+      </Stagger>
       {academyCourses.filter((course) => course.modules.some((module) => module.lessons.some((lesson) => completedLessonIds.includes(lesson.id)))).length === 0 && (
-        <Card className="py-12 text-center text-muted-foreground">
-          <p>No courses started yet.</p>
-          <Link href="/courses" className="mt-2 inline-block text-sm font-semibold text-primary hover:opacity-80">Browse the academy to begin</Link>
-        </Card>
+        <EmptyState
+          icon={BookOpen}
+          title="No courses started yet"
+          description="Browse the academy to begin your first learning path."
+          action={<Link href="/courses"><Button size="sm">Browse the academy</Button></Link>}
+        />
       )}
     </section>
   </div></AppShell>

@@ -2,10 +2,10 @@ import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
-export const buttonVariants = cva('inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold tracking-tight transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 disabled:pointer-events-none disabled:opacity-40 active:scale-[0.98]', {
+export const buttonVariants = cva('relative inline-flex min-h-11 items-center justify-center gap-2 overflow-hidden rounded-lg px-4 py-2 text-sm font-semibold tracking-tight transition-[transform,background-color,border-color,box-shadow,opacity] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.985]', {
   variants: {
     variant: {
-      primary: 'bg-primary text-primary-foreground shadow-[0_8px_30px_rgb(255_59_34_/_0.3)] hover:bg-primary-dim hover:shadow-[0_10px_35px_rgb(255_59_34_/_0.4)]',
+      primary: 'bg-primary text-primary-foreground shadow-[0_8px_30px_rgb(255_59_34_/_0.3)] hover:bg-primary-dim hover:shadow-[0_12px_40px_rgb(255_59_34_/_0.42)]',
       secondary: 'border border-border-bright bg-elevated text-white hover:bg-border/50',
       outline: 'border border-border-bright bg-transparent text-white hover:border-primary/50 hover:bg-primary/8',
       ghost: 'text-muted-foreground hover:bg-elevated hover:text-white',

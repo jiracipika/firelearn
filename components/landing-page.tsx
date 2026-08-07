@@ -5,6 +5,7 @@ import { AppShell } from '@/components/layout/app-shell'
 import { buttonVariants } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { Reveal, RevealOnMount, Stagger } from '@/components/ui/motion'
 
 const pillars = [
   { title: 'Academy paths', body: 'Progress from fundamentals to scenario-heavy fireground judgment with a scalable course model mapped to NFPA 1001 and 472.', icon: BookOpenCheck },
@@ -37,7 +38,7 @@ export function LandingPage() {
       }}
     >
       <div className="mx-auto max-w-7xl">
-        <div className="animate-fade-in-up max-w-3xl space-y-6 sm:space-y-7">
+        <RevealOnMount className="max-w-3xl space-y-6 sm:space-y-7">
           <div className="inline-flex items-center gap-2 rounded-full border border-border-bright bg-background/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-red-100 backdrop-blur">
             <Sparkles size={13} /> Firefighter training, rebuilt
           </div>
@@ -55,75 +56,79 @@ export function LandingPage() {
               Browse academy
             </Link>
           </div>
-          <div className="mobile-snap-row max-w-3xl sm:grid sm:grid-cols-5 sm:gap-3">
+          <Stagger className="mobile-snap-row max-w-3xl sm:grid sm:grid-cols-5 sm:gap-3" stagger={0.07}>
             {stats.map(([value, label]) => (
-              <div key={label} className="stat-tile-hover min-w-32 snap-start rounded-2xl border border-border-bright bg-background/70 p-4 backdrop-blur sm:min-w-0">
+              <Reveal key={label} className="stat-tile-hover min-w-32 snap-start rounded-2xl border border-border-bright bg-background/70 p-4 backdrop-blur sm:min-w-0">
                 <p className="text-3xl font-bold tracking-tight text-gradient-flame">{value}</p>
                 <p className="mt-1 text-xs text-muted">{label}</p>
-              </div>
+              </Reveal>
             ))}
-          </div>
-        </div>
+          </Stagger>
+        </RevealOnMount>
 
-        <Card className="mt-8 max-w-3xl sm:mt-10 animate-fade-in-up overflow-hidden border-border-bright bg-background/78 p-0" >
-          <div className="border-b border-border bg-elevated/50 px-5 py-4">
-            <div className="flex items-center justify-between">
-              <p className="font-semibold text-white">Today&apos;s training queue</p>
-              <span className="rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">Live path</span>
-            </div>
-          </div>
-          <div className="space-y-5 p-5">
-            <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/12 to-transparent p-5">
-              <p className="text-sm font-medium text-red-200">Continue course</p>
-              <h2 className="mt-2 text-xl font-bold text-white">{featured?.title ?? 'Fire behaviour foundations'}</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">Smoke reading, SCBA checks, incident command, and mayday decision points.</p>
-              <Progress value={featured?.progressPercent ?? 34} className="mt-5" />
-              <div className="mt-3 flex items-center justify-between text-xs text-muted">
-                <span>{featured?.progressPercent ?? 34}% complete</span>
-                <span>{featured?.estimatedMinutes ?? 0} min</span>
+        <RevealOnMount delay={0.18}>
+          <Card interactive className="mt-8 max-w-3xl overflow-hidden border-border-bright bg-background/78 p-0 sm:mt-10">
+            <div className="border-b border-border bg-elevated/50 px-5 py-4">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-white">Today&apos;s training queue</p>
+                <span className="rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">Live path</span>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              {[
-                { label: 'Tutorials', value: String(featured?.modules[0]?.lessons[0]?.videos.length ?? 3), icon: PlayCircle, tone: 'text-info' },
-                { label: 'Weak topic', value: 'SCBA', icon: ShieldAlert, tone: 'text-amber-300' },
-                { label: 'Goal', value: '25m', icon: Gauge, tone: 'text-green-300' },
-              ].map((item) => (
-                <div key={item.label} className="rounded-2xl border border-border bg-elevated/40 p-3 sm:p-4">
-                  <item.icon className={item.tone} size={18} />
-                  <p className="mt-2 text-lg font-bold text-white">{item.value}</p>
-                  <p className="text-xs text-muted">{item.label}</p>
+            <div className="space-y-5 p-5">
+              <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/12 to-transparent p-5">
+                <p className="text-sm font-medium text-red-200">Continue course</p>
+                <h2 className="mt-2 text-xl font-bold text-white">{featured?.title ?? 'Fire behaviour foundations'}</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Smoke reading, SCBA checks, incident command, and mayday decision points.</p>
+                <Progress value={featured?.progressPercent ?? 34} className="mt-5" />
+                <div className="mt-3 flex items-center justify-between text-xs text-muted">
+                  <span>{featured?.progressPercent ?? 34}% complete</span>
+                  <span>{featured?.estimatedMinutes ?? 0} min</span>
                 </div>
-              ))}
-            </div>
-            <div className="rounded-2xl border border-border bg-elevated/40 p-3 sm:p-4">
-              <div className="flex items-start gap-3">
-                <Radio className="mt-0.5 shrink-0 text-amber-300" size={16} />
-                <div>
-                  <p className="text-sm font-medium text-white">Educational support only</p>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">Reinforces official training, SOPs, and instructor-led certification. Not a replacement.</p>
+              </div>
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                {[
+                  { label: 'Tutorials', value: String(featured?.modules[0]?.lessons[0]?.videos.length ?? 3), icon: PlayCircle, tone: 'text-info' },
+                  { label: 'Weak topic', value: 'SCBA', icon: ShieldAlert, tone: 'text-amber-300' },
+                  { label: 'Goal', value: '25m', icon: Gauge, tone: 'text-green-300' },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-border bg-elevated/40 p-3 sm:p-4">
+                    <item.icon className={item.tone} size={18} />
+                    <p className="mt-2 text-lg font-bold text-white">{item.value}</p>
+                    <p className="text-xs text-muted">{item.label}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-border bg-elevated/40 p-3 sm:p-4">
+                <div className="flex items-start gap-3">
+                  <Radio className="mt-0.5 shrink-0 text-amber-300" size={16} />
+                  <div>
+                    <p className="text-sm font-medium text-white">Educational support only</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">Reinforces official training, SOPs, and instructor-led certification. Not a replacement.</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </RevealOnMount>
       </div>
     </section>
 
-    <section className="mobile-snap-row mx-auto max-w-7xl px-4 py-12 sm:grid sm:grid-cols-2 sm:gap-4 sm:px-6 md:grid-cols-4 md:py-16">
+    <Stagger as="section" className="mobile-snap-row mx-auto max-w-7xl px-4 py-12 sm:grid sm:grid-cols-2 sm:gap-4 sm:px-6 md:grid-cols-4 md:py-16" stagger={0.08}>
       {pillars.map((pillar) => (
-        <Card key={pillar.title} className="group min-w-[82vw] snap-start transition duration-200 sm:min-w-0 hover:-translate-y-1 hover:border-primary/30">
-          <div className="mb-4 inline-flex size-12 items-center justify-center rounded-lg bg-primary/10">
-            <pillar.icon className="text-primary" size={22} aria-hidden />
-          </div>
-          <h2 className="font-bold text-white">{pillar.title}</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{pillar.body}</p>
-        </Card>
+        <Reveal key={pillar.title}>
+          <Card interactive className="group min-h-full min-w-[82vw] snap-start transition duration-200 sm:min-w-0 hover:-translate-y-1 hover:border-primary/30">
+            <div className="mb-4 inline-flex size-12 items-center justify-center rounded-lg bg-primary/10 transition-transform duration-300 group-hover:scale-110">
+              <pillar.icon className="text-primary" size={22} aria-hidden />
+            </div>
+            <h2 className="font-bold text-white">{pillar.title}</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{pillar.body}</p>
+          </Card>
+        </Reveal>
       ))}
-    </section>
+    </Stagger>
 
-    <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6">
-      <Card className="grid gap-6 overflow-hidden border-border-bright bg-gradient-to-r from-card via-card to-elevated p-5 sm:p-8 md:grid-cols-[1fr_auto] md:items-center">
+    <RevealOnMount as="section" delay={0.05} className="mx-auto max-w-7xl px-4 pb-20 sm:px-6">
+      <Card interactive className="grid gap-6 overflow-hidden border-border-bright bg-gradient-to-r from-card via-card to-elevated p-5 sm:p-8 md:grid-cols-[1fr_auto] md:items-center">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Ready for the next rep?</p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-gradient-fire">Build mastery before the alarm drops.</h2>
@@ -133,6 +138,6 @@ export function LandingPage() {
           Open dashboard <CheckCircle2 size={18} aria-hidden />
         </Link>
       </Card>
-    </section>
+    </RevealOnMount>
   </AppShell>
 }
