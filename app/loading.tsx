@@ -9,8 +9,8 @@ import { Skeleton, SkeletonStatGrid } from '@/components/ui/skeleton'
  * route segment streaming, so it must stay a server component (no "use client").
  */
 export default function Loading() {
-  return <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-    <div className="space-y-8">
+  return <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+    <div className="space-y-10">
       {/* Hero headline */}
       <div className="space-y-3">
         <Skeleton className="h-3 w-32" />
@@ -20,17 +20,17 @@ export default function Loading() {
 
       {/* Hero + side card */}
       <div className="grid gap-4 md:grid-cols-[1.4fr_0.8fr]">
-        <div className="rounded-2xl border border-border bg-card/60 p-6">
+        <div className="glass-card rounded-2xl p-6">
           <SkeletonStatGrid count={4} />
           <Skeleton className="mt-4 h-2 w-full" />
         </div>
-        <Skeleton className="h-56 rounded-2xl border border-border bg-card/60" />
+        <Skeleton className="glass-card h-56 rounded-2xl" />
       </div>
 
       {/* Three-up cards */}
       <div className="grid gap-4 md:grid-cols-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="space-y-3 rounded-2xl border border-border bg-card/50 p-5">
+          <div key={i} className="glass-card space-y-3 rounded-2xl p-5">
             <Skeleton className="h-4 w-2/3" />
             <Skeleton className="h-3 w-full" />
             <Skeleton className="h-3 w-4/5" />

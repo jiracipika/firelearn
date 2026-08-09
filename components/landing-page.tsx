@@ -30,7 +30,7 @@ export function LandingPage() {
   const featured = academyCourses[0]
   return <AppShell fullBleed>
     <section
-      className="relative isolate overflow-hidden px-4 pb-12 pt-10 sm:px-6 sm:pt-16 lg:pb-20 lg:pt-24"
+      className="relative isolate overflow-hidden px-4 pb-16 pt-12 sm:px-6 sm:pt-20 lg:pb-24 lg:pt-28"
       style={{
         backgroundImage: "linear-gradient(90deg, rgb(7 9 13 / 0.94), rgb(7 9 13 / 0.72) 48%, rgb(7 9 13 / 0.48)), linear-gradient(180deg, transparent 70%, #07090d), url('/hero-fireground.png')",
         backgroundPosition: 'center',
@@ -38,27 +38,27 @@ export function LandingPage() {
       }}
     >
       <div className="mx-auto max-w-7xl">
-        <RevealOnMount className="max-w-3xl space-y-6 sm:space-y-7">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border-bright bg-background/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-red-100 backdrop-blur">
+        <RevealOnMount className="max-w-3xl space-y-7 sm:space-y-8">
+          <div className="glass-pill inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-red-100">
             <Sparkles size={13} /> Firefighter training, rebuilt
           </div>
-          <h1 className="max-w-5xl text-4xl font-bold tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
+          <h1 className="heading-tight max-w-5xl text-5xl font-bold text-white sm:text-7xl lg:text-8xl">
             <span className="text-gradient-fire">FireLearn</span>
           </h1>
-          <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-xl sm:leading-8">
+          <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-xl sm:leading-9">
             A firefighter learning console with embedded video tutorials, scenario-heavy quizzes, flashcards, and progress tracking built around supervised training and local SOPs.
           </p>
           <div className="grid gap-3 sm:flex sm:flex-wrap">
-            <Link href="/dashboard" className={buttonVariants({ size: 'lg' })}>
+            <Link href="/dashboard" className={`${buttonVariants({ size: 'lg' })} press-feedback`}>
               Start learning <ArrowRight size={18} aria-hidden />
             </Link>
-            <Link href="/courses" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+            <Link href="/courses" className={`${buttonVariants({ variant: 'ghost', size: 'lg' })} press-feedback`}>
               Browse academy
             </Link>
           </div>
           <Stagger className="mobile-snap-row max-w-3xl sm:grid sm:grid-cols-5 sm:gap-3" stagger={0.07}>
             {stats.map(([value, label]) => (
-              <Reveal key={label} className="stat-tile-hover min-w-32 snap-start rounded-2xl border border-border-bright bg-background/70 p-4 backdrop-blur sm:min-w-0">
+              <Reveal key={label} className="stat-tile-hover press-feedback glass-card min-w-32 snap-start rounded-2xl p-4 sm:min-w-0">
                 <p className="text-3xl font-bold tracking-tight text-gradient-flame">{value}</p>
                 <p className="mt-1 text-xs text-muted">{label}</p>
               </Reveal>
@@ -67,17 +67,17 @@ export function LandingPage() {
         </RevealOnMount>
 
         <RevealOnMount delay={0.18}>
-          <Card interactive className="mt-8 max-w-3xl overflow-hidden border-border-bright bg-background/78 p-0 sm:mt-10">
-            <div className="border-b border-border bg-elevated/50 px-5 py-4">
+          <Card interactive className="glass-card mt-10 max-w-3xl overflow-hidden p-0 sm:mt-12">
+            <div className="border-b border-white/[0.06] px-5 py-4">
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-white">Today&apos;s training queue</p>
-                <span className="rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">Live path</span>
+                <span className="glass-pill rounded-full px-3 py-1 text-xs font-semibold text-success">Live path</span>
               </div>
             </div>
             <div className="space-y-5 p-5">
-              <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/12 to-transparent p-5">
+              <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/12 to-transparent p-5">
                 <p className="text-sm font-medium text-red-200">Continue course</p>
-                <h2 className="mt-2 text-xl font-bold text-white">{featured?.title ?? 'Fire behaviour foundations'}</h2>
+                <h2 className="mt-2 heading-tight text-xl font-bold text-white">{featured?.title ?? 'Fire behaviour foundations'}</h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">Smoke reading, SCBA checks, incident command, and mayday decision points.</p>
                 <Progress value={featured?.progressPercent ?? 34} className="mt-5" />
                 <div className="mt-3 flex items-center justify-between text-xs text-muted">
@@ -91,14 +91,14 @@ export function LandingPage() {
                   { label: 'Weak topic', value: 'SCBA', icon: ShieldAlert, tone: 'text-amber-300' },
                   { label: 'Goal', value: '25m', icon: Gauge, tone: 'text-green-300' },
                 ].map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-border bg-elevated/40 p-3 sm:p-4">
+                  <div key={item.label} className="glass-card rounded-2xl p-3 sm:p-4">
                     <item.icon className={item.tone} size={18} />
                     <p className="mt-2 text-lg font-bold text-white">{item.value}</p>
                     <p className="text-xs text-muted">{item.label}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-border bg-elevated/40 p-3 sm:p-4">
+              <div className="glass-card rounded-2xl p-3 sm:p-4">
                 <div className="flex items-start gap-3">
                   <Radio className="mt-0.5 shrink-0 text-amber-300" size={16} />
                   <div>
@@ -113,28 +113,28 @@ export function LandingPage() {
       </div>
     </section>
 
-    <Stagger as="section" className="mobile-snap-row mx-auto max-w-7xl px-4 py-12 sm:grid sm:grid-cols-2 sm:gap-4 sm:px-6 md:grid-cols-4 md:py-16" stagger={0.08}>
+    <Stagger as="section" className="mobile-snap-row mx-auto max-w-7xl px-4 py-16 sm:grid sm:grid-cols-2 sm:gap-5 sm:px-6 md:grid-cols-4 md:py-20" stagger={0.08}>
       {pillars.map((pillar) => (
         <Reveal key={pillar.title}>
-          <Card interactive className="group min-h-full min-w-[82vw] snap-start transition duration-200 sm:min-w-0 hover:-translate-y-1 hover:border-primary/30">
-            <div className="mb-4 inline-flex size-12 items-center justify-center rounded-lg bg-primary/10 transition-transform duration-300 group-hover:scale-110">
+          <Card interactive className="press-feedback group min-h-full min-w-[82vw] snap-start sm:min-w-0 hover:-translate-y-1 hover:border-primary/30">
+            <div className="mb-4 inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-110">
               <pillar.icon className="text-primary" size={22} aria-hidden />
             </div>
-            <h2 className="font-bold text-white">{pillar.title}</h2>
+            <h2 className="heading-tight font-bold text-white">{pillar.title}</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{pillar.body}</p>
           </Card>
         </Reveal>
       ))}
     </Stagger>
 
-    <RevealOnMount as="section" delay={0.05} className="mx-auto max-w-7xl px-4 pb-20 sm:px-6">
-      <Card interactive className="grid gap-6 overflow-hidden border-border-bright bg-gradient-to-r from-card via-card to-elevated p-5 sm:p-8 md:grid-cols-[1fr_auto] md:items-center">
+    <RevealOnMount as="section" delay={0.05} className="mx-auto max-w-7xl px-4 pb-24 sm:px-6">
+      <Card interactive className="glass-card grid gap-6 overflow-hidden p-6 sm:p-10 md:grid-cols-[1fr_auto] md:items-center">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Ready for the next rep?</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-gradient-fire">Build mastery before the alarm drops.</h2>
-          <p className="mt-2 max-w-2xl text-muted-foreground">Jump into the dashboard, run mixed practice, or clear today&apos;s review queue.</p>
+          <h2 className="heading-tight mt-3 text-4xl font-bold text-gradient-fire">Build mastery before the alarm drops.</h2>
+          <p className="mt-3 max-w-2xl text-muted-foreground">Jump into the dashboard, run mixed practice, or clear today&apos;s review queue.</p>
         </div>
-        <Link href="/dashboard" className={buttonVariants({ size: 'lg' })}>
+        <Link href="/dashboard" className={`${buttonVariants({ size: 'lg' })} press-feedback`}>
           Open dashboard <CheckCircle2 size={18} aria-hidden />
         </Link>
       </Card>
