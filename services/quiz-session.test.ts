@@ -106,8 +106,9 @@ describe('quiz session persistence', () => {
 
     clearQuizSession(storage, snapshot.quizId)
 
-    expect(loadQuizSession(storage, snapshot.quizId, questions)).toBeNull()
-    expect(loadQuizSession(storage, 'Course quiz', questions)).not.toBeNull()
+    const withinSessionLifetime = new Date('2026-07-22T02:00:00.000Z')
+    expect(loadQuizSession(storage, snapshot.quizId, questions, withinSessionLifetime)).toBeNull()
+    expect(loadQuizSession(storage, 'Course quiz', questions, withinSessionLifetime)).not.toBeNull()
   })
 
   it('does not crash the quiz when browser storage is unavailable', () => {

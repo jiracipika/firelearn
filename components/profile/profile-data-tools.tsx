@@ -14,6 +14,7 @@ const localKeys = [
   'firelearn.flashcards.v1',
   'firelearn.syncQueue.v1',
   'firelearn.studyActivity.v1',
+  'firelearn.studyTimer.v1',
 ]
 
 const maxImportBytes = 1_000_000
@@ -66,7 +67,7 @@ export function ProfileDataTools({ onReset }: { onReset?: () => void }) {
   }
 
   function resetLocalData() {
-    if (!window.confirm('Clear local FireLearn progress, quiz history, flashcards, sync queue, and study activity on this device? Supabase data is not deleted.')) return
+    if (!window.confirm('Clear local FireLearn progress, quiz history, flashcards, sync queue, study activity, and timer on this device? Supabase data is not deleted.')) return
     const storage = getBrowserStorage()
     if (!storage) return
     localKeys.forEach((key) => storage.removeItem(key))

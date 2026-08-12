@@ -59,6 +59,29 @@ describe('data integrity validation', () => {
     expect(result.errors.some((e) => e.includes('kind is invalid'))).toBe(true)
   })
 
+  it('rejects malformed flashcards, sync items, timer state, and non-finite metrics', () => {
+    const result = validateExportedData({
+      'firelearn.learnerState.v1': {
+        completedLessonIds: ['lesson-1'], dailyGoalMinutes: 25, xp: Number.NaN, streakDays: 1,
+      },
+      'firelearn.flashcards.v1': {
+        'card-1': { id: 'different-card', front: 'Question', back: 'Answer', topicIds: [], difficulty: 'Unknown', easeFactor: 0, intervalDays: -1, reviewCount: 0, nextReview: 'not-a-date' },
+      },
+      'firelearn.syncQueue.v1': [
+        { id: 'item-1', entity: 'unknown', operation: 'insert', status: 'pending', payload: {}, createdAt: 'not-a-date' },
+      ],
+      'firelearn.studyTimer.v1': { startedAt: null, accumulatedSeconds: -1 },
+    })
+
+    expect(result.valid).toBe(false)
+    expect(result.errors).toEqual(expect.arrayContaining([
+      expect.stringContaining('xp must be a non-negative finite number'),
+      expect.stringContaining('id must match its storage key'),
+      expect.stringContaining('syncQueue[0].entity is invalid'),
+      expect.stringContaining('studyTimer.accumulatedSeconds'),
+    ]))
+  })
+
   it('validates real storage integrity', () => {
     const storage = createMemoryStorage()
     const result = validateStorageIntegrity(storage)
@@ -106,5 +129,30 @@ describe('data integrity validation', () => {
       'firelearn.learnerState.v1': { completedLessonIds: 'not-an-array' },
     })).toThrow(/could not be restored/i)
     expect(JSON.parse(storage.getItem('firelearn.learnerState.v1') ?? '')).toMatchObject({ xp: 50 })
+  })
+
+  it('restores prior values when a storage write fails partway through', () => {
+    const backing = createMemoryStorage()
+    backing.setItem('firelearn.learnerState.v1', JSON.stringify({
+      completedLessonIds: ['existing'], dailyGoalMinutes: 25, xp: 50, streakDays: 2,
+    }))
+    backing.setItem('firelearn.quizHistory.v1', JSON.stringify([]))
+    let writes = 0
+    const storage = {
+      getItem: backing.getItem,
+      removeItem: backing.removeItem,
+      setItem(key: string, value: string) {
+        writes += 1
+        if (writes === 2) throw new Error('quota exceeded')
+        backing.setItem(key, value)
+      },
+    }
+
+    expect(() => restoreExportedData(storage, {
+      'firelearn.learnerState.v1': { completedLessonIds: ['replacement'], dailyGoalMinutes: 30, xp: 100, streakDays: 3 },
+      'firelearn.quizHistory.v1': [{ quizId: 'q1', scorePercent: 80, weakTopicIds: [], completedAt: '2026-06-30T12:00:00.000Z' }],
+    })).toThrow(/quota exceeded/)
+    expect(JSON.parse(backing.getItem('firelearn.learnerState.v1') ?? '')).toMatchObject({ completedLessonIds: ['existing'], xp: 50 })
+    expect(JSON.parse(backing.getItem('firelearn.quizHistory.v1') ?? '')).toEqual([])
   })
 })
