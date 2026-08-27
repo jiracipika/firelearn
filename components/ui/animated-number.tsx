@@ -42,11 +42,20 @@ export function AnimatedNumber({
 
   React.useEffect(() => {
     if (reduce) {
-      setDisplay(value)
-      previousValue.current = value
-      return
+      // Defer the state write off the effect's synchronous path so reduced-
+      // motion users get a direct snap to the final value without cascading
+      // renders during commit (react-hooks/set-state-in-effect).
+      let cancelled = false
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setDisplay(value)
+          previousValue.current = value
+        }
+      })
+      return () => {
+        cancelled = true
+      }
     }
-
     const from = previousValue.current
     if (from === value) return
 

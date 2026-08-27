@@ -13,24 +13,36 @@ export default function AppTransitionShell({ children }: { children: React.React
     enabled: SWIPE_ROUTES.some((r) => pathname.startsWith(r)),
   });
 
+  // Reduced-motion read is deferred to a microtask so the effect never calls
+  // setState synchronously (react-hooks/set-state-in-effect).
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [prevIndex, setPrevIndex] = useState(-1);
-
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) setReducedMotion(mq.matches);
+    });
     const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
     mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
+    return () => {
+      cancelled = true;
+      mq.removeEventListener('change', handler);
+    };
   }, []);
 
   const currentIndex = SWIPE_ROUTES.findIndex(
     (r) => pathname === r || (r !== SWIPE_ROUTES[0] && pathname.startsWith(`${r}/`)),
   );
+  const [prevIndex, setPrevIndex] = useState(currentIndex);
+
+  useEffect(() => {
+    if (currentIndex === prevIndex) return;
+    const timer = window.setTimeout(() => setPrevIndex(currentIndex), 0);
+    return () => window.clearTimeout(timer);
+  }, [currentIndex, prevIndex]);
+
   const direction = currentIndex >= 0 && prevIndex >= 0
     ? currentIndex > prevIndex ? 1 : currentIndex < prevIndex ? -1 : 0 : 0;
-
-  useEffect(() => { setPrevIndex(currentIndex); }, [currentIndex]);
 
   const transitionStyle: React.CSSProperties = {
     transform: canSwipe && dragOffset !== 0 ? `translateX(${dragOffset}px)` : undefined,

@@ -46,6 +46,9 @@ const themeBootstrap = `(() => {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
     <head><script dangerouslySetInnerHTML={{ __html: themeBootstrap }} /></head>
-    <body>{children}<RegisterServiceWorker /></body>
+    <body>
+      <AppTransitionShell>{children}</AppTransitionShell>
+      <RegisterServiceWorker />
+    </body>
   </html>
 }
