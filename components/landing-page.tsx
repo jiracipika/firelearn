@@ -1,17 +1,15 @@
 import Link from 'next/link'
-import { ArrowRight, BookOpenCheck, Brain, CheckCircle2, Flame, Gauge, PlayCircle, Radio, ShieldAlert, Sparkles, Trophy } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, BookOpenCheck, Brain, CheckCircle2, Flame, Radio, Trophy } from 'lucide-react'
 import { academyCourses } from '@/data/academy'
 import { AppShell } from '@/components/layout/app-shell'
-import { buttonVariants } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Reveal, RevealOnMount, Stagger } from '@/components/ui/motion'
 
 const pillars = [
-  { title: 'Academy paths', body: 'Progress from fundamentals to scenario-heavy fireground judgment with a scalable course model mapped to NFPA 1001 and 472.', icon: BookOpenCheck },
-  { title: 'Exam-grade quizzes', body: 'Practice mode, exam mode, explanations, weak-topic detection, and realistic incident prompts.', icon: Brain },
-  { title: 'Spaced repetition', body: 'SM-2 style scheduling keeps SCBA, mayday, codes, and tactics fresh between calls.', icon: Flame },
-  { title: 'Progress signals', body: 'XP, completion, streaks, and review queues create accountability without LMS clutter.', icon: Trophy },
+  { index: '01', title: 'Academy paths', body: 'Progress from fundamentals to scenario-heavy fireground judgment with a scalable course model mapped to NFPA 1001 and 472.', icon: BookOpenCheck },
+  { index: '02', title: 'Exam-grade quizzes', body: 'Practice mode, exam mode, explanations, weak-topic detection, and realistic incident prompts.', icon: Brain },
+  { index: '03', title: 'Spaced repetition', body: 'SM-2 style scheduling keeps SCBA, mayday, codes, and tactics fresh between calls.', icon: Flame },
+  { index: '04', title: 'Progress signals', body: 'XP, completion, streaks, and review queues create accountability without LMS clutter.', icon: Trophy },
 ]
 
 const lessonCount = academyCourses.reduce((total, course) => total + course.modules.reduce((courseTotal, module) => courseTotal + module.lessons.length, 0), 0)
@@ -28,116 +26,153 @@ const stats = [
 
 export function LandingPage() {
   const featured = academyCourses[0]
+  const progress = featured?.progressPercent ?? 34
+  const minutes = featured?.estimatedMinutes ?? 0
   return <AppShell fullBleed>
-    <section
-      className="relative isolate overflow-hidden px-4 pb-16 pt-12 sm:px-6 sm:pt-20 lg:pb-24 lg:pt-28"
-      style={{
-        backgroundImage: "linear-gradient(90deg, rgb(7 9 13 / 0.94), rgb(7 9 13 / 0.72) 48%, rgb(7 9 13 / 0.48)), linear-gradient(180deg, transparent 70%, #07090d), url('/hero-fireground.png')",
-        backgroundPosition: 'center',
-        backgroundSize: 'cover',
-      }}
-    >
-      <div className="mx-auto max-w-7xl">
-        <RevealOnMount className="max-w-3xl space-y-7 sm:space-y-8">
-          <div className="glass-pill inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-red-100">
-            <Sparkles size={13} /> Firefighter training, rebuilt
+    {/* ============ HERO: editorial copy left, instrument panel right ============ */}
+    <section className="relative isolate overflow-hidden px-5 pb-20 pt-14 sm:px-8 sm:pt-20 lg:pb-28 lg:pt-24">
+      <div className="mx-auto grid max-w-[1400px] items-center gap-14 lg:grid-cols-[minmax(0,1.12fr)_minmax(400px,0.88fr)] lg:gap-20">
+        <RevealOnMount className="min-w-0">
+          <div className="fg-label flex items-center">
+            <i className="fg-live-dot" aria-hidden />
+            Firefighter training, recomposed
           </div>
-          <h1 className="heading-tight max-w-5xl text-5xl font-bold text-white sm:text-7xl lg:text-8xl">
-            <span className="text-gradient-fire">FireLearn</span>
+          <h1 className="fg-hero-title mt-6">
+            Train for the moments&nbsp;<em>that matter.</em>
           </h1>
-          <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-xl sm:leading-9">
-            A firefighter learning console with embedded video tutorials, scenario-heavy quizzes, flashcards, and progress tracking built around supervised training and local SOPs.
+          <p className="mt-7 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
+            A firefighter learning console with embedded video tutorials, scenario-heavy quizzes, flashcards, and progress tracking — built around supervised training and local SOPs.
           </p>
-          <div className="grid gap-3 sm:flex sm:flex-wrap">
-            <Link href="/dashboard" className={`${buttonVariants({ size: 'lg' })} press-feedback`}>
-              Start learning <ArrowRight size={18} aria-hidden />
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <Link href="/dashboard" className="fg-cta-primary press-feedback">
+              Begin your training <span aria-hidden>&rarr;</span>
             </Link>
-            <Link href="/courses" className={`${buttonVariants({ variant: 'ghost', size: 'lg' })} press-feedback`}>
-              Browse academy
+            <Link href="/courses" className="fg-cta-ghost press-feedback">
+              Browse the academy
             </Link>
           </div>
-          <Stagger className="mobile-snap-row max-w-3xl sm:grid sm:grid-cols-5 sm:gap-3" stagger={0.07}>
+
+          {/* Hairline stat strip — instrument readouts, not floating tiles */}
+          <Stagger className="fg-strip mt-11 flex-col sm:flex-row" stagger={0.06}>
             {stats.map(([value, label]) => (
-              <Reveal key={label} className="stat-tile-hover press-feedback glass-card min-w-32 snap-start rounded-2xl p-4 sm:min-w-0">
-                <p className="text-3xl font-bold tracking-tight text-gradient-flame">{value}</p>
-                <p className="mt-1 text-xs text-muted">{label}</p>
+              <Reveal key={label} className="stat-tile-hover">
+                <p className="fg-readout-mono text-2xl font-bold tracking-tight text-white">{value}</p>
+                <p className="fg-label mt-2" style={{ fontSize: '8px' }}>{label}</p>
               </Reveal>
             ))}
           </Stagger>
         </RevealOnMount>
 
-        <RevealOnMount delay={0.18}>
-          <Card interactive className="glass-card mt-10 max-w-3xl overflow-hidden p-0 sm:mt-12">
-            <div className="border-b border-white/[0.06] px-5 py-4">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold text-white">Today&apos;s training queue</p>
-                <span className="glass-pill rounded-full px-3 py-1 text-xs font-semibold text-success">Live path</span>
+        {/* ============ THE INSTRUMENT — today&apos;s training queue as a fireground radio ============ */}
+        <RevealOnMount delay={0.14}>
+          <div className="fg-instrument mx-auto w-full max-w-lg p-6 sm:p-7">
+            <div className="relative z-[1] flex items-center justify-between">
+              <span className="fg-label">Today&apos;s training queue</span>
+              <span className="fg-label text-success">
+                <i className="fg-live-dot" aria-hidden style={{ background: 'var(--color-success)', boxShadow: '0 0 12px var(--color-success)' }} />
+                On shift
+              </span>
+            </div>
+
+            {/* Readout: continue-course headline in serif, ember */}
+            <div className="relative z-[1] mt-9">
+              <p className="fg-label" style={{ color: 'var(--fg-ember)' }}>Continue course</p>
+              <h2 className="fg-readout mt-3 text-[clamp(34px,4vw,46px)]">{featured?.title ?? 'Fire behaviour foundations'}</h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">Smoke reading, SCBA checks, incident command, and mayday decision points.</p>
+            </div>
+
+            {/* Progress track with mono readouts */}
+            <div className="relative z-[1] mt-7">
+              <Progress value={progress} />
+              <div className="mt-3 flex items-center justify-between">
+                <span className="fg-label">{progress}% complete</span>
+                <span className="fg-label">{minutes} min</span>
               </div>
             </div>
-            <div className="space-y-5 p-5">
-              <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/12 to-transparent p-5">
-                <p className="text-sm font-medium text-red-200">Continue course</p>
-                <h2 className="mt-2 heading-tight text-xl font-bold text-white">{featured?.title ?? 'Fire behaviour foundations'}</h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">Smoke reading, SCBA checks, incident command, and mayday decision points.</p>
-                <Progress value={featured?.progressPercent ?? 34} className="mt-5" />
-                <div className="mt-3 flex items-center justify-between text-xs text-muted">
-                  <span>{featured?.progressPercent ?? 34}% complete</span>
-                  <span>{featured?.estimatedMinutes ?? 0} min</span>
+
+            {/* Meter cells — hairline joined */}
+            <div className="fg-strip relative z-[1] mt-7 !rounded-xl">
+              {[
+                { label: 'Tutorials', value: String(featured?.modules[0]?.lessons[0]?.videos.length ?? 3) },
+                { label: 'Weak topic', value: 'SCBA' },
+                { label: 'Daily goal', value: '25m' },
+              ].map((item) => (
+                <div key={item.label}>
+                  <p className="fg-readout-mono text-base font-bold text-white">{item.value}</p>
+                  <p className="fg-label mt-1.5" style={{ fontSize: '8px' }}>{item.label}</p>
                 </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                {[
-                  { label: 'Tutorials', value: String(featured?.modules[0]?.lessons[0]?.videos.length ?? 3), icon: PlayCircle, tone: 'text-info' },
-                  { label: 'Weak topic', value: 'SCBA', icon: ShieldAlert, tone: 'text-amber-300' },
-                  { label: 'Goal', value: '25m', icon: Gauge, tone: 'text-green-300' },
-                ].map((item) => (
-                  <div key={item.label} className="glass-card rounded-2xl p-3 sm:p-4">
-                    <item.icon className={item.tone} size={18} />
-                    <p className="mt-2 text-lg font-bold text-white">{item.value}</p>
-                    <p className="text-xs text-muted">{item.label}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="glass-card rounded-2xl p-3 sm:p-4">
-                <div className="flex items-start gap-3">
-                  <Radio className="mt-0.5 shrink-0 text-amber-300" size={16} />
-                  <div>
-                    <p className="text-sm font-medium text-white">Educational support only</p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">Reinforces official training, SOPs, and instructor-led certification. Not a replacement.</p>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
-          </Card>
+
+            <div className="relative z-[1] mt-7 flex items-start justify-between gap-3 border-t pt-5" style={{ borderColor: 'var(--fg-hairline)' }}>
+              <div className="flex items-start gap-3">
+                <Radio className="mt-0.5 shrink-0 text-amber-300" size={15} aria-hidden />
+                <div>
+                  <p className="text-sm font-medium text-white">Educational support only</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">Reinforces official training, SOPs, and instructor-led certification. Not a replacement.</p>
+                </div>
+              </div>
+              <Link href="/dashboard" aria-label="Resume training queue" className="fg-chip press-feedback shrink-0" style={{ width: 44, height: 44, borderRadius: 999 }}>
+                <ArrowUpRight size={18} aria-hidden />
+              </Link>
+            </div>
+          </div>
         </RevealOnMount>
       </div>
+
     </section>
 
-    <Stagger as="section" className="mobile-snap-row mx-auto max-w-7xl px-4 py-16 sm:grid sm:grid-cols-2 sm:gap-5 sm:px-6 md:grid-cols-4 md:py-20" stagger={0.08}>
-      {pillars.map((pillar) => (
-        <Reveal key={pillar.title}>
-          <Card interactive className="press-feedback group min-h-full min-w-[82vw] snap-start sm:min-w-0 hover:-translate-y-1 hover:border-primary/30">
-            <div className="mb-4 inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-110">
-              <pillar.icon className="text-primary" size={22} aria-hidden />
-            </div>
-            <h2 className="heading-tight font-bold text-white">{pillar.title}</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{pillar.body}</p>
-          </Card>
-        </Reveal>
-      ))}
-    </Stagger>
-
-    <RevealOnMount as="section" delay={0.05} className="mx-auto max-w-7xl px-4 pb-24 sm:px-6">
-      <Card interactive className="glass-card grid gap-6 overflow-hidden p-6 sm:p-10 md:grid-cols-[1fr_auto] md:items-center">
+    {/* ============ PILLARS — hairline contact-sheet grid ============ */}
+    <section aria-labelledby="pillars-title" className="mx-auto max-w-[1400px] px-5 sm:px-8">
+      <div className="mb-12 grid gap-8 md:grid-cols-2 md:items-end">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Ready for the next rep?</p>
-          <h2 className="heading-tight mt-3 text-4xl font-bold text-gradient-fire">Build mastery before the alarm drops.</h2>
-          <p className="mt-3 max-w-2xl text-muted-foreground">Jump into the dashboard, run mixed practice, or clear today&apos;s review queue.</p>
+          <p className="fg-label" style={{ color: 'var(--fg-ember)' }}>The system</p>
+          <h2 id="pillars-title" className="mt-4 max-w-xl text-[clamp(34px,4.5vw,62px)] font-medium leading-[0.95] tracking-[-0.05em] text-white">
+            One weakness.<br />One focused drill.
+          </h2>
         </div>
-        <Link href="/dashboard" className={`${buttonVariants({ size: 'lg' })} press-feedback`}>
-          Open dashboard <CheckCircle2 size={18} aria-hidden />
-        </Link>
-      </Card>
+        <p className="max-w-md text-[15px] leading-7 text-muted-foreground md:justify-self-end">
+          No bloated curriculum. Four signals carry you from fundamentals to fireground judgment — pick the one you need and start.
+        </p>
+      </div>
+      <Stagger className="fg-grid-section" stagger={0.08}>
+        {pillars.map((pillar) => (
+          <Reveal key={pillar.index}>
+            <Link href="/dashboard" className="fg-grid-cell press-feedback group">
+              <span className="fg-label">{pillar.index}</span>
+              <span className="fg-chip mt-9 mb-6 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-110">
+                <pillar.icon size={24} aria-hidden />
+              </span>
+              <h3 className="text-[22px] font-medium tracking-[-0.03em] text-white">{pillar.title}</h3>
+              <p className="mt-2 max-w-[32ch] text-xs leading-[1.6] text-muted-foreground">{pillar.body}</p>
+              <span className="mt-auto flex items-center justify-between border-t pt-4 text-[10px] text-muted-foreground" style={{ borderColor: 'var(--fg-hairline)' }}>
+                Open in dashboard
+                <ArrowRight className="text-primary" size={15} aria-hidden />
+              </span>
+            </Link>
+          </Reveal>
+        ))}
+      </Stagger>
+    </section>
+
+    {/* ============ CLOSING — giant serif statement ============ */}
+    <RevealOnMount as="section" delay={0.05} className="mx-auto max-w-[1400px] px-5 py-24 sm:px-8 lg:py-32">
+      <div className="glass-card overflow-hidden rounded-[28px] p-8 sm:p-14">
+        <p className="fg-label" style={{ color: 'var(--fg-ember)' }}>Ready for the next rep?</p>
+        <div className="mt-6 grid gap-10 lg:grid-cols-[1.5fr_auto] lg:items-center">
+          <h2 className="fg-closing-title">
+            Build mastery before <em>the alarm drops.</em>
+          </h2>
+          <div className="flex flex-col gap-4 lg:items-end">
+            <Link href="/dashboard" className="fg-cta-primary press-feedback">
+              Open dashboard <CheckCircle2 size={17} aria-hidden />
+            </Link>
+            <p className="max-w-xs text-sm leading-6 text-muted-foreground lg:text-right">
+              Jump into the dashboard, run mixed practice, or clear today&apos;s review queue.
+            </p>
+          </div>
+        </div>
+      </div>
     </RevealOnMount>
   </AppShell>
 }
