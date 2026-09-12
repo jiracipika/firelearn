@@ -548,7 +548,7 @@ body {
   --fg-ink-4: rgb(247 244 239 / 0.26);
   --fg-hairline: rgb(255 255 255 / 0.1);
   --fg-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  --fg-serif: Georgia, 'Times New Roman', serif;
+  --fg-serif: var(--font-fraunces), Georgia, 'Times New Roman', serif;
 }
 
 :root[data-theme='light'] {
@@ -589,18 +589,20 @@ body {
 
 /* --- Editorial hero headline --- */
 .fg-hero-title {
-  font-size: clamp(56px, 7.4vw, 116px);
+  font-size: clamp(58px, 7.6vw, 122px);
   font-weight: 500;
   line-height: 0.88;
   letter-spacing: -0.065em;
   color: var(--fg-ink);
+  text-wrap: balance;
 }
 
 .fg-hero-title em {
   font-family: var(--fg-serif);
   font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.04em;
+  font-weight: 430;
+  font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1;
+  letter-spacing: -0.03em;
   color: var(--fg-ember);
 }
 
@@ -674,9 +676,11 @@ body {
 /* --- Big numeric readout inside the instrument --- */
 .fg-readout {
   font-family: var(--fg-serif);
-  font-weight: 400;
+  font-weight: 480;
+  font-variation-settings: 'opsz' 144, 'SOFT' 40, 'WONK' 0;
   color: var(--fg-ember);
-  line-height: 0.8;
+  line-height: 0.82;
+  text-wrap: balance;
 }
 
 :root[data-theme='light'] .fg-readout { color: #d83b23; }
@@ -804,15 +808,18 @@ body {
 /* --- Giant serif closing statement --- */
 .fg-closing-title {
   font-family: var(--fg-serif);
-  font-size: clamp(52px, 8vw, 118px);
-  font-weight: 400;
+  font-size: clamp(54px, 8.4vw, 128px);
+  font-weight: 430;
+  font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1;
   line-height: 0.85;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.05em;
   color: var(--fg-ink);
+  text-wrap: balance;
 }
 
 .fg-closing-title em {
   font-style: italic;
+  font-weight: 400;
   color: var(--fg-ember);
 }
 
@@ -837,4 +844,148 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .fg-instrument::after { animation: none; opacity: 0.12; }
   .fg-live-dot { animation: none; }
+}
+
+/* ============================================================
+   FIREGROUND v2 — instrument-grade upgrades
+   ============================================================ */
+
+/* --- Stat readout row: borderless, mono, tabular-nums, hairline-topped band --- */
+.fg-stats {
+  display: flex;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--fg-hairline);
+  padding-top: 22px;
+  gap: 0 44px;
+}
+
+.fg-stats > * {
+  min-width: 0;
+}
+
+.fg-stat-value {
+  font-family: var(--fg-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--fg-ink);
+}
+
+.fg-stat-value .fg-stat-unit {
+  font-size: 0.55em;
+  font-weight: 600;
+  color: var(--fg-ember);
+  margin-left: 2px;
+}
+
+/* --- EQ meter bars: animated radio-signal motif inside the instrument --- */
+.fg-eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 26px;
+}
+
+.fg-eq i {
+  width: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to top, var(--fg-ember), var(--fg-amber));
+  height: 30%;
+  animation: fg-eq-bounce 1.6s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+.fg-eq i:nth-child(1) { animation-delay: 0s; }
+.fg-eq i:nth-child(2) { animation-delay: 0.18s; }
+.fg-eq i:nth-child(3) { animation-delay: 0.36s; }
+.fg-eq i:nth-child(4) { animation-delay: 0.54s; }
+.fg-eq i:nth-child(5) { animation-delay: 0.72s; }
+
+@keyframes fg-eq-bounce {
+  0%, 100% { height: 22%; opacity: 0.7; }
+  35% { height: 92%; opacity: 1; }
+  60% { height: 45%; opacity: 0.85; }
+}
+
+/* --- Scanline texture on the instrument face (subtle CRT nod) --- */
+.fg-instrument::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgb(255 255 255 / 0.022) 0px,
+    rgb(255 255 255 / 0.022) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.5;
+}
+
+/* --- Drill log rows: numbered full-width rows replace uniform card grid --- */
+.fg-rows {
+  border-top: 1px solid var(--fg-hairline);
+}
+
+.fg-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 26px 22px;
+  border-bottom: 1px solid var(--fg-hairline);
+  color: var(--fg-ink);
+  text-decoration: none;
+  overflow: hidden;
+  transition: background 220ms ease;
+}
+
+/* ember sweep on hover */
+.fg-row::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgb(255 74 46 / 0.09), transparent 55%);
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .fg-row:hover { background: rgb(255 255 255 / 0.025); }
+  .fg-row:hover::before { opacity: 1; }
+  .fg-row:hover .fg-row-arrow { transform: translate(3px, -3px); color: var(--fg-ember); }
+}
+
+.fg-row-num {
+  font-family: var(--fg-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--fg-ink-4);
+  transition: color 220ms ease;
+}
+
+.fg-row:hover .fg-row-num { color: var(--fg-ember); }
+
+.fg-row-arrow {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), color 220ms ease;
+  color: var(--fg-ink-4);
+}
+
+@media (max-width: 639px) {
+  .fg-row {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 14px;
+    padding: 20px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fg-eq i { animation: none; height: 55%; }
 }

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, ArrowUpRight, BookOpenCheck, Brain, CheckCircle2, Flame, Radio, Trophy } from 'lucide-react'
+import { ArrowUpRight, BookOpenCheck, Brain, CheckCircle2, Flame, Radio, Trophy } from 'lucide-react'
 import { academyCourses } from '@/data/academy'
 import { AppShell } from '@/components/layout/app-shell'
 import { Progress } from '@/components/ui/progress'
@@ -17,12 +17,12 @@ const questionCount = academyCourses.reduce((total, course) => total + course.mo
 const videoCount = academyCourses.reduce((total, course) => total + course.modules.reduce((moduleTotal, module) => moduleTotal + module.lessons.reduce((lessonTotal, lesson) => lessonTotal + lesson.videos.length, 0), 0), 0)
 
 const stats = [
-  [String(academyCourses.length), 'Courses'],
-  [String(lessonCount), 'Lessons'],
-  [String(videoCount), 'Videos'],
-  [String(questionCount), 'Quiz questions'],
-  ['SM-2', 'Review engine'],
-] as const
+  { value: String(academyCourses.length), label: 'Courses' },
+  { value: String(lessonCount), label: 'Lessons' },
+  { value: String(videoCount), label: 'Video tutorials' },
+  { value: String(questionCount), label: 'Quiz questions' },
+  { value: 'SM-2', label: 'Review engine' },
+]
 
 export function LandingPage() {
   const featured = academyCourses[0]
@@ -30,7 +30,7 @@ export function LandingPage() {
   const minutes = featured?.estimatedMinutes ?? 0
   return <AppShell fullBleed>
     {/* ============ HERO: editorial copy left, instrument panel right ============ */}
-    <section className="relative isolate overflow-hidden px-5 pb-20 pt-14 sm:px-8 sm:pt-20 lg:pb-28 lg:pt-24">
+    <section className="relative isolate overflow-hidden px-5 pb-16 pt-14 sm:px-8 sm:pt-20 lg:pb-24 lg:pt-24">
       <div className="mx-auto grid max-w-[1400px] items-center gap-14 lg:grid-cols-[minmax(0,1.12fr)_minmax(400px,0.88fr)] lg:gap-20">
         <RevealOnMount className="min-w-0">
           <div className="fg-label flex items-center">
@@ -38,9 +38,11 @@ export function LandingPage() {
             Firefighter training, recomposed
           </div>
           <h1 className="fg-hero-title mt-6">
-            Train for the moments&nbsp;<em>that matter.</em>
+            Train for the
+            <br />
+            moments <em>that&nbsp;matter.</em>
           </h1>
-          <p className="mt-7 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
+          <p className="mt-8 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
             A firefighter learning console with embedded video tutorials, scenario-heavy quizzes, flashcards, and progress tracking — built around supervised training and local SOPs.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -51,16 +53,6 @@ export function LandingPage() {
               Browse the academy
             </Link>
           </div>
-
-          {/* Hairline stat strip — instrument readouts, not floating tiles */}
-          <Stagger className="fg-strip mt-11 flex-col sm:flex-row" stagger={0.06}>
-            {stats.map(([value, label]) => (
-              <Reveal key={label} className="stat-tile-hover">
-                <p className="fg-readout-mono text-2xl font-bold tracking-tight text-white">{value}</p>
-                <p className="fg-label mt-2" style={{ fontSize: '8px' }}>{label}</p>
-              </Reveal>
-            ))}
-          </Stagger>
         </RevealOnMount>
 
         {/* ============ THE INSTRUMENT — today&apos;s training queue as a fireground radio ============ */}
@@ -68,18 +60,23 @@ export function LandingPage() {
           <div className="fg-instrument mx-auto w-full max-w-lg p-6 sm:p-7">
             <div className="relative z-[1] flex items-center justify-between">
               <span className="fg-label">Today&apos;s training queue</span>
-              <span className="fg-label text-success">
+              <span className="fg-label flex items-center gap-2 text-success">
                 <i className="fg-live-dot" aria-hidden style={{ background: 'var(--color-success)', boxShadow: '0 0 12px var(--color-success)' }} />
                 On shift
               </span>
             </div>
 
-            {/* Readout: continue-course headline in serif, ember */}
-            <div className="relative z-[1] mt-9">
-              <p className="fg-label" style={{ color: 'var(--fg-ember)' }}>Continue course</p>
-              <h2 className="fg-readout mt-3 text-[clamp(34px,4vw,46px)]">{featured?.title ?? 'Fire behaviour foundations'}</h2>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">Smoke reading, SCBA checks, incident command, and mayday decision points.</p>
+            {/* Readout: continue-course headline in serif ember + EQ signal motif */}
+            <div className="relative z-[1] mt-9 flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="fg-label" style={{ color: 'var(--fg-ember)' }}>Continue course</p>
+                <h2 className="fg-readout mt-3 text-[clamp(32px,3.6vw,42px)]">{featured?.title ?? 'Fire behaviour foundations'}</h2>
+              </div>
+              <span className="fg-eq mt-1 shrink-0" aria-hidden>
+                <i /><i /><i /><i /><i />
+              </span>
             </div>
+            <p className="relative z-[1] mt-3 text-sm leading-6 text-muted-foreground">Smoke reading, SCBA checks, incident command, and mayday decision points.</p>
 
             {/* Progress track with mono readouts */}
             <div className="relative z-[1] mt-7">
@@ -120,9 +117,18 @@ export function LandingPage() {
         </RevealOnMount>
       </div>
 
+      {/* ============ STAT BAND — full-width hairline-topped mono readouts ============ */}
+      <Stagger className="fg-stats mx-auto mt-16 max-w-[1400px] sm:mt-20" stagger={0.05}>
+        {stats.map((stat) => (
+          <Reveal key={stat.label}>
+            <p className="fg-stat-value">{stat.value}</p>
+            <p className="fg-label mt-2.5">{stat.label}</p>
+          </Reveal>
+        ))}
+      </Stagger>
     </section>
 
-    {/* ============ PILLARS — hairline contact-sheet grid ============ */}
+    {/* ============ PILLARS — numbered drill-log rows with ember sweep ============ */}
     <section aria-labelledby="pillars-title" className="mx-auto max-w-[1400px] px-5 sm:px-8">
       <div className="mb-12 grid gap-8 md:grid-cols-2 md:items-end">
         <div>
@@ -135,19 +141,23 @@ export function LandingPage() {
           No bloated curriculum. Four signals carry you from fundamentals to fireground judgment — pick the one you need and start.
         </p>
       </div>
-      <Stagger className="fg-grid-section" stagger={0.08}>
+      <Stagger className="fg-rows" stagger={0.07}>
         {pillars.map((pillar) => (
           <Reveal key={pillar.index}>
-            <Link href="/dashboard" className="fg-grid-cell press-feedback group">
-              <span className="fg-label">{pillar.index}</span>
-              <span className="fg-chip mt-9 mb-6 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-110">
-                <pillar.icon size={24} aria-hidden />
+            <Link href="/dashboard" className="fg-row group">
+              <span className="fg-row-num">{pillar.index}</span>
+              <span className="flex min-w-0 items-center gap-4 sm:gap-5">
+                <span className="fg-chip !h-11 !w-11 shrink-0 !rounded-xl sm:!h-12 sm:!w-12">
+                  <pillar.icon size={20} aria-hidden />
+                </span>
+                <span className="min-w-0">
+                  <h3 className="text-[19px] font-medium tracking-[-0.03em] text-white sm:text-[21px]">{pillar.title}</h3>
+                  <p className="mt-1.5 hidden max-w-[62ch] text-[13px] leading-[1.55] text-muted-foreground sm:block">{pillar.body}</p>
+                </span>
               </span>
-              <h3 className="text-[22px] font-medium tracking-[-0.03em] text-white">{pillar.title}</h3>
-              <p className="mt-2 max-w-[32ch] text-xs leading-[1.6] text-muted-foreground">{pillar.body}</p>
-              <span className="mt-auto flex items-center justify-between border-t pt-4 text-[10px] text-muted-foreground" style={{ borderColor: 'var(--fg-hairline)' }}>
-                Open in dashboard
-                <ArrowRight className="text-primary" size={15} aria-hidden />
+              <span className="flex items-center gap-4">
+                <span className="fg-label hidden lg:block">Open in dashboard</span>
+                <ArrowUpRight className="fg-row-arrow" size={18} aria-hidden />
               </span>
             </Link>
           </Reveal>
@@ -155,15 +165,15 @@ export function LandingPage() {
       </Stagger>
     </section>
 
-    {/* ============ CLOSING — giant serif statement ============ */}
-    <RevealOnMount as="section" delay={0.05} className="mx-auto max-w-[1400px] px-5 py-24 sm:px-8 lg:py-32">
-      <div className="glass-card overflow-hidden rounded-[28px] p-8 sm:p-14">
+    {/* ============ CLOSING — full-bleed giant serif statement + hairline rule ============ */}
+    <RevealOnMount as="section" delay={0.05} className="mx-auto max-w-[1400px] px-5 pb-24 pt-20 sm:px-8 lg:pb-32 lg:pt-28">
+      <div className="border-t pt-16 sm:pt-20" style={{ borderColor: 'var(--fg-hairline)' }}>
         <p className="fg-label" style={{ color: 'var(--fg-ember)' }}>Ready for the next rep?</p>
-        <div className="mt-6 grid gap-10 lg:grid-cols-[1.5fr_auto] lg:items-center">
+        <div className="mt-8 grid gap-12 lg:grid-cols-[1.6fr_auto] lg:items-end">
           <h2 className="fg-closing-title">
-            Build mastery before <em>the alarm drops.</em>
+            Build mastery before <em>the&nbsp;alarm&nbsp;drops.</em>
           </h2>
-          <div className="flex flex-col gap-4 lg:items-end">
+          <div className="flex flex-col gap-5 lg:items-end lg:pb-3">
             <Link href="/dashboard" className="fg-cta-primary press-feedback">
               Open dashboard <CheckCircle2 size={17} aria-hidden />
             </Link>
