@@ -44,7 +44,7 @@ export function FiregroundScene() {
         </svg>
         <div className="scene-sweep" />
       </div>
-      {points.map((point) => <button key={point.id} type="button" className={`scene-hotspot ${active === point.id ? 'is-active' : ''}`} style={{ left: `${point.x}%`, top: `${point.y}%` }} onClick={() => setActive(point.id)} aria-label={`Inspect ${point.label}`} aria-pressed={active === point.id}><span /></button>)}
+      {points.map((point) => <button key={point.id} type="button" className={`scene-hotspot ${active === point.id ? 'is-active' : ''}`} style={{ left: `${50 + (point.x - 50) * zoom}%`, top: `${55 + (point.y - 55) * zoom}%` }} onClick={() => setActive(point.id)} aria-label={`Inspect ${point.label}`} aria-pressed={active === point.id}><span /></button>)}
       <div className="scene-coordinate">43° 39′ N&nbsp; / &nbsp;79° 23′ W</div>
       <div className="scene-scale">01 / 03 &nbsp;·&nbsp; FIELD NOTES</div>
     </div>
