@@ -116,17 +116,17 @@ export function DashboardOverview() {
     { label: 'Completion', numeric: completion, suffix: '%', icon: BookOpen, color: 'text-sky-400', bg: 'bg-sky-500/10' },
   ]
 
-  return <AppShell><div className="space-y-8">
-    <section className="grid gap-5 lg:grid-cols-[1fr_0.38fr] lg:items-stretch">
+  return <AppShell><div className="fl-dashboard space-y-8">
+    <section className="fl-dashboard-hero grid gap-5 lg:grid-cols-[1fr_0.38fr] lg:items-stretch">
       <RevealOnMount as="div">
-        <Card className="relative overflow-hidden p-6 md:p-8">
+        <Card className="fl-dashboard-lead relative overflow-hidden p-6 md:p-8">
           <div className="absolute right-0 top-0 size-40 rounded-full bg-primary/15 blur-3xl" />
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Command dashboard</p>
-          <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-[-0.03em] md:text-5xl text-gradient-fire">Keep your fireground knowledge mission-ready.</h1>
-          <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Track completions, quiz history, and weak topics from one focused cockpit.</p>
+          <p className="fl-kicker">YOUR FIELD DESK / COMMAND DASHBOARD</p>
+          <h1 className="fl-dashboard-title mt-3 max-w-3xl">Every rep builds <em>readiness.</em></h1>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Your training pulse, next drill, and progress at a glance. Pick up where you left off.</p>
           <Stagger className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4" stagger={0.07}>
             {statTiles.map((stat) => (
-              <Reveal key={stat.label} as="div" className="stat-tile-hover rounded-2xl border border-border bg-elevated/40 p-4">
+              <Reveal key={stat.label} as="div" className="fl-dashboard-stat stat-tile-hover rounded-2xl border border-border bg-elevated/40 p-4">
                 <div className={cn('inline-flex size-10 items-center justify-center rounded-xl', stat.bg)}>
                   <stat.icon className={stat.color} size={20} />
                 </div>
@@ -141,7 +141,7 @@ export function DashboardOverview() {
         </Card>
       </RevealOnMount>
       <RevealOnMount as="div" delay={0.08}>
-        <Card className="flex h-full flex-col justify-between gap-4 bg-gradient-to-br from-primary/8 to-transparent">
+        <Card className="fl-dashboard-goal flex h-full flex-col justify-between gap-4">
           <div>
             <div className="flex items-center justify-between">
               <div>

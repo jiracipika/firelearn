@@ -60,10 +60,10 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
   return <div className="min-h-screen pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
     <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-primary focus:px-4 focus:py-3 focus:text-sm focus:font-bold focus:text-primary-foreground">Skip to content</a>
     <CommandPalette />
-    <header className="sticky top-0 z-50 border-b border-border bg-background/86 pt-[env(safe-area-inset-top)] backdrop-blur-2xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+    <header className="fl-header sticky top-0 z-50 border-b border-border bg-background/86 pt-[env(safe-area-inset-top)] backdrop-blur-2xl">
+      <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-3 px-4 py-3 sm:px-8">
         <div className="flex items-center gap-6">
-          <Link href="/" className="group flex items-center gap-2.5" aria-label="FireLearn home">
+          <Link href="/" className="fl-brand group flex items-center gap-2.5" aria-label="FireLearn home">
             <span className="relative flex size-9 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-primary to-primary-dim shadow-[0_0_25px_rgb(255_74_46_/_0.35)] transition-shadow duration-300 group-hover:shadow-[0_0_35px_rgb(255_74_46_/_0.55)]">
               <Flame size={18} className="text-white animate-flame-flicker" aria-hidden />
             </span>
@@ -72,7 +72,7 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
               <span className="hidden text-[10px] text-muted sm:block">Train smarter</span>
             </span>
           </Link>
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
+          <nav className="fl-desktop-nav hidden items-center gap-1 md:flex" aria-label="Primary navigation">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -111,8 +111,8 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
       </div>
     </header>
     <NetworkStatusBanner />
-    <main id="main-content" className={fullBleed ? '' : 'mx-auto max-w-7xl px-4 py-6 sm:px-6 md:py-12'}>{children}</main>
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur-2xl md:hidden" aria-label="Primary navigation">
+    <main id="main-content" className={fullBleed ? '' : 'mx-auto max-w-[1440px] px-4 py-6 sm:px-8 md:py-12'}>{children}</main>
+    <nav className="fl-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur-2xl md:hidden" aria-label="Primary navigation">
       <div className="grid grid-cols-5 gap-1">
         {mobileTabs.map((item) => (
           <Link key={item.href} href={item.href} aria-current={isActive(item.href) ? 'page' : undefined} className={cn('flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60', isActive(item.href) ? 'bg-gradient-to-b from-primary/18 to-primary/8 text-white shadow-[inset_0_0_0_1px_rgb(255_74_46_/_0.22)]' : 'text-muted-foreground')}>
@@ -122,7 +122,7 @@ export function AppShell({ children, fullBleed = false }: { children: React.Reac
         ))}
       </div>
     </nav>
-    <footer className="border-t border-border px-4 py-8 text-sm text-muted sm:px-6">
+    <footer className="fl-footer border-t border-border px-4 py-8 text-sm text-muted sm:px-6">
       <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-[0.5fr_1fr] md:items-start">
         <div className="flex items-center gap-2">
           <Flame size={16} className="text-primary" />
