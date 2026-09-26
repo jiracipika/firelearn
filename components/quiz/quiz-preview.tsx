@@ -20,5 +20,5 @@ export function QuizPreview({ courseSlug, lessonSlug }: QuizPreviewProps) {
     ? `lesson:${course.slug}:${lesson.slug}`
     : 'mixed-practice'
 
-  return <AppShell><QuizEngine quizId={quizId} title={title} questions={questions} /></AppShell>
+  return <AppShell><div className="fl-study"><QuizEngine quizId={quizId} title={title} questions={questions} /></div></AppShell>
 }

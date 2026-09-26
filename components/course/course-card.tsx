@@ -1,46 +1,17 @@
 import Link from 'next/link'
-import { ArrowRight, Brain, Clock, Flame, Layers, PlayCircle } from 'lucide-react'
+import { ArrowUpRight, Clock3, Layers3, Play } from 'lucide-react'
+import type { CSSProperties } from 'react'
 import type { Course } from '@/types/learning'
 import { getCategoryTitle } from '@/data/academy'
-import { Badge } from '@/components/ui/badge'
-import { Card } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { cn } from '@/lib/utils'
+
+const accents = ['#ff7543', '#e8b774', '#83b8c2', '#c9a4ac', '#b0b881']
 
 export function CourseCard({ course }: { course: Course }) {
-  const lessonCount = course.modules.reduce((total, module) => total + module.lessons.length, 0)
-  const questionCount = course.modules.reduce((total, module) => total + module.lessons.reduce((lessonTotal, lesson) => lessonTotal + lesson.quiz.length, 0), 0)
-  const videoCount = course.modules.reduce((total, module) => total + module.lessons.reduce((lessonTotal, lesson) => lessonTotal + lesson.videos.length, 0), 0)
-  const complete = course.progressPercent >= 100
-  return (
-    <Link href={`/courses/${course.slug}`} className="block">
-      <Card interactive className="group flex h-full flex-col gap-4 border-border-bright/80 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_20px_60px_rgb(255_74_46_/_0.12)]">
-        <div className="flex items-start justify-between gap-3">
-          <Badge>{getCategoryTitle(course.categoryId)}</Badge>
-          <span className="rounded-md border border-border bg-elevated/60 px-2 py-0.5 text-xs text-muted-foreground">{course.difficulty}</span>
-        </div>
-        <div className="flex-1 space-y-2">
-          <h3 className="text-lg font-bold leading-snug tracking-tight text-white transition-colors duration-200 group-hover:text-red-50">{course.title}</h3>
-          <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{course.description}</p>
-        </div>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2 text-xs text-muted sm:grid-cols-4">
-            <span className="flex items-center gap-1.5"><Clock size={13} /> {course.estimatedMinutes}m</span>
-            <span className="flex items-center gap-1.5"><Flame size={13} /> {course.xp} XP</span>
-            <span className="flex items-center gap-1.5"><Layers size={13} /> {lessonCount}</span>
-            <span className="flex items-center gap-1.5"><PlayCircle size={13} /> {videoCount}</span>
-            <span className="flex items-center gap-1.5 sm:col-span-2"><Brain size={13} /> {questionCount} questions</span>
-          </div>
-          <Progress value={course.progressPercent} />
-          <span className={cn(
-            'inline-flex items-center gap-1.5 text-sm font-semibold transition-all duration-200',
-            complete ? 'text-success' : 'text-primary',
-            'group-hover:gap-2.5',
-          )}>
-            {complete ? 'Review course' : 'Open course'} <ArrowRight size={14} />
-          </span>
-        </div>
-      </Card>
-    </Link>
-  )
+  const lessons = course.modules.reduce((total, module) => total + module.lessons.length, 0)
+  const videos = course.modules.reduce((total, module) => total + module.lessons.reduce((n, lesson) => n + lesson.videos.length, 0), 0)
+  const accent = accents[course.slug.split('').reduce((sum, character) => sum + character.charCodeAt(0), 0) % accents.length]
+  return <Link href={`/courses/${course.slug}`} className="fl-course-card" style={{ '--course-accent': accent } as CSSProperties}>
+    <div className="fl-course-visual" aria-hidden="true"><span className="fl-course-orbit"/><span className="fl-course-orbit fl-course-orbit-small"/><span className="fl-course-glyph">{course.title.slice(0, 1).toUpperCase()}</span><span className="fl-course-index">FL / {course.id.slice(-3).toUpperCase()}</span></div>
+    <div className="fl-course-body"><div className="fl-course-label"><span>{getCategoryTitle(course.categoryId)}</span><span>{course.difficulty}</span></div><h3>{course.title}</h3><p>{course.description}</p><div className="fl-course-meta"><span><Clock3 size={14} aria-hidden /> {course.estimatedMinutes} MIN</span><span><Layers3 size={14} aria-hidden /> {lessons} LESSONS</span><span><Play size={14} aria-hidden /> {videos} VIDEOS</span></div><div className="fl-course-bottom"><span>{course.progressPercent >= 100 ? 'REVIEW COURSE' : 'EXPLORE COURSE'}</span><ArrowUpRight size={20} aria-hidden /></div></div>
+  </Link>
 }

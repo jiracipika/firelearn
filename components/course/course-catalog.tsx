@@ -57,14 +57,14 @@ export function CourseCatalog() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
-  return <AppShell><div className="space-y-8">
-    <section className="grid gap-6 lg:grid-cols-[1fr_0.8fr] lg:items-end">
+  return <AppShell><div className="fl-catalog space-y-8">
+    <section className="fl-catalog-hero grid gap-6 lg:grid-cols-[1fr_0.8fr] lg:items-end">
       <div className="space-y-4">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Academy</p>
-        <h1 className="text-4xl font-bold tracking-[-0.03em] md:text-5xl">Firefighter course catalog</h1>
+        <p className="fl-kicker">THE ACADEMY / ALL PATHS</p>
+        <h1 className="fl-catalog-title">Find your next <em>edge.</em></h1>
         <p className="max-w-2xl text-lg leading-7 text-muted-foreground">Mapped learning paths with embedded tutorials, scenario quizzes, flashcards, and references for recruit through company-officer study.</p>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="fl-catalog-numbers grid grid-cols-3 gap-3">
         {[
           { label: 'Lessons', value: totals.lessons, icon: BookOpen },
           { label: 'Videos', value: totals.videos, icon: PlayCircle },
@@ -79,7 +79,7 @@ export function CourseCatalog() {
       </div>
     </section>
 
-    <div className="relative">
+    <div className="fl-catalog-search relative">
       <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" size={18} />
       <Input ref={searchInputRef} className="pl-11 pr-24" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search courses, disciplines, tactics..." aria-label="Search courses" />
       <div className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-2">
@@ -98,7 +98,7 @@ export function CourseCatalog() {
       </div>
     </div>
 
-    <div className="flex flex-wrap gap-2">
+    <div className="fl-catalog-filters flex flex-wrap gap-2">
       <button
         onClick={() => setActiveCategory(null)}
         className={cn('rounded-md border px-3 py-1.5 text-xs font-medium transition', !activeCategory ? 'border-primary/40 bg-primary/10 text-red-200' : 'border-border bg-elevated/40 text-muted-foreground hover:text-white')}
@@ -122,7 +122,7 @@ export function CourseCatalog() {
       </div>
     )}
 
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <section className="fl-catalog-grid grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {visibleMatches.map((match) => (
         <div key={match.course.id} className="space-y-2">
           <CourseCard course={match.course} />

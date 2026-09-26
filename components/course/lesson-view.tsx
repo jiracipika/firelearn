@@ -53,7 +53,7 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
   return <AppShell>
     <JsonLd data={lessonJsonLd(course, lesson)} />
     <ScrollProgress />
-    <article className="mx-auto max-w-4xl space-y-6">
+    <article className="fl-lesson mx-auto max-w-4xl space-y-6">
       <Link href={`/courses/${course.slug}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-white">
         <ArrowLeft size={16} /> {course.title}
       </Link>

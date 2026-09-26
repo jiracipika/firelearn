@@ -51,7 +51,7 @@ export function CourseDetail({ course }: { course: Course }) {
     syncMessage = 'Progress is saved locally. Sign in from any lesson to sync it with Supabase.'
   }
 
-  return <AppShell><JsonLd data={courseJsonLd(course)} /><div className="space-y-9">
+  return <AppShell><JsonLd data={courseJsonLd(course)} /><div className="fl-detail space-y-9">
     <section className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
       <Card className="relative overflow-hidden border-border-bright p-7">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-info" />

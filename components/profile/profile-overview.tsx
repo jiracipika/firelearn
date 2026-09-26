@@ -47,7 +47,7 @@ export function ProfileOverview() {
     { icon: Activity, label: 'Daily goal', value: `${studyActivity.minutesToday}`, sub: `/${learnerProgress.dailyGoalMinutes}m`, color: 'text-green-400', bg: 'bg-green-500/10' },
   ]
 
-  return <AppShell><div className="space-y-8">
+  return <AppShell><div className="fl-profile space-y-8">
     <section className="grid gap-5 lg:grid-cols-[0.7fr_1.3fr]">
       <Card className="space-y-4">
         <div className="inline-flex size-14 items-center justify-center rounded-2xl bg-primary/10">

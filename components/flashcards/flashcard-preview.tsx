@@ -17,5 +17,5 @@ export function FlashcardPreview({ courseSlug, lessonSlug }: FlashcardPreviewPro
     ? `lesson:${course.slug}:${lesson.slug}`
     : 'daily-review'
 
-  return <AppShell><FlashcardReview initialCards={cards.slice(0, lesson ? cards.length : 18)} sessionId={sessionId} /></AppShell>
+  return <AppShell><div className="fl-study"><FlashcardReview initialCards={cards.slice(0, lesson ? cards.length : 18)} sessionId={sessionId} /></div></AppShell>
 }
