@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { BookOpen, Brain, PlayCircle, Search, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { categories } from '@/data/categories'
 import { academyCourses } from '@/data/academy'
 import { AppShell } from '@/components/layout/app-shell'
@@ -10,8 +10,14 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { searchCourseCatalog } from '@/lib/search'
 import { cn } from '@/lib/utils'
+import { useOfflineProgress } from '@/hooks/use-offline-progress'
+import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
+import { mergeCompletedLessonIds } from '@/services/progress-merge'
 
 export function CourseCatalog() {
+  const localProgress = useOfflineProgress()
+  const savedProgress = useSupabaseProgress()
+  const completedLessonIds = mergeCompletedLessonIds(savedProgress.completedLessonIds, localProgress.learnerState.completedLessonIds)
   const [query, setQuery] = React.useState('')
   const [activeCategory, setActiveCategory] = React.useState<string | null>(null)
   const searchInputRef = React.useRef<HTMLInputElement>(null)
@@ -25,22 +31,6 @@ export function CourseCatalog() {
     const counts: Record<string, number> = {}
     academyCourses.forEach((course) => { counts[course.categoryId] = (counts[course.categoryId] ?? 0) + 1 })
     return counts
-  }, [])
-
-  const totals = React.useMemo(() => {
-    return academyCourses.reduce(
-      (acc, course) => {
-        course.modules.forEach((module) => {
-          module.lessons.forEach((lesson) => {
-            acc.lessons += 1
-            acc.videos += lesson.videos.length
-            acc.questions += lesson.quiz.length
-          })
-        })
-        return acc
-      },
-      { lessons: 0, videos: 0, questions: 0 }
-    )
   }, [])
 
   React.useEffect(() => {
@@ -58,39 +48,24 @@ export function CourseCatalog() {
   }, [])
 
   return <AppShell><div className="fl-catalog space-y-8">
-    <section className="fl-catalog-hero grid gap-6 lg:grid-cols-[1fr_0.8fr] lg:items-end">
-      <div className="space-y-4">
-        <p className="fl-kicker">THE ACADEMY / ALL PATHS</p>
-        <h1 className="fl-catalog-title">Find your next <em>edge.</em></h1>
-        <p className="max-w-2xl text-lg leading-7 text-muted-foreground">Mapped learning paths with embedded tutorials, scenario quizzes, flashcards, and references for recruit through company-officer study.</p>
-      </div>
-      <div className="fl-catalog-numbers grid grid-cols-3 gap-3">
-        {[
-          { label: 'Lessons', value: totals.lessons, icon: BookOpen },
-          { label: 'Videos', value: totals.videos, icon: PlayCircle },
-          { label: 'Questions', value: totals.questions, icon: Brain },
-        ].map((item) => (
-          <div key={item.label} className="rounded-lg border border-border-bright bg-card/80 p-4">
-            <item.icon className="text-info" size={18} />
-            <p className="mt-2 text-2xl font-bold text-white">{item.value}</p>
-            <p className="text-xs text-muted">{item.label}</p>
-          </div>
-        ))}
-      </div>
+    <section>
+      <p className="fl-kicker">The learning library</p>
+      <h1 className="fl-catalog-title mt-2">Find something to work on.</h1>
+      <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Browse {academyCourses.length} courses, from the fundamentals to company-officer study. Start wherever feels useful.</p>
     </section>
 
     <div className="fl-catalog-search relative">
       <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" size={18} />
-      <Input ref={searchInputRef} className="pl-11 pr-24" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search courses, disciplines, tactics..." aria-label="Search courses" />
+      <Input ref={searchInputRef} className="pl-11 pr-16" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Try “smoke”, “hose”, or “leadership”" aria-label="Search courses" />
       <div className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-2">
         {query ? (
           <button
             type="button"
             onClick={() => { setQuery(''); searchInputRef.current?.focus() }}
-            className="pointer-events-auto inline-flex size-6 items-center justify-center rounded text-muted transition hover:bg-elevated hover:text-white"
+            className="pointer-events-auto inline-flex size-11 items-center justify-center rounded text-muted transition hover:bg-elevated hover:text-white"
             aria-label="Clear search"
           >
-            <X size={14} />
+            <X size={18} />
           </button>
         ) : (
           <kbd className="hidden rounded border border-border bg-elevated/60 px-1.5 py-0.5 text-[10px] text-muted sm:inline-block">/</kbd>
@@ -98,39 +73,37 @@ export function CourseCatalog() {
       </div>
     </div>
 
-    <div className="fl-catalog-filters flex flex-wrap gap-2">
+    <div className="fl-catalog-filters flex flex-wrap gap-2" role="group" aria-label="Filter courses by topic">
       <button
+        aria-pressed={!activeCategory}
         onClick={() => setActiveCategory(null)}
-        className={cn('rounded-md border px-3 py-1.5 text-xs font-medium transition', !activeCategory ? 'border-primary/40 bg-primary/10 text-red-200' : 'border-border bg-elevated/40 text-muted-foreground hover:text-white')}
+        className={cn('rounded-md border px-3 py-1.5 text-xs font-medium transition', !activeCategory ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border bg-elevated/40 text-muted-foreground hover:text-white')}
       >
         All ({academyCourses.length})
       </button>
       {categories.filter((cat) => (categoryCounts[cat.id] ?? 0) > 0).slice(0, 16).map((category) => (
         <button
           key={category.id}
+          aria-pressed={activeCategory === category.id}
           onClick={() => setActiveCategory(activeCategory === category.id ? null : category.id)}
-          className={cn('rounded-md border px-3 py-1.5 text-xs font-medium transition', activeCategory === category.id ? 'border-primary/40 bg-primary/10 text-red-200' : 'border-border bg-elevated/40 text-muted-foreground hover:text-white')}
+          className={cn('rounded-md border px-3 py-1.5 text-xs font-medium transition', activeCategory === category.id ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border bg-elevated/40 text-muted-foreground hover:text-white')}
         >
           {category.title}
         </button>
       ))}
     </div>
 
-    {normalized && courses.length > 0 && (
-      <div className="rounded-2xl border border-border bg-elevated/35 px-4 py-3 text-sm text-muted-foreground">
-        Deep search found {visibleMatches.reduce((sum, match) => sum + match.matchCount, 0)} matching course, lesson, quiz, or flashcard signal{visibleMatches.reduce((sum, match) => sum + match.matchCount, 0) === 1 ? '' : 's'}.
-      </div>
-    )}
+    <p className="text-sm text-muted-foreground" role="status" aria-live="polite">{courses.length} {courses.length === 1 ? 'course' : 'courses'}{normalized ? ` matching “${normalized}”` : activeCategory ? ' in this topic' : ' to explore'}</p>
 
     <section className="fl-catalog-grid grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {visibleMatches.map((match) => (
         <div key={match.course.id} className="space-y-2">
-          <CourseCard course={match.course} />
+          <CourseCard course={match.course} completedLessonIds={completedLessonIds} />
           {normalized && match.topMatches.length > 0 && (
             <div className="rounded-xl border border-border bg-card/50 px-3 py-2 text-xs text-muted-foreground">
-              <p className="font-semibold uppercase tracking-[0.12em] text-red-200">Best match</p>
+              <p className="font-semibold text-primary">Best match</p>
               <p className="mt-1 line-clamp-2 text-white">{match.topMatches[0].title}</p>
-              <p className="mt-1 capitalize text-muted">{match.matchedTypes.join(', ').replace(/-/g, ' ')} · {match.matchCount} signal{match.matchCount === 1 ? '' : 's'}</p>
+              <p className="mt-1 capitalize text-muted">{match.matchedTypes.join(', ').replace(/-/g, ' ')} · {match.matchCount} match{match.matchCount === 1 ? '' : 'es'}</p>
             </div>
           )}
         </div>
@@ -139,7 +112,7 @@ export function CourseCatalog() {
 
     {courses.length === 0 ? (
       <Card className="py-12 text-center text-muted-foreground">
-        <p>No courses match your search.</p>
+        <h2 className="font-semibold text-white">No courses found this time.</h2><p className="mt-2 text-sm">Try a different word or clear the topic filter.</p>
         {(query || activeCategory) && (
           <button
             type="button"

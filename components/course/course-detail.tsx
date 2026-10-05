@@ -45,10 +45,10 @@ export function CourseDetail({ course }: { course: Course }) {
   } else if (learnerProgress.authenticated) {
     SyncIcon = Cloud
     syncMessage = learnerProgress.syncQueueCount > 0
-      ? `${learnerProgress.syncQueueCount} local ${learnerProgress.syncQueueCount === 1 ? 'change is' : 'changes are'} queued for Supabase sync.`
-      : 'Progress is synced with Supabase.'
+      ? `${learnerProgress.syncQueueCount} local ${learnerProgress.syncQueueCount === 1 ? 'change is' : 'changes are'} waiting to sync.`
+      : 'Progress is saved in the cloud.'
   } else if (learnerProgress.supabaseAvailable) {
-    syncMessage = 'Progress is saved locally. Sign in from any lesson to sync it with Supabase.'
+    syncMessage = 'Progress is saved on this device. Connect cloud save from a lesson to back it up.'
   }
 
   return <AppShell><JsonLd data={courseJsonLd(course)} /><div className="fl-detail space-y-9">
@@ -64,7 +64,7 @@ export function CourseDetail({ course }: { course: Course }) {
             <div>
               <p className="text-sm font-semibold text-white">Your course progress</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {learnerProgress.loading ? 'Checking this device and Supabase…' : `${learnerProgress.completedCount} of ${learnerProgress.totalCount} lessons complete`}
+                {learnerProgress.loading ? 'Loading your saved progress…' : `${learnerProgress.completedCount} of ${learnerProgress.totalCount} lessons complete`}
               </p>
             </div>
             <span className="text-2xl font-bold tabular-nums text-white">{learnerProgress.percent}%</span>
@@ -73,7 +73,7 @@ export function CourseDetail({ course }: { course: Course }) {
           <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
             <SyncIcon size={14} className="shrink-0" aria-hidden /> {syncMessage}
           </p>
-          {learnerProgress.syncError && <p className="mt-2 rounded-lg border border-red-500/30 bg-red-500/8 p-2.5 text-xs text-red-200" role="status">Supabase sync issue: {learnerProgress.syncError} Your local progress remains available.</p>}
+          {learnerProgress.syncError && <p className="mt-2 rounded-lg border border-red-500/30 bg-red-500/8 p-2.5 text-xs text-red-200" role="status">Cloud save couldn’t sync. Your progress is still saved on this device.</p>}
           <Link href={nextHref} className={cn(buttonVariants({ size: 'lg' }), 'mt-4 w-full sm:w-auto')}>
             {nextLabel} <ArrowRight size={17} aria-hidden />
           </Link>

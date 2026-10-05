@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle2, ClipboardCheck, ExternalLink, PlayCircle, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, ClipboardCheck, ExternalLink, ShieldCheck } from 'lucide-react'
 import type { Course, Lesson } from '@/types/learning'
 import { useSupabaseProgress } from '@/hooks/use-supabase-progress'
 import { useOfflineProgress } from '@/hooks/use-offline-progress'
@@ -21,16 +21,16 @@ import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { ScrollProgress } from '@/components/ui/scroll-progress'
 
-function lessonProgressPercent(completed: boolean, lesson: Lesson) {
+function lessonProgressPercent(completed: boolean) {
   if (completed) return 100
-  return lesson.completion.percent
+  return 0
 }
 
 export function LessonView({ course, lesson }: { course: Course; lesson: Lesson }) {
-  const { completedLessonIds, completeLesson, available, authenticated, loading, signIn, error, projectRef } = useSupabaseProgress()
+  const { completedLessonIds, completeLesson, available, authenticated, loading, signIn, error } = useSupabaseProgress()
   const offlineProgress = useOfflineProgress()
   const completed = completedLessonIds.includes(lesson.id) || offlineProgress.learnerState.completedLessonIds.includes(lesson.id)
-  const progress = lessonProgressPercent(completed, lesson)
+  const progress = lessonProgressPercent(completed)
   const xpAwarded = getLessonXpAward(course)
 
   // Compute prev/next lessons for navigation
@@ -74,15 +74,12 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
             <h2 className="font-bold text-white">Save progress</h2>
           </div>
           <p className="text-xs leading-5 text-muted-foreground">
-            {!available ? 'Supabase is not configured, so this completion will stay on this device until sync is available.'
-            : completed ? authenticated ? 'Completed and saved.' : 'Completed locally and queued for Supabase sync.'
-            : authenticated ? 'Save this completion locally and to Supabase.'
-            : `Mark complete locally now, or sign in anonymously to sync${projectRef ? ` on project ${projectRef}` : ''}.`}
+            {completed ? 'Lesson completed. Your progress is saved on this device.' : 'Your progress saves here, even if you’re offline.'}
           </p>
-          {error && <p className="rounded-lg border border-red-500/30 bg-red-500/8 p-2.5 text-xs text-red-300">{error}</p>}
+          {error && <p className="text-xs leading-5 text-red-300" role="status">Cloud save couldn’t connect. Your progress is saved on this device.</p>}
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" disabled={completed} onClick={markComplete}>{completed ? 'Completed' : `Mark complete · ${xpAwarded} XP`}</Button>
-            {!authenticated && <Button variant="outline" size="sm" disabled={!available || loading} onClick={signIn}>{loading ? 'Checking Supabase...' : 'Sign in to sync'}</Button>}
+            <Button size="sm" disabled={completed} onClick={markComplete}>{completed ? 'Completed' : 'Mark as complete'}</Button>
+            {available && !authenticated && <Button variant="outline" size="sm" disabled={loading} onClick={signIn}>{loading ? 'Connecting…' : 'Connect cloud save'}</Button>}
           </div>
         </Card>
       </section>
@@ -90,8 +87,8 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Watch before starting</p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">Embedded tutorial queue</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Watch and learn</p>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">Video walkthroughs</h2>
           </div>
           <span className="rounded-md border border-info/30 bg-info/10 px-3 py-1 text-xs font-semibold text-info">{lesson.videos.length} YouTube videos</span>
         </div>
@@ -102,7 +99,7 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
               <div className="flex min-h-20 items-start justify-between gap-3 p-3">
                 <div>
                   <p className="text-sm font-semibold leading-snug text-white">{video.title}</p>
-                  <p className="mt-1 text-xs text-muted">YouTube tutorial · click to load</p>
+                  <p className="mt-1 text-xs text-muted">YouTube · select to watch</p>
                 </div>
                 <a className="rounded-md border border-border bg-elevated p-2 text-muted-foreground transition hover:border-border-bright hover:text-white" href={video.url} target="_blank" rel="noreferrer" aria-label={`Open ${video.title} on YouTube`}>
                   <ExternalLink size={14} />
@@ -128,20 +125,7 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
         </div>
       </Card>
 
-      <Card className="border-info/25 bg-info/8">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-start gap-3">
-            <PlayCircle className="mt-0.5 shrink-0 text-info" size={20} />
-            <div>
-              <h2 className="font-bold text-white">Start the lesson rep</h2>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">Watch the tutorials, scan the objectives, then use the knowledge check and mixed quiz bank to test the topic.</p>
-            </div>
-          </div>
-          <Badge className="border-info/25 bg-info/10 text-info">{lesson.imageAlt}</Badge>
-        </div>
-      </Card>
-
-      <div className="grid gap-4">
+      <div className="fl-lesson-copy space-y-6">
         {lesson.content.map((block, index) => <ContentBlock key={`${block.type}-${index}`} block={block} />)}
       </div>
 
@@ -159,7 +143,7 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
         </Card>
         <Card className="space-y-3">
           <h2 className="font-bold text-white">Quiz and flashcards</h2>
-          <p className="text-sm leading-6 text-muted-foreground">This lesson includes {lesson.quiz.length} quiz question(s) and {lesson.flashcards.length} spaced-repetition card(s).</p>
+          <p className="text-sm leading-6 text-muted-foreground">Practice with {lesson.quiz.length} questions or review {lesson.flashcards.length} flashcards from this lesson.</p>
           <div className="flex flex-wrap gap-2">
             <Link href={getLessonPracticeHref('quiz', course, lesson)}><Button variant="outline" size="sm">Practice this lesson</Button></Link>
             <Link href={getLessonPracticeHref('flashcards', course, lesson)}><Button variant="outline" size="sm">Review lesson cards</Button></Link>
@@ -174,8 +158,13 @@ export function LessonView({ course, lesson }: { course: Course; lesson: Lesson 
         </ul>
       </Card>
 
+      <Card className="flex flex-wrap items-center justify-between gap-4 p-6">
+        <div><h2 className="font-semibold">{completed ? 'Lesson complete' : 'Finished reading?'}</h2><p className="mt-1 text-sm text-muted-foreground">{completed ? 'You can come back to this lesson anytime.' : 'Save your progress before moving to the next lesson.'}</p></div>
+        <Button disabled={completed} onClick={markComplete}>{completed ? 'Completed' : 'Mark as complete'}</Button>
+      </Card>
+
       {(prevLesson || nextLesson) && (
-        <nav className="grid gap-4 sm:grid-cols-2">
+        <nav aria-label="Lesson navigation" className="grid gap-4 sm:grid-cols-2">
           {prevLesson && (
             <Link href={`/courses/${course.slug}/${prevLesson.slug}`} className="group">
               <Card className="flex items-center gap-3 transition hover:border-primary/30">

@@ -55,8 +55,8 @@ export function ProfileOverview() {
         </div>
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">Learner profile</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-gradient-fire">Your Firefighter Profile</h1>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{authenticated ? 'Connected to Supabase. Progress saves automatically.' : 'Not signed in. Sign in from the dashboard to save progress.'}</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-gradient-fire">Your profile</h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{authenticated ? 'Cloud save is connected. Progress also saves on this device.' : 'Your progress is saved on this device. You can connect cloud save from My learning.'}</p>
         </div>
         {authenticated && (
           <Button variant="outline" size="sm" onClick={async () => {

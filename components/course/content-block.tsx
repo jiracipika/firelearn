@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 
 export function ContentBlock({ block }: { block: LessonContentBlock }) {
   if (block.type === 'paragraph') {
-    return <Card><p className="text-base leading-8 text-slate-200">{block.text}</p></Card>
+    return <p className="text-base leading-8">{block.text}</p>
   }
 
   if (block.type === 'callout') {

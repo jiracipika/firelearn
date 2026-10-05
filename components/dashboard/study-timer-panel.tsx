@@ -29,15 +29,23 @@ const TICK_MS = 1000
 export function StudyTimerPanel() {
   const { record } = useStudyActivity()
 
-  // Restore any in-flight session on mount via a lazy initializer (same pattern
-  // as the theme toggle in app-shell) so a refresh or route change does not
-  // silently discard a running timer. On the server, getBrowserStorage returns
-  // undefined and we fall back to a fresh paused session.
-  const [session, setSession] = React.useState<StudyTimerSession>(() => {
-    const storage = getBrowserStorage()
-    return storage ? loadStudyTimerSession(storage) : { startedAt: null, accumulatedSeconds: 0 }
-  })
-  const [seconds, setSeconds] = React.useState(() => computeElapsedSeconds(session))
+  // Match the server's initial render, then restore the saved timer. Reading
+  // browser storage in the initializer caused a hydration mismatch on refresh.
+  const [session, setSession] = React.useState<StudyTimerSession>({ startedAt: null, accumulatedSeconds: 0 })
+  const [seconds, setSeconds] = React.useState(0)
+
+  React.useEffect(() => {
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled) return
+      const storage = getBrowserStorage()
+      if (!storage) return
+      const saved = loadStudyTimerSession(storage)
+      setSession(saved)
+      setSeconds(computeElapsedSeconds(saved))
+    })
+    return () => { cancelled = true }
+  }, [])
 
   const running = isStudyTimerRunning(session)
 
@@ -79,9 +87,9 @@ export function StudyTimerPanel() {
     <div className="flex items-center justify-between gap-3">
       <div>
         <h2 className="flex items-center gap-2 font-bold text-white"><Timer size={18} className="text-red-400" /> Study timer</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">{running ? 'Counting — safely close this tab and resume anytime.' : 'Track real minutes for streaks and weekly activity.'}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{running ? 'Your timer keeps running if you leave this page.' : 'Set aside a few minutes. Pause whenever you need.'}</p>
       </div>
-      <span className="font-mono text-3xl font-bold text-white" aria-live="polite">{formatSeconds(seconds)}</span>
+      <span className="font-mono text-3xl font-bold text-white" aria-label="Elapsed study time">{formatSeconds(seconds)}</span>
     </div>
     <div className="flex flex-wrap gap-2">
       <Button size="sm" onClick={toggle}>

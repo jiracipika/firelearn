@@ -35,7 +35,7 @@ export function SupabaseSyncButton({ onSynced }: { onSynced?: () => void }) {
     onSynced?.()
   }
 
-  const label = status === 'syncing' ? 'Syncing...' : status === 'done' ? 'Synced' : status === 'blocked' ? 'Sign in to sync' : status === 'error' ? 'Retry sync' : 'Sync to Supabase'
+  const label = status === 'syncing' ? 'Saving…' : status === 'done' ? 'Saved' : status === 'blocked' ? 'Connect cloud save' : status === 'error' ? 'Try saving again' : 'Save to cloud'
 
   return <Button variant="outline" onClick={syncNow} disabled={status === 'syncing'}><UploadCloud size={16} /> {label}</Button>
 }
