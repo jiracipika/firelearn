@@ -8,11 +8,12 @@ import { animate, useInView, useReducedMotion } from 'framer-motion'
  * (no-JS safe), then recounts from zero the first time it scrolls into
  * view. Under reduced motion the static value simply stays.
  */
-export function CountUp({ value, format }: { value: number; format?: (v: number) => string }) {
+export function CountUp({ value, pad }: { value: number; pad?: number }) {
   const ref = useRef<HTMLSpanElement>(null)
   const inView = useInView(ref, { once: true, margin: '-40px' })
   const reduce = useReducedMotion()
-  const formatValue = format ?? ((v: number) => String(v))
+  // Keep formatting internal: props from Server Components must stay serializable.
+  const formatValue = (v: number) => (pad ? String(v).padStart(pad, '0') : String(v))
 
   useEffect(() => {
     const el = ref.current

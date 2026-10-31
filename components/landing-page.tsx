@@ -58,7 +58,7 @@ export function LandingPage() {
       <section className="fl-metrics" aria-label="Learning library at a glance">
         <div className="fl-section-width fl-metrics-inner">
           <div className="fl-metrics-intro"><span className="fl-kicker">A FULL LEARNING SYSTEM</span><strong>More than a course list.</strong></div>
-          <div><strong><CountUp value={academyCourses.length} format={(v) => v.toString().padStart(2, '0')} /></strong><span>COURSE PATHS</span></div>
+          <div><strong><CountUp value={academyCourses.length} pad={2} /></strong><span>COURSE PATHS</span></div>
           <div><strong><CountUp value={lessonCount} /></strong><span>FOCUSED LESSONS</span></div>
           <div><strong><CountUp value={videoCount} /></strong><span>VIDEO TUTORIALS</span></div>
           <div><strong><CountUp value={questionCount} /></strong><span>QUIZ QUESTIONS</span></div>
