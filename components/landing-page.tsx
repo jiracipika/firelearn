@@ -5,6 +5,12 @@ import { AppShell } from '@/components/layout/app-shell'
 import { FiregroundScene } from '@/components/fireground-scene'
 import { CourseCard } from '@/components/course/course-card'
 import { Reveal, RevealOnMount, Stagger } from '@/components/ui/motion'
+import { CardSpotlight } from '@/components/card-spotlight'
+import { CountUp } from '@/components/count-up'
+import { EmberField } from '@/components/ember-field'
+import { SceneParallax } from '@/components/scene-parallax'
+import { SmoothScroll } from '@/components/smooth-scroll'
+import { TiltCard } from '@/components/tilt-card'
 
 const lessonCount = academyCourses.reduce((total, course) => total + course.modules.reduce((sum, module) => sum + module.lessons.length, 0), 0)
 const questionCount = academyCourses.reduce((total, course) => total + course.modules.reduce((sum, module) => sum + module.lessons.reduce((n, lesson) => n + lesson.quiz.length, 0), 0), 0)
@@ -18,9 +24,11 @@ const modes = [
 
 export function LandingPage() {
   return <AppShell fullBleed>
+    <SmoothScroll>
     <div className="fl-home">
       <section className="fl-hero" aria-labelledby="fl-hero-title">
         <div className="fl-hero-grain" aria-hidden />
+        <EmberField className="fl-hero-embers" />
         <div className="fl-hero-inner">
           <RevealOnMount className="fl-hero-copy">
             <div className="fl-eyebrow"><span className="fl-eyebrow-line" /> FIRELEARN / TRAINING PLATFORM <span className="fl-eyebrow-index">EST. FOR THE NEXT CALL</span></div>
@@ -32,29 +40,39 @@ export function LandingPage() {
             </div>
             <p className="fl-hero-note"><span className="fl-note-pulse" /> BUILT FOR REPS, REFLECTION & READINESS</p>
           </RevealOnMount>
-          <RevealOnMount delay={0.12} className="fl-scene-wrap"><FiregroundScene /></RevealOnMount>
+          <RevealOnMount delay={0.12} className="fl-scene-wrap">
+            <SceneParallax>
+              <TiltCard max={3.2}><FiregroundScene /></TiltCard>
+            </SceneParallax>
+          </RevealOnMount>
         </div>
         <div className="fl-hero-rail"><span>SCROLL TO EXPLORE</span><ArrowDownRight size={18} aria-hidden /><span>01 — 04</span></div>
       </section>
 
+      <div className="fl-marquee" aria-hidden="true">
+        <div className="fl-marquee-track">
+          {[...academyCourses, ...academyCourses].map((course, index) => <span key={`${course.id}-${index}`}>{course.title}<i>✦</i></span>)}
+        </div>
+      </div>
+
       <section className="fl-metrics" aria-label="Learning library at a glance">
         <div className="fl-section-width fl-metrics-inner">
           <div className="fl-metrics-intro"><span className="fl-kicker">A FULL LEARNING SYSTEM</span><strong>More than a course list.</strong></div>
-          <div><strong>{academyCourses.length.toString().padStart(2, '0')}</strong><span>COURSE PATHS</span></div>
-          <div><strong>{lessonCount}</strong><span>FOCUSED LESSONS</span></div>
-          <div><strong>{videoCount}</strong><span>VIDEO TUTORIALS</span></div>
-          <div><strong>{questionCount}</strong><span>QUIZ QUESTIONS</span></div>
+          <div><strong><CountUp value={academyCourses.length} format={(v) => v.toString().padStart(2, '0')} /></strong><span>COURSE PATHS</span></div>
+          <div><strong><CountUp value={lessonCount} /></strong><span>FOCUSED LESSONS</span></div>
+          <div><strong><CountUp value={videoCount} /></strong><span>VIDEO TUTORIALS</span></div>
+          <div><strong><CountUp value={questionCount} /></strong><span>QUIZ QUESTIONS</span></div>
         </div>
       </section>
 
       <section className="fl-section-width fl-modes" aria-labelledby="fl-modes-title">
         <Reveal className="fl-section-heading"><div><p className="fl-kicker">01 / THE METHOD</p><h2 id="fl-modes-title" className="fl-section-title">Training that<br /><em>stays with you.</em></h2></div><p>Learn it. Put it to the test. Come back to it. Every part of FireLearn works together to make the next rep count.</p></Reveal>
-        <Stagger className="fl-mode-grid" stagger={0.09}>{modes.map((mode) => <Reveal key={mode.number}><Link className={`fl-mode-card fl-mode-${mode.accent}`} href={mode.href}>
+        <CardSpotlight><Stagger className="fl-mode-grid" stagger={0.09}>{modes.map((mode) => <Reveal key={mode.number}><Link className={`fl-mode-card fl-mode-${mode.accent}`} href={mode.href}>
           <div className="fl-mode-top"><span>{mode.number} / 03</span><ArrowUpRight size={21} aria-hidden /></div>
           <span className="fl-mode-symbol"><mode.icon size={35} strokeWidth={1.35} aria-hidden /></span>
           <div><h3>{mode.title}</h3><p>{mode.text}</p></div>
           <span className="fl-mode-link">EXPLORE MODE <ArrowRight size={17} aria-hidden /></span>
-        </Link></Reveal>)}</Stagger>
+        </Link></Reveal>)}</Stagger></CardSpotlight>
       </section>
 
       <section className="fl-feature-band"><div className="fl-section-width fl-feature-inner">
@@ -62,9 +80,10 @@ export function LandingPage() {
         <Reveal className="fl-feature-graphic" aria-label="Learning cycle: study, apply, review"><div className="fl-graphic-ring fl-ring-one"/><div className="fl-graphic-ring fl-ring-two"/><div className="fl-graphic-center"><Flame size={44} strokeWidth={1.2} aria-hidden /><span>THE NEXT<br />REP STARTS<br />HERE</span></div><span className="fl-graphic-tag fl-tag-one"><BookOpen size={16} aria-hidden /> STUDY</span><span className="fl-graphic-tag fl-tag-two"><Radar size={16} aria-hidden /> APPLY</span><span className="fl-graphic-tag fl-tag-three"><Layers3 size={16} aria-hidden /> REVIEW</span></Reveal>
       </div></section>
 
-      <section className="fl-section-width fl-courses" aria-labelledby="fl-courses-title"><Reveal className="fl-section-heading"><div><p className="fl-kicker">03 / PICK YOUR PATH</p><h2 id="fl-courses-title" className="fl-section-title">Start somewhere.<br /><em>Go further.</em></h2></div><Link className="fl-text-link" href="/courses">View the entire academy <ArrowUpRight size={18} aria-hidden /></Link></Reveal><Stagger className="fl-course-grid" stagger={0.08}>{academyCourses.slice(0, 3).map(course => <Reveal key={course.id}><CourseCard course={course}/></Reveal>)}</Stagger></section>
+      <section className="fl-section-width fl-courses" aria-labelledby="fl-courses-title"><Reveal className="fl-section-heading"><div><p className="fl-kicker">03 / PICK YOUR PATH</p><h2 id="fl-courses-title" className="fl-section-title">Start somewhere.<br /><em>Go further.</em></h2></div><Link className="fl-text-link" href="/courses">View the entire academy <ArrowUpRight size={18} aria-hidden /></Link></Reveal><CardSpotlight><Stagger className="fl-course-grid" stagger={0.08}>{academyCourses.slice(0, 3).map(course => <Reveal key={course.id}><CourseCard course={course}/></Reveal>)}</Stagger></CardSpotlight></section>
 
       <section className="fl-final"><div className="fl-section-width"><p className="fl-kicker">04 / YOUR NEXT MOVE</p><h2>Ready for<br /><em>the next call?</em></h2><div className="fl-final-bottom"><p>Turn a few minutes today into knowledge you can reach for tomorrow. Educational study supports instructor led training and local procedures.</p><Link className="fl-button fl-button-primary" href="/dashboard">Start training <ArrowUpRight size={20} aria-hidden /></Link></div></div></section>
     </div>
+    </SmoothScroll>
   </AppShell>
 }
