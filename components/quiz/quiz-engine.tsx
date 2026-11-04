@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { CheckCircle2, ChevronRight, Clock, Keyboard, RotateCcw, Sparkles, Target, TrendingDown, TrendingUp, XCircle } from 'lucide-react'
 import type { QuizQuestion } from '@/types/learning'
 import { getBrowserStorage } from '@/services/local-persistence'
@@ -29,6 +29,7 @@ type QuizEngineProps = {
 }
 
 export function QuizEngine({ quizId, title, questions, poolTotal }: QuizEngineProps) {
+  const reduceMotion = useReducedMotion()
   const [mode, setMode] = React.useState<QuizMode>('practice')
   const [index, setIndex] = React.useState(0)
   const [selected, setSelected] = React.useState<string[]>([])
@@ -342,7 +343,7 @@ export function QuizEngine({ quizId, title, questions, poolTotal }: QuizEnginePr
       <Progress value={progress} />
 
       <AnimatePresence mode="wait">
-        <motion.div key={question.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.18 }}>
+        <motion.div key={question.id} initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: reduceMotion ? 1 : 0 }} transition={{ duration: reduceMotion ? 0 : 0.12 }}>
           <Card className="space-y-5 p-5 md:p-7">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-lg border border-border bg-elevated/60 px-2.5 py-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{question.type.replace('-', ' ')}</span>

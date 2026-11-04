@@ -52,7 +52,7 @@ export function ProfileDataTools({ onReset }: { onReset?: () => void }) {
 
     try {
       const raw: unknown = JSON.parse(await file.text())
-      if (!window.confirm('Restore progress from this export? Current on-device values in the file will be replaced. Supabase data is unaffected.')) return
+      if (!window.confirm('Restore progress from this export? Current on-device values in the file will be replaced. Cloud data is unaffected.')) return
       const result = restoreExportedData(storage, raw)
       setImportStatus({ tone: 'success', message: `Restored ${result.restoredKeys} local data ${result.restoredKeys === 1 ? 'section' : 'sections'}.` })
       onReset?.()
@@ -67,7 +67,7 @@ export function ProfileDataTools({ onReset }: { onReset?: () => void }) {
   }
 
   function resetLocalData() {
-    if (!window.confirm('Clear local FireLearn progress, quiz history, flashcards, sync queue, study activity, and timer on this device? Supabase data is not deleted.')) return
+    if (!window.confirm('Clear local FireLearn progress, quiz history, flashcards, sync queue, study activity, and timer on this device? Cloud data is not deleted.')) return
     const storage = getBrowserStorage()
     if (!storage) return
     localKeys.forEach((key) => storage.removeItem(key))
@@ -78,7 +78,7 @@ export function ProfileDataTools({ onReset }: { onReset?: () => void }) {
   return <Card className="space-y-4">
     <div>
       <h2 className="font-bold text-white">Data tools</h2>
-      <p className="mt-1 text-sm leading-6 text-muted-foreground">Export, restore, or clear on-device FireLearn data. Cloud Supabase records are unaffected.</p>
+      <p className="mt-1 text-sm leading-6 text-muted-foreground">Export, restore, or clear on-device FireLearn data. Cloud records are unaffected.</p>
     </div>
     <div className="flex flex-wrap gap-2">
       <Button variant="outline" size="sm" onClick={downloadExport}><Download size={16} /> Export JSON</Button>

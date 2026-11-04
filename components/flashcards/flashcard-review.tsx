@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Keyboard, RotateCcw, Sparkles } from 'lucide-react'
 import type { Flashcard, FlashcardRating } from '@/types/learning'
 import { getBrowserStorage, loadFlashcards, saveFlashcards } from '@/services/local-persistence'
@@ -26,6 +26,7 @@ const ratings: { value: FlashcardRating; label: string; shortcut: string; tone: 
 ]
 
 export function FlashcardReview({ initialCards, sessionId }: { initialCards: Flashcard[]; sessionId: string }) {
+  const reduceMotion = useReducedMotion()
   const [cards, setCards] = React.useState(initialCards)
   const [reviewIds, setReviewIds] = React.useState(() => initialCards.filter((card) => card.reviewCount === 0 || new Date(card.nextReview).getTime() <= Date.now()).map((card) => card.id))
   const [index, setIndex] = React.useState(0)
@@ -224,8 +225,8 @@ export function FlashcardReview({ initialCards, sessionId }: { initialCards: Fla
             </div>
             <p className="text-sm leading-6 text-muted-foreground">
               {sessionSummary.difficultFlashcardIds.length > 0
-                ? `${sessionSummary.difficultFlashcardIds.length} card${sessionSummary.difficultFlashcardIds.length === 1 ? '' : 's'} flagged for extra reps (rated Again or Hard). They will resurface sooner with shorter intervals.`
-                : 'No cards flagged as difficult. Your schedule advances cleanly — keep the streak.'}
+                ? `${sessionSummary.difficultFlashcardIds.length} card${sessionSummary.difficultFlashcardIds.length === 1 ? '' : 's'} to review again. You’ll see these sooner because you rated them Again or Hard.`
+                : 'You recalled all the cards in this session. They’ll come back when it’s time to review.'}
               {sessionSummary.nextDueAt && ` Next review: ${new Date(sessionSummary.nextDueAt).toLocaleDateString()}.`}
             </p>
           </Card>
@@ -252,7 +253,7 @@ export function FlashcardReview({ initialCards, sessionId }: { initialCards: Fla
       {sessionStorageFailed && (
         <div role="status" className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
           <p className="font-semibold">Device session recovery is unavailable</p>
-          <p className="mt-1 text-amber-100/75">Keep this tab open until you finish. Completed ratings will still sync to Supabase when a connection and signed-in session are available.</p>
+          <p className="mt-1 text-amber-100/75">Keep this tab open until you finish. Completed ratings can still sync when cloud save is connected.</p>
         </div>
       )}
       {/* Polite live region so screen readers announce each card transition and
@@ -277,14 +278,14 @@ export function FlashcardReview({ initialCards, sessionId }: { initialCards: Fla
       <QueueStats queue={queue} />
 
       <AnimatePresence mode="wait">
-        <motion.div key={current.id + String(revealed)} initial={{ opacity: 0, rotateX: -6, y: 8 }} animate={{ opacity: 1, rotateX: 0, y: 0 }} exit={{ opacity: 0, rotateX: 6, y: -8 }} transition={{ duration: 0.16 }}>
+        <motion.div key={current.id + String(revealed)} initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: reduceMotion ? 1 : 0 }} transition={{ duration: reduceMotion ? 0 : 0.12 }}>
           <Card className="relative min-h-80 overflow-hidden p-8 text-center md:p-12">
-            <div className="absolute inset-x-20 top-0 h-24 bg-primary/10 blur-3xl" />
+
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{revealed ? 'Answer' : 'Prompt'}</p>
             <p className="mx-auto mt-8 max-w-2xl text-2xl font-bold leading-snug tracking-tight text-white md:text-3xl">{revealed ? current.back : current.front}</p>
-            {!revealed && <Button className="mt-8" onClick={() => setRevealed(true)}>Show answer <Sparkles size={16} /></Button>}
+            {!revealed && <Button className="mt-8" onClick={() => setRevealed(true)}>Show answer</Button>}
             {revealed && (
-              <div className="mt-8 grid gap-2.5 sm:grid-cols-4" role="group" aria-label="Rate this card">
+              <div className="mt-8 grid grid-cols-2 gap-2.5 sm:grid-cols-4" role="group" aria-label="Rate this card">
                 {ratings.map((rating) => (
                   <button
                     key={rating.value}
@@ -300,7 +301,7 @@ export function FlashcardReview({ initialCards, sessionId }: { initialCards: Fla
                 ))}
               </div>
             )}
-            {revealed && <p className="mt-5 text-xs text-muted">Interval: {nextDueLabel(current)} · Ease {current.easeFactor.toFixed(2)} · Reviews {current.reviewCount}</p>}
+            {revealed && <p className="mt-5 text-xs text-muted">Next review: {nextDueLabel(current)} · Reviewed {current.reviewCount} times</p>}
           </Card>
         </motion.div>
       </AnimatePresence>
