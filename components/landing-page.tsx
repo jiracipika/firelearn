@@ -4,6 +4,7 @@ import { academyCourses } from '@/data/academy'
 import { computeCatalogMetrics } from '@/services/catalog-metrics'
 import { AppShell } from '@/components/layout/app-shell'
 import { CourseCard } from '@/components/course/course-card'
+import { StudyIllustration } from '@/components/study-illustration'
 import { buttonVariants } from '@/components/ui/button'
 
 const metrics = computeCatalogMetrics(academyCourses)
@@ -20,8 +21,8 @@ export function LandingPage() {
     <div className="fl-home">
       <section className="fl-home-hero fl-section-width" aria-labelledby="home-title">
         <div>
-          <p className="fl-kicker">For the time between calls</p>
-          <h1 id="home-title">A little learning.<br /><em>Every time you can.</em></h1>
+          <p className="fl-kicker">A little time. Something new.</p>
+          <h1 id="home-title">Your next chapter<br /><em>starts here.</em></h1>
           <p className="fl-home-lede">Firefighter courses, practice questions, and flashcards. Pick a topic, take your time, and come back where you left off.</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link href="/courses" className={buttonVariants({ size: 'lg' })}>Find a course <ArrowRight size={18} aria-hidden /></Link>
@@ -30,7 +31,7 @@ export function LandingPage() {
           <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground"><Check size={16} className="text-success" aria-hidden />Start without an account. Progress saves on this device.</p>
         </div>
         {firstCourse && firstLesson && <aside className="fl-start-card" aria-label="A place to start">
-          <div className="fl-start-cover" aria-hidden><BookOpen size={44} strokeWidth={1.3} /><span>THE FIELD NOTES</span></div>
+          <div className="fl-start-cover" aria-hidden><StudyIllustration /><span>YOUR FIRST FIELD NOTE</span></div>
           <div className="p-6 sm:p-8">
             <p className="fl-kicker">New here? Start with a lesson</p>
             <h2 className="mt-3 text-2xl font-semibold leading-tight">{firstLesson.title}</h2>

@@ -1,46 +1,46 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #191c1a;
-  --color-surface: #202421;
-  --color-card: #232824;
-  --color-elevated: #2c322d;
-  --color-primary: #ee956e;
-  --color-primary-foreground: #201b17;
-  --color-primary-dim: #f3ac8d;
-  --color-accent: #dfba79;
-  --color-success: #82c49a;
-  --color-info: #94bbd0;
-  --color-muted: #a5ada6;
-  --color-muted-foreground: #bac1ba;
-  --color-border: #3b433c;
-  --color-border-bright: #586158;
+  --color-background: #101e2c;
+  --color-surface: #152838;
+  --color-card: #192e40;
+  --color-elevated: #213d50;
+  --color-primary: #62dec8;
+  --color-primary-foreground: #102c2c;
+  --color-primary-dim: #93ecdc;
+  --color-accent: #f3c97b;
+  --color-success: #8ddba7;
+  --color-info: #9bcaff;
+  --color-muted: #a8bacb;
+  --color-muted-foreground: #c3d0de;
+  --color-border: #344d63;
+  --color-border-bright: #58738b;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 :root {
   color-scheme: dark;
-  --color-ink: #f0f1eb;
+  --color-ink: #f2f7fc;
   --radius: 1rem;
 }
 :root[data-theme='light'] {
   color-scheme: light;
-  --color-background: #f7f5ef;
-  --color-surface: #fcfbf8;
-  --color-card: #fcfbf8;
-  --color-elevated: #eeeee7;
-  --color-primary: #ac4526;
+  --color-background: #f1f7fb;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+  --color-elevated: #e6f0f5;
+  --color-primary: #087c70;
   --color-primary-foreground: #ffffff;
-  --color-primary-dim: #933a20;
-  --color-accent: #8b622d;
-  --color-success: #39734c;
-  --color-info: #376b86;
-  --color-muted: #697167;
-  --color-muted-foreground: #596255;
-  --color-border: #dedfd4;
-  --color-border-bright: #bfc4b7;
-  --color-ink: #293126;
+  --color-primary-dim: #066357;
+  --color-accent: #93651d;
+  --color-success: #277744;
+  --color-info: #316caa;
+  --color-muted: #60768a;
+  --color-muted-foreground: #4b6378;
+  --color-border: #d6e3ed;
+  --color-border-bright: #adc6d8;
+  --color-ink: #18344b;
 }
 * { box-sizing: border-box; }
 html { background: var(--color-background); scroll-padding-top: 6rem; }
@@ -69,8 +69,8 @@ summary::-webkit-details-marker { display: none; }
 :root[data-theme='light'] :is(.text-slate-200, .text-slate-300, .text-gray-200) { color: var(--color-ink); }
 :root[data-theme='light'] :is(.text-red-100, .text-red-200, .text-red-300, .text-red-400) { color: #a23d2c; }
 :root[data-theme='light'] :is(.text-amber-100, .text-amber-200, .text-amber-300, .text-amber-400) { color: #835720; }
-:root[data-theme='light'] :is(.text-green-100, .text-green-300, .text-green-400, .text-emerald-300, .text-emerald-400) { color: #39734c; }
-:root[data-theme='light'] :is(.text-sky-100, .text-sky-300, .text-sky-400, .text-blue-300) { color: #376b86; }
+:root[data-theme='light'] :is(.text-green-100, .text-green-300, .text-green-400, .text-emerald-300, .text-emerald-400) { color: #277744; }
+:root[data-theme='light'] :is(.text-sky-100, .text-sky-300, .text-sky-400, .text-blue-300) { color: #316caa; }
 .text-gradient-fire { color: var(--color-ink); }
 .text-gradient-flame { color: var(--color-primary); }
 .glass-card { background: var(--color-card); box-shadow: 0 2px 6px rgb(0 0 0 / 0.025); }
@@ -208,3 +208,43 @@ summary::-webkit-details-marker { display: none; }
 @keyframes fl-rise { to { transform: translateY(-6px); } }
 @keyframes fl-scan { to { top: 100%; } }
 @media (prefers-reduced-motion: reduce) { .scene * { animation: none !important; } }
+
+/* Study club: generous shapes, clear navigation and quiet color coding. */
+.fl-home-hero { gap: clamp(2rem, 5vw, 5rem); }
+.fl-home-hero h1 { font-weight: 750; letter-spacing: -.055em; line-height: 1.08; }
+.fl-home-hero h1 em { font-family: var(--font-sans), sans-serif; font-style: normal; font-weight: 750; }
+.fl-start-card { border-radius: 2rem; box-shadow: 0 18px 50px rgb(15 51 75 / .09); }
+.fl-start-cover { min-height: 220px; position: relative; background: #b9ece5; color: #174f55; }
+.fl-start-cover svg { width: min(100%, 290px); height: 200px; }
+.fl-start-cover span { position: absolute; left: 1.5rem; bottom: 1rem; letter-spacing: .08em; }
+.fl-kicker { letter-spacing: .025em; font-size: .8rem; }
+.fl-library-strip { border-radius: 1.25rem; background: var(--color-elevated); border: 0; }
+.fl-mode-card { border-radius: 1.5rem; padding: 1.75rem; border-top: 4px solid var(--color-primary); }
+.fl-mode-card:nth-child(2) { border-top-color: var(--color-info); }
+.fl-mode-card:nth-child(3) { border-top-color: var(--color-accent); }
+.fl-mode-icon { width: 52px; height: 52px; border-radius: 1rem; }
+.fl-mode-card:nth-child(2) .fl-mode-icon { color: var(--color-info); }
+.fl-mode-card:nth-child(3) .fl-mode-icon { color: var(--color-accent); }
+.fl-course-card { border-radius: 1.5rem; }
+.fl-course-category { display: flex; align-items: center; gap: .6rem; }
+.fl-course-category svg { flex: none; color: var(--color-primary); }
+.fl-course-body h3 { font-size: 1.3rem; }
+.fl-dashboard-focus { border-radius: 1.75rem; background: color-mix(in srgb, var(--color-primary) 7%, var(--color-card)); }
+.fl-dashboard-stats { border-radius: 1.5rem; }
+.fl-dashboard-stats > div > p:first-child { color: var(--color-primary); }
+.fl-header nav a[aria-current='page'] { box-shadow: inset 0 -2px var(--color-primary); }
+.fl-mobile-nav a[aria-current='page'] { border-radius: 1rem; }
+.fl-catalog-filters button { border-radius: 999px; }
+.fl-catalog-search input { border-radius: 1rem; }
+.fl-study .glass-card, .fl-lesson .glass-card, .fl-profile .glass-card { border-radius: 1.5rem; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .fl-mode-card, .fl-course-card { transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
+  .fl-mode-card:hover, .fl-course-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgb(15 51 75 / .08); }
+}
+@media (max-width: 767px) {
+  .fl-home-hero h1 { font-size: clamp(2.5rem, 9vw, 3.5rem); }
+  .fl-start-cover { min-height: 190px; }
+  .fl-start-cover svg { height: 170px; }
+  .fl-library-strip { border-radius: 0; }
+}
+@media print { .fl-start-card, .fl-mode-card, .fl-course-card { box-shadow: none; } }
